@@ -50,3 +50,9 @@ runs/
 .DS_Store             # macOS
 Thumbs.db             # Windows
 *~                    # backups do Vim/Neovim
+
+# === Agentes ===
+.claude/
+.gemini/
+.agent/
+CLAUDE.md
