@@ -1,0 +1,57 @@
+# config.yaml — fonte única de hiperparâmetros do projeto.
+# Alterar um experimento = alterar este arquivo, NÃO os notebooks.
+
+seed: 42
+
+# Ativos analisados (B3). Um modelo por ticker.
+tickers:
+  - PETR4.SA   # Petrobras PN  — energia/commodities
+  - VALE3.SA   # Vale S.A.     — mineração
+  - AMER3.SA   # Americanas    — varejo
+  - ITUB4.SA   # Itaú Unibanco — financeiro
+
+# Período de coleta e split temporal.
+# Treino = "normalidade" (2010–2019); teste = 2020–2024.
+data:
+  start: "2010-01-01"
+  end: "2024-12-31"
+  train_end: "2019-12-31"   # split temporal ANTES da normalização (evita vazamento)
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+
+# Feature principal: retorno logarítmico diário.
+# Decisoes documentadas em docs/adr/ (cada chave referencia um ADR).
+preprocessing:
+  window_size: 30           # ADR-0002. Li (2020) e Valkov: TIME_STEPS=30.
+  step: 1                   # passo entre janelas
+
+# Arquitetura LSTM-Autoencoder. Ver ADR-0003.
+model:
+  latent_dim: 16            # bottleneck. Escolha de projeto (compressao ~4:1); calibrar em M3.
+  lstm_units: 64            # Valkov (curiousily): units=64.
+  dropout: 0.2              # Valkov: rate=0.2.
+  loss: "mse"              # README/Li (2020). Alternativa MAE (Valkov) discutida no ADR-0003.
+
+# Treino. Ver ADR-0004.
+train:
+  epochs: 100               # teto; EarlyStopping governa a parada real.
+  batch_size: 32            # Valkov.
+  learning_rate: 0.001      # default do Adam.
+  optimizer: "adam"        # Li (2020), Valkov.
+  validation_split: 0.1     # Valkov.
+  shuffle: false            # CRITICO: serie temporal. shuffle=False evita vazamento (Valkov).
+  early_stopping_patience: 10
+  models_dir: "models"
+
+# Detecção de anomalias via erro de reconstrução. Ver ADR-0005.
+detection:
+  threshold_percentile: 95  # estatico: percentil do erro de TREINO (README). p95 robusto vs. max de Li (2020).
+  dynamic_window: 252        # dinamico: janela movel CAUSAL (~1 ano util de pregao). Provisorio; calibrar em M4.
+
+# Avaliação por injeção sintética. Ver ADR-0006 (Liu et al. 2025).
+evaluation:
+  n_injections: 50          # PROVISORIO: sem fonte para o numero. Calibrar em M5.
+  price_shock: 0.15         # PROVISORIO: calibrar relativo a distribuicao real dos retornos.
+  volume_spike: 5.0         # PROVISORIO: multiplicador de volume; calibrar em M5.
+
+figures_dir: "figures"
