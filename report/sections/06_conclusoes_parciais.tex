@@ -1,24 +1,27 @@
 \section{Conclusões Parciais e Próximos Passos}
 \label{sec:conclusoes}
 
-Até este ponto, o projeto estabeleceu uma base reprodutível (M0) e validou a
-qualidade dos dados (M1). Os principais resultados parciais são:
+Até este ponto, o projeto estabeleceu uma base reprodutível (M0), validou a
+qualidade dos dados (M1) e construiu a representação de entrada do modelo (M2). Os
+principais resultados parciais são:
 \begin{itemize}[noitemsep]
   \item Infraestrutura com configuração centralizada, \emph{seeds} fixas e proveniência
         documentada de cada hiperparâmetro, separando escolhas fundamentadas de valores
         provisórios.
   \item Quatro séries íntegras (3724 pregões, sem NaN), com anomalias reais já mapeadas
         como âncoras para a validação narrativa.
-  \item Esclarecimento do caso AMER3, com decisão registrada de correção do artefato de
-        grupamento na próxima etapa.
+  \item Esclarecimento do caso AMER3: a hipótese de artefato de grupamento foi refutada
+        com os dados, e o ativo segue o pipeline padrão (Seção~\ref{sec:m2-amer3}).
+  \item Representação de entrada pronta: log-retornos normalizados em janelas de 30 passos,
+        com split temporal e scaler restrito ao treino (sem vazamento).
 \end{itemize}
 
-\paragraph{Próximos passos (M2 --- Pré-processamento).} Implementar o cálculo de
-log-retornos, a correção do fator de grupamento do AMER3, o \emph{split} temporal com
-ajuste do \texttt{MinMaxScaler} restrito ao treino e a geração das janelas deslizantes.
-As etapas subsequentes cobrirão o treino do modelo (M3), os limiares de detecção (M4), a
-avaliação quantitativa por injeção sintética (M5) e a correlação com eventos e a
-comparação setorial (M6).
+\paragraph{Próximos passos (M3 --- Modelo e Treino).} Implementar e treinar o
+LSTM-Autoencoder (um modelo por ativo), com \texttt{EarlyStopping} e validação por bloco
+cronológico (\texttt{shuffle=False}), e conduzir o estudo de sensibilidade de
+\texttt{window\_size} e \texttt{latent\_dim}. As etapas subsequentes cobrirão os limiares
+de detecção (M4), a avaliação quantitativa por injeção sintética (M5) e a correlação com
+eventos e a comparação setorial (M6).
 
 \paragraph{Registro de decisões.} Todas as decisões de configuração estão documentadas
 como ADRs em \texttt{docs/adr/}. Este relatório é atualizado a cada fechamento de
