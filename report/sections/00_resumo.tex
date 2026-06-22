@@ -1,0 +1,13 @@
+A detecção de anomalias em mercados financeiros é dominada, na literatura, pelo
+mercado norte-americano e por criptomoedas. Este trabalho aplica uma arquitetura
+\emph{LSTM-Autoencoder} à detecção não supervisionada de anomalias em quatro ações
+da B3 (PETR4, VALE3, AMER3 e ITUB4), cobrindo distintos setores econômicos. O modelo
+é treinado apenas sobre o período considerado de ``normalidade'' (2010--2019) e sinaliza
+como anômalas as janelas cujo erro de reconstrução excede um limiar; comparam-se
+limiares estático (percentil fixo) e dinâmico (percentil em janela móvel causal).
+A avaliação combina validação narrativa (sobreposição com eventos econômicos e políticos
+brasileiros documentados) e quantitativa (injeção controlada de anomalias sintéticas,
+com Precision, Recall e F1). Este relatório preliminar documenta, de forma incremental e
+academicamente rastreável, as decisões metodológicas, suas fontes e as observações de
+cada etapa do projeto. Até o momento concluíram-se as etapas de \emph{infraestrutura}
+(M0) e de \emph{coleta e análise exploratória} (M1).

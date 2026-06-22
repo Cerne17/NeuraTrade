@@ -1,0 +1,53 @@
+\section{Introdução}
+
+A identificação de comportamentos atípicos em séries de preços de ativos é relevante
+tanto para a gestão de risco quanto para a compreensão de como eventos econômicos e
+políticos se refletem nos mercados. A maior parte da literatura de detecção de anomalias
+com aprendizado profundo concentra-se no mercado norte-americano e em
+criptomoedas~\cite{li2020lstm,bitcoin2021anomaly}, deixando sub-representado o contexto
+de mercados emergentes como o brasileiro.
+
+Este trabalho investiga a detecção \emph{não supervisionada} de anomalias em ações da
+B3 por meio de um \emph{LSTM-Autoencoder}~\cite{hochreiter1997lstm}. A premissa é que um
+autoencoder treinado apenas em períodos de comportamento típico aprende a reconstruir os
+padrões normais da série; diante de movimentos atípicos, o erro de reconstrução cresce e
+sinaliza a anomalia.
+
+\subsection{Contribuições}
+O projeto combina quatro contribuições:
+\begin{enumerate}[noitemsep]
+  \item Aplicação a ativos nacionais (B3), contexto sub-representado na literatura.
+  \item Correlação sistemática e documentada entre anomalias detectadas e eventos
+        históricos brasileiros.
+  \item Comparação entre limiar \emph{estático} (percentil fixo) e \emph{dinâmico}
+        (percentil em janela móvel).
+  \item Avaliação de generalização entre setores econômicos distintos.
+\end{enumerate}
+
+\subsection{Ativos e período}
+Foram selecionados quatro ativos, um por setor, conforme a Tabela~\ref{tab:ativos}.
+O período de coleta vai de 2010 a 2024; o treino (``normalidade'') usa 2010--2019 e o
+teste, 2020--2024.
+
+\begin{table}[h]
+\centering
+\caption{Ativos analisados.}
+\label{tab:ativos}
+\begin{tabular}{lll}
+\toprule
+\textbf{Ticker} & \textbf{Empresa} & \textbf{Setor} \\
+\midrule
+PETR4.SA & Petrobras PN    & Energia/commodities \\
+VALE3.SA & Vale S.A.       & Mineração \\
+AMER3.SA & Americanas S.A. & Varejo \\
+ITUB4.SA & Itaú Unibanco   & Financeiro \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Sobre este documento}
+Trata-se de um relatório preliminar e \emph{vivo}: a cada fechamento de \emph{milestone}
+acrescenta-se uma seção descrevendo, academicamente, as decisões tomadas, suas fontes,
+as observações empíricas e as conclusões parciais. As decisões de configuração são
+registradas em paralelo como \emph{Architecture Decision Records} (ADRs) no
+repositório (\texttt{docs/adr/}), referenciados ao longo do texto.

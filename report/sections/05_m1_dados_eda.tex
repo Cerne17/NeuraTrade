@@ -1,0 +1,64 @@
+\section{M1 --- Coleta e Análise Exploratória}
+\label{sec:m1}
+
+\subsection{Coleta e cache}
+Os dados são obtidos via \texttt{yfinance} com \texttt{auto\_adjust=True}, de modo que o
+preço de fechamento já incorpora ajustes por \emph{splits} e dividendos. A arquitetura de
+dados separa estritamente o acesso à rede da leitura: as funções \texttt{cache\_*} baixam
+e persistem os dados em \texttt{data/raw/} (CSV, versionado), enquanto \texttt{load\_*}
+--- usadas por todo o \emph{pipeline} --- leem apenas do cache, jamais da API. Isso garante
+execução \emph{offline} e reprodutível dos notebooks.
+
+\subsection{Integridade das séries}
+As quatro séries apresentam \textbf{3724 pregões} cada (2010-01-04 a 2024-12-30), sem
+valores ausentes (NaN) após o ajuste. A Tabela~\ref{tab:integridade} resume os achados.
+A função \texttt{integrity\_report} computa, por ativo, contagens de NaN, dias com volume
+zero (halts/iliquidez) e os extremos de log-retorno diário, que funcionam como
+indicadores tanto de anomalias reais quanto de eventuais artefatos.
+
+\begin{table}[h]
+\centering
+\caption{Integridade e maior queda diária de log-retorno por ativo.}
+\label{tab:integridade}
+\small
+\begin{tabular}{lcccl}
+\toprule
+\textbf{Ticker} & \textbf{Pregões} & \textbf{NaN} & \textbf{Vol.\ zero} & \textbf{Maior queda (data)} \\
+\midrule
+PETR4.SA & 3724 & 0 & 54 & $-0{,}352$ (2020-03-09) \\
+VALE3.SA & 3724 & 0 & 27 & $-0{,}282$ (2019-01-28) \\
+AMER3.SA & 3724 & 0 & 25 & $-1{,}484$ (2023-01-12) \\
+ITUB4.SA & 3724 & 0 & 34 & $-0{,}198$ (2021-10-04) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Anomalias reais identificadas}
+A EDA já revela eventos extremos que servirão de âncora para a validação narrativa (M6):
+\begin{itemize}[noitemsep]
+  \item \textbf{PETR4}, 09/03/2020: queda associada ao início da pandemia de COVID-19 e à
+        guerra de preços do petróleo.
+  \item \textbf{VALE3}, 28/01/2019: reação ao rompimento da barragem de Brumadinho.
+  \item \textbf{AMER3}, 12/01/2023: divulgação da fraude contábil da Americanas (queda de
+        $\approx$78\% no dia).
+  \item \textbf{ITUB4}, 04/10/2021: maior queda do setor financeiro no período.
+\end{itemize}
+A distribuição dos log-retornos exibe caudas pesadas (leptocurtose), o que reforça a
+escolha de limiares por percentil em vez de critérios baseados em desvio-padrão.
+
+\subsection{O caso AMER3}
+A série da Americanas merecia atenção especial por causa da reorganização societária e do
+colapso pós-fraude. Dois pontos foram esclarecidos pela EDA:
+\begin{enumerate}[noitemsep]
+  \item \textbf{Histórico de treino existe.} Diferentemente da hipótese inicial de ausência
+        de dados em 2010--2019, o \texttt{yfinance} fornece a série desde 2010 por
+        continuidade de \emph{ticker} (herdada da Lojas Americanas). Há, portanto, dados de
+        ``normalidade'' para o ativo.
+  \item \textbf{Sinal vs.\ artefato.} A queda de 12/01/2023 é uma anomalia \emph{real} e
+        deve ser preservada (é justamente o evento-alvo). Já o salto de log-retorno
+        $\approx +1{,}03$ em 14/11/2024 é compatível com um \emph{grupamento} (\emph{reverse
+        split}) não totalmente ajustado pela fonte, configurando provável \textbf{artefato}.
+\end{enumerate}
+Decidiu-se, para a etapa de pré-processamento (M2), \textbf{corrigir o fator de grupamento}
+do AMER3, em vez de recortar o período --- preservando a continuidade temporal e o caso
+completo do ativo.

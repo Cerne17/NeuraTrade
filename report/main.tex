@@ -1,0 +1,62 @@
+\documentclass[11pt,a4paper]{article}
+
+% ============================================================
+% Relatório preliminar — NeuraTrade
+% Detecção de anomalias em séries financeiras da B3 com LSTM-Autoencoder
+%
+% Documento VIVO: a cada fechamento de milestone, acrescenta-se uma seção
+% em sections/ e registra-se aqui via \input. Servirá de base para o
+% artigo final.
+%
+% Compilar:  tectonic main.tex      (ou latexmk -pdf main.tex)
+% ============================================================
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xurl}
+\usepackage{enumitem}
+\usepackage{authblk}
+\usepackage{caption}
+\usepackage[numbers,sort&compress]{natbib}
+
+\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
+
+\title{\textbf{Detecção Não Supervisionada de Anomalias em Séries Temporais
+Financeiras Brasileiras com LSTM-Autoencoder}\\[0.3em]
+\large Relatório Preliminar}
+
+\author[ ]{Ana Beatriz}
+\author[ ]{Miguel Cerne}
+\affil[ ]{Redes Neurais (2026.1)}
+
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\input{sections/00_resumo}
+\end{abstract}
+
+\noindent\textbf{Palavras-chave:} detecção de anomalias; LSTM-Autoencoder;
+séries temporais financeiras; B3; aprendizado não supervisionado.
+
+\tableofcontents
+
+\input{sections/01_introducao}
+\input{sections/02_trabalhos_relacionados}
+\input{sections/03_metodologia}
+\input{sections/04_m0_setup}
+\input{sections/05_m1_dados_eda}
+\input{sections/06_conclusoes_parciais}
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}

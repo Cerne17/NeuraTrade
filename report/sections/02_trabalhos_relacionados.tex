@@ -1,0 +1,26 @@
+\section{Trabalhos Relacionados}
+
+A detecção de anomalias com autoencoders recorrentes baseia-se na ideia de que a
+reconstrução de padrões aprendidos falha sobre observações fora da distribuição de
+treino. \citet{li2020lstm}, em referência amplamente reproduzida, aplica um
+LSTM-Autoencoder a preços de ações (Johnson \& Johnson), adotando janelas de 30 passos
+de tempo e definindo o limiar de anomalia a partir do erro de reconstrução do treino.
+\citet{valkov2019lstm} fornece uma implementação canônica em Keras, com escolhas de
+projeto que servem de referência prática (camadas LSTM de 64 unidades, \emph{dropout}
+de 0{,}2, \texttt{validation\_split} de 0{,}1 e, crucialmente, \texttt{shuffle=False}
+para preservar a ordem temporal). \citet{petrovic2019lstm} disponibiliza um repositório
+com abordagem equivalente.
+
+Trabalhos mais recentes ampliam o desenho experimental. \citet{liu2025robust} propõem um
+arcabouço híbrido que acopla um LSTM-Autoencoder a redes adversárias generativas e
+introduzem explicitamente um \emph{mecanismo de injeção artificial de anomalias} para
+avaliação quantitativa, validado em múltiplas categorias de ações --- desenho que
+inspira diretamente a avaliação setorial e por injeção adotada neste projeto. No domínio
+de criptomoedas, \citet{bitcoin2021anomaly} exploram a mesma família de modelos sobre
+valores do Bitcoin.
+
+Em relação a esses trabalhos, a principal lacuna endereçada aqui é a aplicação ao mercado
+brasileiro (B3) com correlação documentada a eventos nacionais e comparação explícita
+entre estratégias de limiar estático e dinâmico.
+
+% \citet usado acima requer natbib; caso o estilo não suporte, ver nota em report/README.
