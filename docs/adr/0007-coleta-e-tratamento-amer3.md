@@ -26,11 +26,26 @@ real) ou ruído (artefato de evento corporativo).
 ### Tratamento AMER3 (#7)
 4. **Não limpar anomalias reais.** A queda de ~78% em **12/01/2023** (log-ret ≈ -1.48),
    após a divulgação da fraude contábil, é o evento-alvo do projeto — permanece na série.
-5. **Sinalizar artefato de grupamento.** O salto de log-ret ≈ +1.03 em **14/11/2024**
-   é compatível com um grupamento (reverse split) não totalmente ajustado pelo yfinance.
-   Documentado e marcado na EDA; decisão de correção fica para M2 (pré-processamento).
+5. **Saltos de 14/11/2024 e 15/08/2024 são movimentos REAIS, não artefatos.**
+   Verificação em M2 (ver Atualização abaixo) refutou a hipótese inicial de artefato de
+   grupamento nessas datas. **Nenhuma correção é aplicada.**
 6. **Dias de volume zero** (halts/iliquidez) são contados em `integrity_report` e
    reportados, não removidos nesta fase.
+
+> **Atualização (M2, 2026-06-22) — premissa do M1 refutada.**
+> A hipótese de que o salto de **14/11/2024** (log-ret ≈ +1.03) seria um artefato de
+> grupamento não se confirmou:
+> - Os grupamentos reais do AMER3 ocorreram em **jul/ago 2024** (4 eventos de razão 1:100
+>   registrados no yfinance: 17/07, 23/07, 26/08, 27/08) e **já são corrigidos por
+>   `auto_adjust=True`** — o log-retorno ajustado nessas datas é pequeno (+0,09; +0,01;
+>   −0,18; +0,34), série contínua.
+> - Em **14/11/2024** o preço bruto foi de 3,36 → 9,41 com volume de ~57 M (×3 a média),
+>   sem split registrado: é **evento de mercado real** (especulação durante a recuperação
+>   judicial), assim como **15/08/2024** (+0,86).
+> - Como log-retorno é invariante a escala multiplicativa, splits já aplicados em `Close`
+>   não geram retorno espúrio. **Conclusão: não há fator a corrigir;** esses saltos são
+>   anomalias reais que o modelo deve detectar. A decisão anterior ("corrigir o fator")
+>   fica **sem efeito**.
 
 ## Justificativa
 
@@ -38,17 +53,15 @@ real) ou ruído (artefato de evento corporativo).
   (herdada da Lojas Americanas), então **há histórico de treino 2010–2019** — a
   preocupação inicial de "delisting / sem histórico" não se confirmou na EDA.
 - A integridade verificada (3724 pregões, 0 NaN em todos) torna desnecessário
-  imputar valores; o foco do tratamento é distinguir **sinal** (fraude) de
-  **artefato** (grupamento).
+  imputar valores. A investigação dos splits (M2) confirmou que `auto_adjust`
+  já trata os grupamentos; não restou artefato a corrigir.
 - CSV em `data/raw/` cumpre o requisito do README de pipeline reprodutível offline
   (~1.3 MB no total, aceitável para versionar).
 
 ## Consequências
 
-- O artefato de 14/11/2024 em AMER3, se não corrigido, vira uma anomalia espúria nas
-  métricas de M5. **Decisão (M2): corrigir o fator de grupamento** (reverse split), **não
-  recortar** o período — preserva-se a continuidade da série e o caso AMER3 inteiro.
-  Implementação no pré-processamento (M2).
+- AMER3 entra no pré-processamento **sem tratamento especial**, como os demais ativos.
+  Os saltos de 2024 são anomalias reais (verdade narrativa para M6), não ruído a remover.
 - `auto_adjust=True` muda valores históricos quando há novos proventos/splits → re-baixar
   o cache pode alterar resultados. O cache versionado **congela** os dados do experimento;
   re-rodar `cache_all` é uma decisão consciente, não automática.
