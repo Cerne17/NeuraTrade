@@ -1,0 +1,52 @@
+# === Python ===
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# === Jupyter / Colab ===
+.ipynb_checkpoints/
+*.nbconvert.ipynb
+
+# === Dados gerados (raw é commitado de propósito) ===
+data/processed/
+data/interim/
+!data/raw/
+!data/raw/*.csv
+
+# === Modelos treinados (regeneráveis via 03_train) ===
+models/
+*.keras
+*.h5
+*.weights.h5
+
+# === Logs / experimentos ===
+logs/
+runs/
+*.tfevents.*          # TensorBoard
+
+# === LaTeX (report/) ===
+*.aux
+*.log
+*.out
+*.toc
+*.bbl
+*.blg
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+# report/relatorio.pdf   # descomente se NÃO quiser versionar o PDF final
+
+# === Segredos / ambiente ===
+.env
+*.local
+
+# === SO ===
+.DS_Store             # macOS
+Thumbs.db             # Windows
+*~                    # backups do Vim/Neovim
