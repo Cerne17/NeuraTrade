@@ -1,0 +1,44 @@
+\section{M2 --- Pré-processamento}
+\label{sec:m2}
+
+Esta etapa transforma as séries de preço na representação consumida pelo modelo,
+respeitando a ordem metodológica que evita vazamento temporal (Seção~\ref{sec:metodologia}).
+
+\subsection{Log-retornos}
+A feature principal é o retorno logarítmico diário $r_t = \ln(P_t/P_{t-1})$, calculado
+sobre o fechamento ajustado. Por ser invariante a transformações multiplicativas de
+escala, é imune a fatores de \emph{split}/grupamento já aplicados ao preço --- propriedade
+relevante para o caso AMER3 (Seção~\ref{sec:m2-amer3}).
+
+\subsection{Split temporal e normalização}
+Aplica-se primeiro o \emph{split} temporal (treino até 2019; teste a partir de 2020) e só
+então a normalização: o \texttt{MinMaxScaler} é ajustado \emph{exclusivamente} no treino e
+aplicado a ambas as partições. Como consequência esperada, uma fração dos pontos de teste
+extrapola o intervalo $[0,1]$ --- precisamente os extremos pós-2020 fora da faixa observada
+no treino. Esse comportamento é desejável: é onde se concentram as anomalias, e o erro de
+reconstrução tende a crescer ali. As janelas deslizantes ($\texttt{window\_size}=30$) são
+geradas \emph{dentro} de cada partição, nunca cruzando a fronteira treino/teste. O
+resultado são $\approx 2450$ janelas de treino e $\approx 1215$ de teste por ativo, no
+formato $(n, 30, 1)$.
+
+\subsection{Revisão da hipótese sobre o AMER3}
+\label{sec:m2-amer3}
+Em M1, levantou-se a hipótese de que o salto de log-retorno de $\approx +1{,}03$ em
+14/11/2024 seria um \emph{artefato} de grupamento, e decidiu-se, provisoriamente,
+``corrigir o fator''. A investigação conduzida em M2 \textbf{refutou essa hipótese} e
+ilustra a importância de validar premissas com os dados:
+\begin{itemize}[noitemsep]
+  \item Os grupamentos reais do AMER3 ocorreram em \textbf{julho e agosto de 2024} (quatro
+        eventos de razão 1:100 registrados pela fonte) e \textbf{já são corrigidos por}
+        \texttt{auto\_adjust=True}: o log-retorno ajustado nessas datas é pequeno
+        ($+0{,}09$; $+0{,}01$; $-0{,}18$; $+0{,}34$), com série contínua.
+  \item Em 14/11/2024 o preço bruto saltou de R\$\,3{,}36 para R\$\,9{,}41 com volume
+        cerca de três vezes a média e \emph{sem} \emph{split} registrado --- caracterizando
+        um \textbf{movimento de mercado real} (especulação durante a recuperação judicial),
+        assim como o salto de 15/08/2024.
+  \item Como o log-retorno é invariante a escala, \emph{splits} já aplicados não produzem
+        retorno espúrio.
+\end{itemize}
+\textbf{Decisão revista:} nenhuma correção é aplicada; o AMER3 segue o mesmo pipeline dos
+demais ativos, e seus saltos de 2024 são tratados como anomalias reais (verdade narrativa
+para M6). O registro completo está no ADR-0007.
