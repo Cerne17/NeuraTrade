@@ -1,0 +1,26 @@
+\section{Conclusões Parciais e Próximos Passos}
+\label{sec:conclusoes}
+
+Até este ponto, o projeto estabeleceu uma base reprodutível (M0) e validou a
+qualidade dos dados (M1). Os principais resultados parciais são:
+\begin{itemize}[noitemsep]
+  \item Infraestrutura com configuração centralizada, \emph{seeds} fixas e proveniência
+        documentada de cada hiperparâmetro, separando escolhas fundamentadas de valores
+        provisórios.
+  \item Quatro séries íntegras (3724 pregões, sem NaN), com anomalias reais já mapeadas
+        como âncoras para a validação narrativa.
+  \item Esclarecimento do caso AMER3, com decisão registrada de correção do artefato de
+        grupamento na próxima etapa.
+\end{itemize}
+
+\paragraph{Próximos passos (M2 --- Pré-processamento).} Implementar o cálculo de
+log-retornos, a correção do fator de grupamento do AMER3, o \emph{split} temporal com
+ajuste do \texttt{MinMaxScaler} restrito ao treino e a geração das janelas deslizantes.
+As etapas subsequentes cobrirão o treino do modelo (M3), os limiares de detecção (M4), a
+avaliação quantitativa por injeção sintética (M5) e a correlação com eventos e a
+comparação setorial (M6).
+
+\paragraph{Registro de decisões.} Todas as decisões de configuração estão documentadas
+como ADRs em \texttt{docs/adr/}. Este relatório é atualizado a cada fechamento de
+\emph{milestone}, consolidando decisões, fontes, observações e conclusões para compor o
+artigo final.

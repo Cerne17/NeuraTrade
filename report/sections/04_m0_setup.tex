@@ -1,0 +1,63 @@
+\section{M0 --- Infraestrutura e Reprodutibilidade}
+\label{sec:m0}
+
+A primeira etapa estabeleceu a infraestrutura que garante reprodutibilidade e
+separação entre lógica e orquestração: a lógica reside em \texttt{src/} e os notebooks
+apenas orquestram e visualizam.
+
+\subsection{Ambiente e dependências}
+Fixou-se o interpretador em \textbf{Python 3.12.13} (via \texttt{pyenv}), versão idêntica
+à do Google Colab à época, alvo principal de execução. As dependências foram
+\emph{pinadas} (TensorFlow/Keras~\cite{tensorflow2015}, \texttt{yfinance}, \texttt{pandas},
+\texttt{numpy}, \texttt{scikit-learn}, \texttt{matplotlib}, \texttt{seaborn}), habilitando
+instalação editável (\texttt{pip install -e .}). Notebooks têm suas saídas removidas
+automaticamente no versionamento (\texttt{nbstripout}), reduzindo ruído em \emph{diffs}.
+
+\subsection{Configuração centralizada e seeds}
+Todos os hiperparâmetros residem em \texttt{config.yaml}, fonte única de verdade: alterar
+um experimento significa alterar esse arquivo, não os notebooks. O módulo
+\texttt{src/config.py} carrega essa configuração e expõe \texttt{set\_seeds()}, que fixa
+as sementes de \texttt{random}, \texttt{numpy} e \texttt{tensorflow} para reprodutibilidade.
+
+\subsection{Decisões de hiperparâmetros e proveniência}
+Um princípio metodológico central do projeto é a \textbf{rastreabilidade da proveniência}
+de cada hiperparâmetro. Cada escolha é classificada como: \emph{fundamentada}
+(ancorada no enunciado do projeto ou na literatura), \emph{default de literatura}
+(convenção da implementação de referência), \emph{decisão de projeto} (escolha de
+\emph{design} sem fonte direta, com \emph{rationale} explícito) ou \emph{provisória}
+(valor a ser calibrado por experimento). A Tabela~\ref{tab:hparams} consolida as
+principais decisões; os valores provisórios não devem sustentar resultados finais sem
+validação.
+
+\begin{table}[h]
+\centering
+\caption{Principais hiperparâmetros e sua proveniência (consolidado dos ADRs).}
+\label{tab:hparams}
+\small
+\begin{tabular}{lll}
+\toprule
+\textbf{Parâmetro} & \textbf{Valor} & \textbf{Proveniência} \\
+\midrule
+\texttt{window\_size}        & 30      & Fundamentada~\cite{li2020lstm,valkov2019lstm} \\
+\texttt{lstm\_units}         & 64      & Default de literatura~\cite{valkov2019lstm} \\
+\texttt{dropout}             & 0{,}2   & Default de literatura~\cite{valkov2019lstm} \\
+\texttt{latent\_dim}         & 16      & Decisão de projeto (calibrar) \\
+\texttt{loss}                & MSE     & Fundamentada~\cite{li2020lstm} \\
+\texttt{shuffle}             & False   & Fundamentada (causalidade)~\cite{valkov2019lstm} \\
+\texttt{validation\_split}   & 0{,}1   & Default de literatura~\cite{valkov2019lstm} \\
+\texttt{threshold\_percentile} & 95    & Fundamentada (enunciado) \\
+\texttt{dynamic\_window}     & 252     & Provisória ($\approx$1 ano útil) \\
+\texttt{n\_injections}       & 50      & Provisória \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Riscos metodológicos registrados}
+Três riscos foram documentados já nesta fase, para serem honrados na implementação:
+(i) o \texttt{validation\_split} do Keras separa o \emph{bloco final} dos dados antes de
+embaralhar --- logo \texttt{shuffle=False} é obrigatório, sob pena de vazamento temporal;
+(ii) o limiar dinâmico deve ser \emph{causal}, usando apenas observações passadas;
+(iii) o \texttt{MinMaxScaler} ajustado no treino faz com que extremos do teste possam
+exceder o intervalo $[0,1]$ --- comportamento esperado e desejável, pois é onde residem as
+anomalias, mas que torna o limiar sensível a \emph{outliers} isolados (motivando o uso de
+percentil em vez do máximo).

@@ -1,0 +1,45 @@
+\section{Metodologia}
+\label{sec:metodologia}
+
+Esta seção descreve o desenho metodológico do projeto. Os valores numéricos de
+hiperparâmetros e suas justificativas são apresentados nas seções de cada
+\emph{milestone} e consolidados nos ADRs do repositório.
+
+\subsection{Pré-processamento}
+A feature principal é o \emph{retorno logarítmico diário},
+$r_t = \ln(P_t / P_{t-1})$, sobre o preço de fechamento ajustado. Adota-se um
+\textbf{split temporal antes da normalização}: o \texttt{MinMaxScaler} é ajustado
+\emph{apenas} sobre o treino e então aplicado ao teste, evitando vazamento de
+informação do futuro. A série é então segmentada em \emph{janelas deslizantes} de
+tamanho fixo (ver Seção~\ref{sec:m1}).
+
+\subsection{Modelo}
+A arquitetura é um \emph{LSTM-Autoencoder}~\cite{hochreiter1997lstm}: um codificador
+LSTM comprime a janela em uma representação latente (gargalo), e um decodificador LSTM
+reconstrói a sequência, otimizando o erro quadrático médio (MSE) de reconstrução. Treina-se
+\textbf{um modelo por ativo}, condição necessária para a comparação setorial.
+
+\subsection{Detecção}
+Uma janela é marcada como anômala quando seu erro de reconstrução ultrapassa um limiar.
+Comparam-se duas estratégias:
+\begin{itemize}[noitemsep]
+  \item \textbf{Estático:} percentil fixo (95) do erro de reconstrução do treino.
+  \item \textbf{Dinâmico:} percentil em janela móvel \emph{causal} (apenas o passado),
+        sensível a mudanças de regime.
+\end{itemize}
+
+\subsection{Avaliação}
+Por ser um problema não supervisionado, a avaliação combina duas vias~\cite{liu2025robust}:
+\begin{itemize}[noitemsep]
+  \item \textbf{Narrativa:} verificação de que as anomalias detectadas correspondem a
+        eventos reais conhecidos (e.g., \emph{crash} de março/2020; caso Americanas em
+        janeiro/2023).
+  \item \textbf{Quantitativa:} injeção controlada de anomalias sintéticas (\emph{price
+        shocks} e \emph{volume spikes}) em posições conhecidas, permitindo calcular
+        Precision, Recall e F1.
+\end{itemize}
+
+\paragraph{Nota metodológica.} O período de treino (2010--2019) contém eventos de forte
+volatilidade (recessão de 2014--2016, Operação Lava Jato, \emph{impeachment} de 2016).
+A definição de ``normalidade'' é, portanto, relativa, e essa limitação é assumida
+explicitamente.
