@@ -2,8 +2,8 @@
 \label{sec:conclusoes}
 
 Até este ponto, o projeto estabeleceu uma base reprodutível (M0), validou a
-qualidade dos dados (M1), construiu a representação de entrada (M2) e treinou os modelos
-(M3). Os principais resultados parciais são:
+qualidade dos dados (M1), construiu a representação de entrada (M2), treinou os modelos
+(M3) e formalizou os limiares de detecção (M4). Os principais resultados parciais são:
 \begin{itemize}[noitemsep]
   \item Infraestrutura com configuração centralizada, \emph{seeds} fixas e proveniência
         documentada de cada hiperparâmetro, separando escolhas fundamentadas de valores
@@ -17,13 +17,16 @@ qualidade dos dados (M1), construiu a representação de entrada (M2) e treinou 
   \item Quatro modelos treinados com parada antecipada e \texttt{val\_loss} homogêneo; a
         sensibilidade do gargalo (\texttt{latent\_dim}) mostrou-se plana, confirmando o
         valor 16 (Seção~\ref{sec:m3}).
+  \item Limiares de detecção implementados: sob mudança de regime, o estático satura
+        (AMER3 $\approx$27\%) enquanto o dinâmico causal se recalibra ($\approx$14\%),
+        evidência empírica a favor do esquema dinâmico (Seção~\ref{sec:m4}).
 \end{itemize}
 
-\paragraph{Próximos passos (M4 --- Detecção e Thresholds).} Formalizar o limiar estático
-(percentil 95 do erro de treino) e o limiar dinâmico (percentil em janela móvel causal)
-sobre o erro de reconstrução, comparando as duas estratégias. As etapas subsequentes
-cobrirão a avaliação quantitativa por injeção sintética (M5) e a correlação com eventos e
-a comparação setorial (M6).
+\paragraph{Próximos passos (M5 --- Avaliação).} Avaliar quantitativamente (Precision,
+Recall, F1) via injeção de anomalias sintéticas em posições conhecidas, comparando limiar
+estático, dinâmico e o baseline, com calibração das magnitudes de injeção e da janela
+dinâmica relativas a cada ativo. A etapa final (M6) cobrirá a correlação com eventos
+históricos e a comparação setorial.
 
 \paragraph{Registro de decisões.} Todas as decisões de configuração estão documentadas
 como ADRs em \texttt{docs/adr/}. Este relatório é atualizado a cada fechamento de
