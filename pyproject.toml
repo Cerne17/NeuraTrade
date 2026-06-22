@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neuratrade"
+version = "0.1.0"
+description = "Deteccao nao supervisionada de anomalias em series temporais financeiras da B3 com LSTM-Autoencoder"
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+license = { text = "Educational" }
+authors = [
+    { name = "Ana Beatriz" },
+    { name = "Miguel Cerne" },
+]
+
+dependencies = [
+    "tensorflow>=2.16,<2.18",
+    "yfinance>=0.2.40,<0.3",
+    "pandas>=2.0,<2.3",
+    "numpy>=1.26,<2.0",
+    "scikit-learn>=1.3,<1.6",
+    "matplotlib>=3.8,<3.10",
+    "seaborn>=0.13,<0.14",
+    "pyyaml>=6.0,<7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "nbstripout>=0.7,<0.8",
+    "jupyter>=1.0",
+]
+
+[tool.setuptools]
+packages = ["src"]
