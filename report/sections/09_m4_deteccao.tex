@@ -1,0 +1,57 @@
+\section{M4 --- Detecção e Limiares}
+\label{sec:m4}
+
+\subsection{Erro de reconstrução}
+A detecção opera sobre o erro de reconstrução por janela --- o erro médio absoluto (MAE)
+entre a janela de entrada e sua reconstrução. Optou-se pelo MAE por sua maior robustez a
+\emph{outliers} isolados em relação ao MSE (este último disponível como opção). Uma janela
+é classificada como anômala quando seu erro supera o limiar.
+
+\subsection{Limiar estático}
+O limiar estático é o percentil 95 do erro de reconstrução \emph{do treino}. Por ser
+calculado sobre o período de normalidade (e não sobre o teste), não incorre em vazamento.
+É simples e estável, mas, por definição, fixo: não se adapta a mudanças no regime de
+volatilidade do ativo.
+
+\subsection{Limiar dinâmico}
+O limiar dinâmico é o percentil 95 calculado em uma janela móvel \textbf{causal} de
+$\texttt{dynamic\_window}=252$ observações ($\approx$1 ano útil). A causalidade é garantida
+excluindo-se o próprio ponto da janela (deslocamento de uma posição), de modo que uma
+anomalia não infle o limiar que a avalia; os primeiros pontos, com janela incompleta, não
+são marcados. Esse esquema constitui uma das contribuições metodológicas do trabalho.
+
+\subsection{Comparação empírica}
+A Tabela~\ref{tab:thresholds} compara, no conjunto de teste (2020--2024), a fração de
+janelas marcadas por cada esquema. O resultado evidencia o comportamento esperado:
+\begin{itemize}[noitemsep]
+  \item Em ativos de regime relativamente estável (PETR4, VALE3), os dois limiares quase
+        coincidem ($\approx$3\%).
+  \item Sob mudança abrupta de regime, o limiar estático \textbf{satura}: no AMER3, todo o
+        período pós-fraude/recuperação judicial faz o erro permanecer elevado, e o estático
+        marca $\approx$27\% das janelas --- perdendo poder discriminativo. O limiar dinâmico,
+        ao se recalibrar à volatilidade local, reduz a marcação para $\approx$14\% sem usar
+        informação do futuro. Comportamento análogo no ITUB4 (11\% $\to$ 5\%).
+\end{itemize}
+
+\begin{table}[h]
+\centering
+\caption{Fração de janelas de teste marcadas como anômalas, por limiar.}
+\label{tab:thresholds}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Ticker} & \textbf{Limiar estático} & \textbf{Estático (\%)} & \textbf{Dinâmico (\%)} \\
+\midrule
+PETR4.SA & 0{,}124 & 2{,}9 & 2{,}9 \\
+VALE3.SA & 0{,}082 & 2{,}7 & 3{,}4 \\
+AMER3.SA & 0{,}077 & 26{,}7 & 14{,}3 \\
+ITUB4.SA & 0{,}088 & 11{,}0 & 4{,}9 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Observações metodológicas.} O percentil 95 implica, por construção, uma taxa-base
+de $\approx$5\% de marcações --- a considerar na leitura das métricas (M5). Além disso, como
+as janelas se sobrepõem, uma única anomalia gera uma rajada de detecções contíguas; antes de
+confrontar com eventos reais (M6) ou calcular métricas (M5), detecções adjacentes devem ser
+agrupadas em ``eventos''. O tamanho da janela dinâmica permanece provisório, com estudo de
+sensibilidade previsto para M5.

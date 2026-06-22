@@ -38,6 +38,18 @@ duas estratégias de limiar — é uma das contribuições declaradas no README.
 - Janelas sobrepostas ([ADR-0002](0002-window-size-30.md)) fazem uma anomalia gerar rajada de
   detecções; agrupar detecções contíguas em "eventos" antes de comparar com eventos reais.
 
+> **Atualização (M4, 2026-06-22) — implementação e evidência.**
+> - **Causalidade:** o limiar dinâmico usa `rolling(window).quantile(p)` com `shift(1)`,
+>   isto é, janela de tamanho `dynamic_window` que **exclui o próprio ponto** (só passado).
+>   Os primeiros `window` pontos ficam `NaN` (não marcados).
+> - **Erro de detecção:** MAE por janela (`metric="mae"`, padrão), mais robusto a outlier
+>   que o MSE; MSE disponível via parâmetro (issue #18).
+> - **Evidência empírica (teste 2020–2024):** sob mudança de regime, o estático **satura** —
+>   AMER3 marca ~27% das janelas (todo o pós-fraude), ITUB4 ~11%. O dinâmico recalibra ao
+>   regime local e reduz para ~14% (AMER3) e ~5% (ITUB4), sem usar o futuro. Em ativos
+>   estáveis (PETR4, VALE3) os dois quase coincidem (~3%). Confirma o valor do esquema dinâmico.
+> - `dynamic_window=252` segue **provisório**; estudo de sensibilidade (126/252/504) fica para M5.
+
 ## Alternativas consideradas
 
 - **Máximo do erro de treino (Li/Valkov):** rejeitado — frágil a outlier único.
