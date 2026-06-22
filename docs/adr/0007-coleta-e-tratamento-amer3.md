@@ -46,7 +46,9 @@ real) ou ruído (artefato de evento corporativo).
 ## Consequências
 
 - O artefato de 14/11/2024 em AMER3, se não corrigido, vira uma anomalia espúria nas
-  métricas de M5. Reavaliar em M2: corrigir o fator de grupamento ou recortar o período.
+  métricas de M5. **Decisão (M2): corrigir o fator de grupamento** (reverse split), **não
+  recortar** o período — preserva-se a continuidade da série e o caso AMER3 inteiro.
+  Implementação no pré-processamento (M2).
 - `auto_adjust=True` muda valores históricos quando há novos proventos/splits → re-baixar
   o cache pode alterar resultados. O cache versionado **congela** os dados do experimento;
   re-rodar `cache_all` é uma decisão consciente, não automática.
