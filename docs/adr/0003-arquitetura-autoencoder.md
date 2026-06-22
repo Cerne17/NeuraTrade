@@ -30,8 +30,12 @@ Estrutura: `LSTM(64) → (gargalo) → RepeatVector(window_size) → LSTM(64, re
   por sua vez segue o padrão da literatura de AE-LSTM em séries financeiras.
 - `latent_dim=16`: a literatura **não padroniza** a dimensão do gargalo (Valkov nem usa um
   `latent_dim` explícito — comprime via `RepeatVector`). 16 é escolha de design para forçar
-  compressão sem estrangular demais a reconstrução. **Deve ser validado em M3** (estudo de
-  sensibilidade: 8/16/32).
+  compressão sem estrangular demais a reconstrução.
+
+> **Atualização (M3, 2026-06-22) — sensibilidade medida.** Estudo em PETR4 com
+> `latent_dim ∈ {8,16,32}` deu `val_loss` praticamente idêntico (0,00342 / 0,00343 /
+> 0,00342). O gargalo **não é restrição ativa** nesse regime; 16 é mantido (até 8 bastaria).
+> Decisão: **manter `latent_dim=16`**, status promovido de "calibrar" para confirmado.
 - `loss=mse`: o README especifica MSE. Li (2020) também usa MSE. (Valkov usa MAE — ver alternativas.)
 
 ## Consequências

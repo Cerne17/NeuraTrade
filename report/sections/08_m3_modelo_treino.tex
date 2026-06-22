@@ -1,0 +1,56 @@
+\section{M3 --- Modelo e Treino}
+\label{sec:m3}
+
+\subsection{Arquitetura}
+Implementou-se o LSTM-Autoencoder descrito na Seção~\ref{sec:metodologia}: um codificador
+\texttt{LSTM(64)} seguido de \emph{dropout} e de uma camada densa de gargalo
+(\texttt{latent\_dim=16}); o decodificador replica o vetor latente (\texttt{RepeatVector})
+e o reconstrói com \texttt{LSTM(64)} e \texttt{TimeDistributed(Dense(1))}. A rede tem
+$\approx$38{,}7 mil parâmetros --- deliberadamente pequena, coerente com o tamanho do
+conjunto ($\approx$2450 janelas por ativo). A perda é o MSE de reconstrução e o otimizador
+é o Adam.
+
+\subsection{Protocolo de treino}
+Treinou-se \textbf{um modelo por ativo}, com validação por bloco cronológico
+(\texttt{shuffle=False}) e \texttt{EarlyStopping} (paciência 10, \texttt{restore\_best\_weights}).
+Os pesos são salvos em \texttt{models/<ticker>.keras} (regeneráveis, não versionados). A
+Tabela~\ref{tab:treino} resume a convergência: a parada antecipada atuou em todos os casos,
+com perdas de validação da mesma ordem de grandeza entre ativos e sem sinais de
+sobreajuste nas curvas.
+
+\begin{table}[h]
+\centering
+\caption{Convergência do treino por ativo (\texttt{EarlyStopping}).}
+\label{tab:treino}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Ticker} & \textbf{Épocas até parar} & \textbf{val\_loss final} \\
+\midrule
+PETR4.SA & 31 & 0{,}00352 \\
+VALE3.SA & 15 & 0{,}00430 \\
+AMER3.SA & 60 & 0{,}00354 \\
+ITUB4.SA & 17 & 0{,}00440 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Sensibilidade do gargalo}
+A dimensão latente havia sido fixada como decisão de projeto, a calibrar nesta etapa. Um
+estudo em PETR4 com $\texttt{latent\_dim} \in \{8, 16, 32\}$ produziu \texttt{val\_loss}
+praticamente idêntico (0{,}00342; 0{,}00343; 0{,}00342). Conclui-se que, neste regime, o
+gargalo \textbf{não é restrição ativa} --- o modelo reconstrói os log-retornos igualmente
+bem nas três configurações. Mantém-se \texttt{latent\_dim=16}, agora confirmado
+empiricamente (registro no ADR-0003).
+
+\subsection{Baseline de comparação}
+Como chão de comparação sem aprendizado (issue \#14), implementou-se um \emph{z-score} em
+janela móvel causal sobre os log-retornos. O baseline acende corretamente nas anomalias
+reais --- por exemplo, no AMER3, $|z|=13{,}9$ em 12/01/2023 (fraude) e $|z|=9{,}7$ em
+14/11/2024. Trata-se de um detector forte para eventos extremos; o valor agregado do
+LSTM-Autoencoder será medido quantitativamente em M5, por injeção de anomalias sintéticas
+mais sutis, onde se espera que heurísticas de cauda sejam menos eficazes.
+
+\subsection{Erro de reconstrução}
+Sobre o conjunto de treino (normalidade), o erro de reconstrução (MAE por janela) concentra-se
+em valores baixos, com cauda à direita já indicando candidatos a anomalia. Essa distribuição
+é a base para a definição formal dos limiares em M4.
