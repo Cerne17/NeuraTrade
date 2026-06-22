@@ -2,8 +2,8 @@
 \label{sec:conclusoes}
 
 Até este ponto, o projeto estabeleceu uma base reprodutível (M0), validou a
-qualidade dos dados (M1) e construiu a representação de entrada do modelo (M2). Os
-principais resultados parciais são:
+qualidade dos dados (M1), construiu a representação de entrada (M2) e treinou os modelos
+(M3). Os principais resultados parciais são:
 \begin{itemize}[noitemsep]
   \item Infraestrutura com configuração centralizada, \emph{seeds} fixas e proveniência
         documentada de cada hiperparâmetro, separando escolhas fundamentadas de valores
@@ -14,14 +14,16 @@ principais resultados parciais são:
         com os dados, e o ativo segue o pipeline padrão (Seção~\ref{sec:m2-amer3}).
   \item Representação de entrada pronta: log-retornos normalizados em janelas de 30 passos,
         com split temporal e scaler restrito ao treino (sem vazamento).
+  \item Quatro modelos treinados com parada antecipada e \texttt{val\_loss} homogêneo; a
+        sensibilidade do gargalo (\texttt{latent\_dim}) mostrou-se plana, confirmando o
+        valor 16 (Seção~\ref{sec:m3}).
 \end{itemize}
 
-\paragraph{Próximos passos (M3 --- Modelo e Treino).} Implementar e treinar o
-LSTM-Autoencoder (um modelo por ativo), com \texttt{EarlyStopping} e validação por bloco
-cronológico (\texttt{shuffle=False}), e conduzir o estudo de sensibilidade de
-\texttt{window\_size} e \texttt{latent\_dim}. As etapas subsequentes cobrirão os limiares
-de detecção (M4), a avaliação quantitativa por injeção sintética (M5) e a correlação com
-eventos e a comparação setorial (M6).
+\paragraph{Próximos passos (M4 --- Detecção e Thresholds).} Formalizar o limiar estático
+(percentil 95 do erro de treino) e o limiar dinâmico (percentil em janela móvel causal)
+sobre o erro de reconstrução, comparando as duas estratégias. As etapas subsequentes
+cobrirão a avaliação quantitativa por injeção sintética (M5) e a correlação com eventos e
+a comparação setorial (M6).
 
 \paragraph{Registro de decisões.} Todas as decisões de configuração estão documentadas
 como ADRs em \texttt{docs/adr/}. Este relatório é atualizado a cada fechamento de
