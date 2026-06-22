@@ -51,6 +51,10 @@ runs/
 Thumbs.db             # Windows
 *~                    # backups do Vim/Neovim
 
+# === Scripts geradores de notebooks (ferramenta local) ===
+# Versionamos apenas o .ipynb resultante, nao o gerador.
+scripts/
+
 # === Agentes ===
 .claude/
 .gemini/
