@@ -1,0 +1,66 @@
+\section{Limitações e Validade}
+\label{sec:limitacoes}
+
+\subsection{O período de treino ``normal'' não é livre de anomalias}
+A premissa central do método é que o autoencoder aprende a ``normalidade'' a partir de
+2010--2019 e sinaliza como anômalo o que dele se desvia no teste (2020--2024). Essa premissa
+é, contudo, uma \textbf{idealização}: o próprio período de treino contém episódios de alta
+volatilidade --- a recessão de 2014--2016, a Operação Lava Jato e seus desdobramentos sobre a
+Petrobras, e o \emph{impeachment} de 2016. ``Normal'', aqui, significa apenas
+\emph{relativo ao que o modelo viu}, não um regime efetivamente calmo. Há duas consequências
+diretas:
+\begin{itemize}[noitemsep]
+  \item O modelo \textbf{incorpora} parte dessa turbulência como padrão esperado, elevando o
+        limiar de normalidade e reduzindo sua sensibilidade a choques de magnitude semelhante
+        no teste --- um viés conservador (tende a subestimar anomalias).
+  \item A comparação treino~vs.~teste do erro (Figura~\ref{fig:m5-dist}) deve ser lida à luz
+        disso: parte do deslocamento de distribuição reflete diferença de regime macro entre
+        as duas janelas temporais, não apenas anomalias pontuais.
+\end{itemize}
+Optou-se deliberadamente por \emph{não} remover esses episódios do treino: fazê-lo exigiria
+rótulos de anomalia que o problema não-supervisionado não possui, e introduziria
+subjetividade. A limitação é, portanto, assumida e reportada, não corrigida.
+
+\subsection{Demais limitações}
+\begin{itemize}[noitemsep]
+  \item \textbf{Avaliação setorial com $n=1$:} um único ativo por setor; diferenças de métrica
+        podem refletir o ativo, não o setor. Estudo de caso qualitativo, não inferência
+        estatística (ADR-0006).
+  \item \textbf{Modelo univariado:} a entrada é o log-retorno de \texttt{Close}; volume e
+        demais colunas OHLCV não são usados. Anomalias puramente de volume são, por
+        construção, invisíveis (Seção~\ref{sec:m5-ksigma}).
+  \item \textbf{Diluição por janela:} o erro é a média sobre 30 passos, de modo que um choque
+        de um único dia é atenuado, limitando o \emph{recall} a choques pontuais.
+  \item \textbf{Taxa-base do p95:} por construção, $\approx$5\% das janelas são marcadas,
+        impondo um teto à \emph{precision} (Seção~\ref{sec:m4}).
+  \item \textbf{Avaliação por injeção sintética:} a verdade-base é controlada, porém artificial;
+        complementa, mas não substitui, a validação narrativa contra eventos reais.
+\end{itemize}
+
+\section{Reprodutibilidade e Entrega}
+\label{sec:repro}
+
+O pipeline é integralmente reprodutível e offline:
+\begin{itemize}[noitemsep]
+  \item \textbf{Semente única} (\texttt{seed=42}) fixada em \texttt{src.config.set\_seeds}, cobrindo
+        \texttt{numpy}, \texttt{random} e TensorFlow.
+  \item \textbf{Configuração centralizada:} todos os hiperparâmetros vivem em \texttt{config.yaml},
+        cada chave referenciando seu ADR; experimentos mudam por edição de configuração, não de
+        código.
+  \item \textbf{Dados versionados:} os CSVs de \texttt{data/raw/} são commitados, de modo que o
+        pipeline roda sem acesso à rede; o \texttt{yfinance} só é necessário para refazer o
+        \emph{cache} do zero.
+  \item \textbf{Ordem de execução:} notebooks numerados \texttt{01\_eda} $\to$ \texttt{02\_preprocessing}
+        $\to$ \texttt{03\_train} $\to$ \texttt{04\_detection\_thresholds} $\to$
+        \texttt{05\_evaluation\_synthetic} $\to$ \texttt{06\_events\_correlation}, todos
+        consumindo a lógica de \texttt{src/}.
+  \item \textbf{Decisões rastreáveis:} oito ADRs em \texttt{docs/adr/} registram cada escolha
+        metodológica, com proveniência (FUNDAMENTADO / DEFAULT DE LITERATURA / DECISÃO DE
+        PROJETO / PROVISÓRIO).
+\end{itemize}
+Os números deste relatório foram regenerados a partir dos modelos treinados
+(\texttt{models/*.keras}) e conferem com as tabelas e figuras apresentadas. As figuras finais
+são geradas em \texttt{report/figures/} e versionadas para que o PDF compile de forma
+auto-contida. Observação operacional: em um clone novo, os notebooks (com saídas removidas por
+\texttt{nbstripout}) exigem reinstalar o filtro local antes de versioná-los; a regeneração de
+resultados não depende disso.
