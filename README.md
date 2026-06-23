@@ -65,7 +65,9 @@ anomaly-detection-b3/
 ├── data/
 │   ├── raw/                  # cache do yfinance (versionado)
 │   └── processed/            # gerado (não versionado)
-├── src/
+├── src/                      # PIPELINE (lógica do projeto)
+│   ├── __main__.py           # CLI: `python -m src` roda a pipeline end-to-end — M10
+│   ├── pipeline.py           # run_pipeline(): data→preproc→train/load→detect→avaliar — M10
 │   ├── config.py             # carrega config.yaml + seeds globais
 │   ├── data.py               # download, cache, load
 │   ├── preprocessing.py      # log-returns, split, scaler, janelas (uni e multivariado)
@@ -76,7 +78,13 @@ anomaly-detection-b3/
 │   ├── evaluate.py           # injeção sintética, precision/recall/f1
 │   ├── events.py             # linha do tempo de eventos BR
 │   └── viz.py                # plots padronizados
-├── notebooks/
+├── scripts/                  # UTILITÁRIOS (atalhos operacionais) — M10
+│   ├── run_pipeline.py       # wrapper da CLI
+│   ├── cache_data.py         # refaz data/raw via yfinance (passo de rede)
+│   ├── build_figures.py      # regenera report/figures/
+│   └── README.md
+├── notebooks/                # ESTUDOS (orquestram src/, versionados com saídas)
+│   ├── README.md             # índice dos estudos por fase
 │   ├── 01_eda.ipynb
 │   ├── 02_preprocessing.ipynb
 │   ├── 03_train.ipynb
@@ -93,13 +101,37 @@ anomaly-detection-b3/
 └── report/                   # relatório LaTeX
 ```
 
-A lógica vive em `src/`; os notebooks apenas orquestram e visualizam. Isso permite reaproveitar o mesmo pipeline nos quatro ativos e reduz conflitos de merge no `.ipynb`.
+Três papéis, três pastas:
+
+- **`src/`** — a **pipeline** (lógica do projeto). Ponto de entrada: `python -m src`.
+- **`scripts/`** — **utilitários** operacionais (atalhos finos sobre `src/`). Ver [`scripts/README.md`](scripts/README.md).
+- **`notebooks/`** — os **estudos** (exploração/medição, com saídas). Ver [`notebooks/README.md`](notebooks/README.md).
+
+A lógica vive em `src/`; notebooks e scripts apenas a orquestram. Isso reaproveita o mesmo pipeline nos quatro ativos e reduz conflitos de merge no `.ipynb`.
 
 ---
 
-## Como rodar
+## Quickstart
 
-Os notebooks são numerados na ordem de execução e mapeiam as fases do projeto:
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -e .
+
+# pipeline de detecção end-to-end (carrega modelos salvos; --train para treinar do zero)
+python -m src --train          # primeira vez (sem modelos versionados)
+python -m src                  # execuções seguintes
+```
+
+A pipeline usa a configuração atual de `config.yaml` (agregação do erro **`max`** por default,
+adotada em M9) e imprime um resumo por ativo: fração de janelas marcadas (limiar estático e
+dinâmico) e, salvo `--no-evaluate`, Precision/Recall/F1 da injeção sintética.
+
+---
+
+## Como rodar (estudos)
+
+Os notebooks são numerados na ordem de execução e mapeiam as fases do projeto
+(índice completo em [`notebooks/README.md`](notebooks/README.md)):
 
 | Notebook                       | Etapa                                                              |
 | ------------------------------ | ----------------------------------------------------------------- |
