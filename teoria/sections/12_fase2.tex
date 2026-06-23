@@ -1,0 +1,97 @@
+\section{Fase 2: três aprimoramentos e sua teoria}
+\label{sec:fase2}
+
+Esta seção explica, no mesmo espírito didático do guia, a teoria por trás das três evoluções
+planejadas para a segunda fase do projeto (milestone~M8, registradas em ADR-0009, 0010 e 0011).
+São \emph{propostas}: a teoria já está madura, a implementação virá depois.
+
+\subsection{Agregar o erro: média esconde o pico}
+\label{sec:fase2-pooling}
+
+O modelo produz um erro de reconstrução para \emph{cada} um dos 30 passos de uma janela. Para
+decidir se a janela é anômala, precisamos resumir esses 30 números em \textbf{um}. Esse passo de
+resumo chama-se \emph{agregação} (ou \emph{pooling}).
+
+\begin{intuicao}
+Imagine 30 dias, 29 calmos e 1 com um choque enorme. Se você tira a \textbf{média} dos erros,
+o pico de 1 dia é dividido por 30 --- vira uma marola. Se você tira o \textbf{máximo}, o pico
+sobrevive intacto. A média é um detector de ``a janela toda está estranha''; o máximo é um
+detector de ``algum dia desta janela está muito estranho''.
+\end{intuicao}
+
+Formalmente, dado o vetor de erros por passo $e_1,\dots,e_{30}$ de uma janela:
+\[
+\text{erro}_{\text{mean}} = \frac{1}{30}\sum_{t=1}^{30} e_t,
+\qquad
+\text{erro}_{\text{max}} = \max_t e_t,
+\qquad
+\text{erro}_{p} = \text{percentil}_p(e_1,\dots,e_{30}).
+\]
+O máximo é sensível ao melhor sinal, mas também ao \emph{ruído} de um único dia atípico --- pela
+mesma razão que rejeitamos o ``máximo do erro de treino'' como limiar (Seção~\ref{sec:deteccao}).
+O percentil alto (p.\,ex.\ p90) é o meio-termo: pega quase o pico, sem depender de um só ponto.
+
+\begin{naprat}
+Trocar a média pelo máximo/percentil tende a \textbf{aumentar o \emph{recall}} de choques de um
+dia. Mas o limiar p95 do projeto foi calculado sobre a \emph{média} do erro: como o máximo muda
+toda a distribuição, o limiar precisa ser \textbf{recalibrado} sobre o novo escore --- senão a
+taxa de falsos positivos explode. Decisão em ADR-0009.
+\end{naprat}
+
+\subsection{Validação que respeita o tempo: \emph{walk-forward}}
+\label{sec:fase2-walkforward}
+
+Para escolher um hiperparâmetro (como a dimensão do gargalo, \texttt{latent\_dim}) queremos uma
+estimativa \emph{confiável} de quão bem cada valor generaliza. Uma única partição de validação dá
+uma estimativa ``sortuda ou azarada''. A validação cruzada repete a medição em vários cortes e
+tira a média.
+
+\begin{intuicao}
+A validação cruzada clássica ($k$-fold) embaralha os dados e usa pedaços aleatórios para validar.
+Em série temporal isso é \textbf{proibido}: embaralhar deixaria o modelo treinar em dias
+\emph{futuros} para prever dias \emph{passados} --- espiar o futuro (Seção~\ref{sec:vazamento}).
+O \emph{walk-forward} corrige isso: sempre treina no passado e valida no futuro adjacente,
+avançando como uma janela que ``anda para frente''.
+\end{intuicao}
+
+\begin{exemplo}
+Com \texttt{TimeSeriesSplit} e 4 folds sobre 2010--2019: treina em 2010--11 valida 2012; treina
+em 2010--12 valida 2013; e assim por diante. A fatia de treino \emph{cresce}, a de validação é
+sempre o bloco seguinte. Nunca o futuro entra no treino.
+\end{exemplo}
+
+\begin{naprat}
+A regra de ouro do projeto (normalizar só com o treino, ADR-0001) vale \textbf{dentro de cada
+fold}: o \texttt{MinMaxScaler} é reajustado a cada corte, usando apenas o treino daquele fold, e
+as janelas são geradas dentro de cada partição. Custa $K$ vezes mais treino, mas dá média
+$\pm$~desvio do erro por candidato. Decisão em ADR-0010.
+\end{naprat}
+
+\subsection{Mais de uma variável: entrada multivariada (OHLCV)}
+\label{sec:fase2-multivariado}
+
+Até aqui a entrada é \emph{univariada}: só o log-retorno do fechamento. Mas cada dia de bolsa tem
+cinco números (OHLCV): abertura, máxima, mínima, fechamento e \textbf{volume} (quantas ações
+foram negociadas). O volume costuma \emph{anteceder} o movimento de preço --- um sinal precursor
+que a entrada univariada joga fora.
+
+\begin{intuicao}
+Pôr cinco variáveis juntas parece sempre melhor, mas surge um problema de \textbf{escala}: o
+volume está na casa dos milhões ($\sim 10^7$) e o log-retorno na casa dos centésimos
+($\sim 10^{-2}$). Se normalizar tudo junto, o volume ``engole'' o retorno e a perda só enxerga
+volume. Por isso normalizamos \textbf{coluna a coluna}: cada variável ganha sua própria escala
+$[0,1]$.
+\end{intuicao}
+
+Há ainda dois cuidados. Primeiro, o volume \textbf{cresce ao longo dos anos} (não é
+estacionário): o range de 2010--2019 não cobre os volumes de 2020+, e o \texttt{MinMaxScaler}
+satura tudo em 1.0 --- aplicamos \texttt{log1p} ao volume antes de escalar para comprimir essa
+faixa. Segundo, Open/High/Low/Close são quase a mesma informação (correlação $\sim 99\%$): por
+isso começamos por \textbf{Close+Volume} $(30,2)$ e só vamos a OHLCV $(30,5)$ se valer a pena.
+
+\begin{naprat}
+Com a entrada multivariada o erro vira um \emph{vetor} (um por canal). Guardar o erro
+\textbf{por canal} permite dizer se a anomalia foi de \emph{preço} ou de \emph{volume} --- e é o
+que finalmente habilita a injeção de \texttt{volume\_spike}, hoje impossível por falta do canal
+de volume (Seção~\ref{sec:avaliacao}). Decisão em ADR-0011.
+\end{naprat}

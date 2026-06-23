@@ -1,0 +1,62 @@
+\section{Fase 2: Evolução Planejada da Modelagem (M8)}
+\label{sec:m8-fase2}
+
+As limitações declaradas na Seção~\ref{sec:limitacoes} não são acidentes, mas fronteiras
+assumidas. A segunda fase do projeto (milestone~M8) ataca três delas com mudanças cujas
+decisões já estão registradas como ADRs em status \emph{proposto} (ADR-0009, 0010 e 0011):
+ainda \textbf{não} implementadas nem calibradas, portanto sem impacto nos resultados aqui
+reportados. Esta seção documenta o plano e a ordem de prioridade.
+
+\subsection{Agregação do erro por janela: \emph{max}/percentil (ADR-0009)}
+\label{sec:m8-pooling}
+Hoje o erro de uma janela é a \textbf{média} do erro absoluto sobre os 30 passos
+(Seção~\ref{sec:m4}). Um choque sintético de um único dia entra com peso $1/30$ e é
+\emph{diluído} pelos 29 dias normais, podendo permanecer abaixo do limiar --- a causa direta do
+teto de \emph{recall} em choques pontuais (Seção~\ref{sec:limitacoes}). A proposta substitui a
+agregação por uma parametrizável: \emph{mean} (atual), \emph{max} (pior passo da janela) ou
+\emph{percentil} alto (p.\,ex.\ p90, meio-termo robusto a um único ponto ruidoso). A redução é
+feita em duas etapas e nesta ordem: média sobre o eixo de \emph{features}, depois agregação
+sobre o eixo \emph{temporal}.
+\par\noindent\textbf{Cuidado metodológico:} \emph{max}/percentil alteram toda a distribuição do
+erro; o limiar p95, calibrado sobre a média, \textbf{não} transfere e precisa ser recalculado
+sobre o mesmo escore agregado do treino (sob pena de inflar falsos positivos). O ganho esperado
+em \emph{recall} vem acompanhado de possível perda de \emph{precision}, a ser medida por P/R/F1
+nos quatro ativos.
+
+\subsection{Validação Walk-Forward (ADR-0010)}
+\label{sec:m8-walkforward}
+A seleção de hiperparâmetros (notadamente \texttt{latent\_dim}) apoia-se hoje num \emph{holdout}
+único, cuja estimativa tem alta variância. A proposta adota validação \emph{walk-forward} com
+\texttt{TimeSeriesSplit}: fatias expansíveis do passado, avaliação no bloco futuro adjacente,
+repetidas por $K$ folds, produzindo média~$\pm$~desvio do \texttt{val\_loss} por candidato. A
+restrição metodológica central do projeto é preservada \textbf{por fold}: o \texttt{MinMaxScaler}
+é reajustado apenas no treino de cada fold e as janelas são geradas \emph{dentro} de cada
+partição, sem cruzar a fronteira treino/validação (ADR-0001). Esta mudança não altera o detector
+em produção --- é instrumento de rigor e credibilidade na escolha do modelo final.
+
+\subsection{Entrada multivariada OHLCV (ADR-0011)}
+\label{sec:m8-multivariado}
+O modelo é univariado (log-retorno de \texttt{Close}), tornando anomalias puramente de volume
+invisíveis por construção (Seção~\ref{sec:limitacoes}). A proposta expande a entrada de
+$(30,1)$ para um tensor multivariado, partindo do mínimo informativo --- \textbf{Close+Volume}
+$(30,2)$ --- e só crescendo para OHLCV $(30,5)$ se houver ganho, dado que Open/High/Low/Close são
+quase colineares. Riscos a controlar: escalas heterogêneas (volume $\sim 10^7$ vs.\ retorno
+$\sim 10^{-2}$) exigem \texttt{MinMaxScaler} \textbf{por coluna}; a não-estacionariedade do volume
+exige \texttt{log1p} antes de escalar (sob pena de saturação no range pós-2020); e o MSE
+desbalanceado entre canais recomenda registrar o erro \textbf{por canal}, indispensável para
+atribuir a anomalia (\emph{volume-driven} vs.\ \emph{price-driven}).
+
+\subsection{Prioridade: maior retorno sobre o esforço}
+\label{sec:m8-prioridade}
+A ordem de execução é deliberada:
+\begin{enumerate}[noitemsep]
+  \item \textbf{Agregação \emph{max}/percentil (ADR-0009)} --- maior retorno por esforço:
+        poucas linhas, ataca diretamente o \emph{recall} declarado, efeito imediato e mensurável.
+  \item \textbf{Walk-Forward (ADR-0010)} --- não melhora o modelo, mas constrói a régua honesta
+        para comparar a mudança anterior contra a \emph{baseline} e calibrar a próxima.
+  \item \textbf{Multivariado OHLCV (ADR-0011)} --- maior potencial, maior superfície de risco;
+        só compensa com (1) agregação que preserva o sinal e (2) validação confiável já no lugar,
+        e ainda assim começando por Close+Volume.
+\end{enumerate}
+Em síntese: (1) é o ganho rápido de \emph{recall}, (2) é o microscópio para confiar nos números,
+(3) é a aposta de maior alcance, viável apenas sobre as duas primeiras.

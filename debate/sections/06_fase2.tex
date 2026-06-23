@@ -1,0 +1,59 @@
+\section{Da limitação à agenda: o que a Fase 2 corrige}
+\label{sec:debate-fase2}
+
+\begin{confronto}
+``Vocês listaram com honestidade as fraquezas (Seção~\ref{sec:debate-sintese}), mas listar não é
+corrigir. Sem um plano concreto, a transparência vira álibi para a inação.''
+\end{confronto}
+
+A crítica é justa e foi antecipada. A segunda fase do projeto (milestone~M8) converte três das
+fronteiras assumidas em tarefas com decisão registrada (ADR-0009, 0010 e 0011, em status
+\emph{proposto}) e ordem de prioridade explícita. O ponto desta seção não é apresentar
+resultados --- não há ainda ---, mas mostrar que cada limitação tem um caminho de correção
+\emph{já desenhado}, com os riscos mapeados.
+
+\subsection{Diluição do choque $\to$ agregação por máximo/percentil}
+\label{sec:debate-fase2-pooling}
+A média sobre 30 passos atenua um choque de um dia (Seção~\ref{sec:debate-sintese}, item~4). A
+correção troca a agregação por \emph{max} ou percentil alto, recuperando o pico.
+\begin{tradeoff}
+Maior \emph{recall} de choques pontuais ao custo de potencial perda de \emph{precision}: o máximo
+é sensível também ao ruído de um único dia. Mitiga-se com o percentil (p90) em vez do máximo puro,
+e mede-se o efeito real com P/R/F1 nos quatro ativos.
+\end{tradeoff}
+\begin{honesto}
+A mudança invalida o limiar p95 atual (calibrado sobre a média): ele \textbf{tem} de ser
+recalibrado sobre o novo escore. Reportar Recall de \emph{max} com limiar de \emph{mean} seria um
+erro de comparação --- e está explicitamente vedado no plano (ADR-0009).
+\end{honesto}
+
+\subsection{\emph{Holdout} único $\to$ validação \emph{walk-forward}}
+\label{sec:debate-fase2-cv}
+O item~1 da síntese --- validação cruzada temporal --- materializa-se com \texttt{TimeSeriesSplit}
+(ADR-0010), respondendo à objeção de variância levantada na Seção~\ref{sec:debate-valid-cv}.
+\begin{honesto}
+A validação cruzada não melhora o detector; melhora a \emph{confiança} na escolha de
+hiperparâmetros. É instrumento de credibilidade, não de desempenho --- e é assim que será
+reportada, sem inflar sua contribuição.
+\end{honesto}
+A regra anti-vazamento (ADR-0001) é preservada \textbf{por fold}: scaler reajustado só no treino
+de cada corte, janelas geradas dentro da partição.
+
+\subsection{Univariado $\to$ entrada multivariada (OHLCV)}
+\label{sec:debate-fase2-multi}
+Os itens~2 e~3 da síntese (anomalias de volume, hoje invisíveis) tornam-se a transição para um
+tensor multivariado (ADR-0011), começando por Close+Volume.
+\begin{tradeoff}
+Ganha-se um canal precursor (volume) ao custo de $5\times$ a entrada, mais capacidade e mais
+risco de \emph{overfitting} --- razão pela qual depende da validação \emph{walk-forward} já
+disponível e começa pelo mínimo informativo, não pelo OHLCV completo.
+\end{tradeoff}
+
+\subsection{Por que nesta ordem}
+\label{sec:debate-fase2-ordem}
+A prioridade não é arbitrária: \textbf{(1)} a agregação é o ganho rápido de \emph{recall} que
+custa poucas linhas; \textbf{(2)} a validação \emph{walk-forward} é a régua honesta para
+comparar (1) contra a \emph{baseline} e calibrar (3); \textbf{(3)} o multivariado é a aposta de
+maior alcance, viável apenas depois que o sinal deixa de ser diluído e os números passam a ser
+confiáveis. Corrigir na ordem inversa seria medir uma aposta cara com um instrumento que ainda
+esconde o que se quer medir.
