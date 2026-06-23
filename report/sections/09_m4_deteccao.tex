@@ -53,5 +53,30 @@ ITUB4.SA & 0{,}088 & 11{,}0 & 4{,}9 \\
 de $\approx$5\% de marcações --- a considerar na leitura das métricas (M5). Além disso, como
 as janelas se sobrepõem, uma única anomalia gera uma rajada de detecções contíguas; antes de
 confrontar com eventos reais (M6) ou calcular métricas (M5), detecções adjacentes devem ser
-agrupadas em ``eventos''. O tamanho da janela dinâmica permanece provisório, com estudo de
-sensibilidade previsto para M5.
+agrupadas em ``eventos''.
+
+\subsection{Sensibilidade da janela dinâmica}
+\label{sec:m4-sensibilidade}
+O tamanho \texttt{dynamic\_window} era provisório; a Tabela~\ref{tab:sensibilidade} fecha a
+questão variando-o em $\{126, 252, 504\}$. O comportamento é monotônico: a janela curta (126)
+é reativa --- segue o ruído local e infla a marcação ($\approx$8\% nos ativos estáveis),
+enquanto a janela longa (504) super-suaviza, aproximando-se de um limiar global e colapsando a
+marcação a $\approx$0\% --- perdendo a capacidade de sinalizar. O valor intermediário
+\textbf{252} produz taxas próximas da base-rate alvo ($\approx$5\% do p95) sem oscilar nem
+colapsar, e é confirmado como escolha definitiva (ADR-0005).
+
+\begin{table}[h]
+\centering
+\caption{Fração de janelas de teste marcadas pelo limiar dinâmico, por tamanho de janela.}
+\label{tab:sensibilidade}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Ticker} & \textbf{126} & \textbf{252} & \textbf{504} \\
+\midrule
+PETR4.SA & 8{,}5\%  & 2{,}9\%  & 0{,}0\% \\
+VALE3.SA & 8{,}2\%  & 3{,}4\%  & 0{,}3\% \\
+AMER3.SA & 15{,}2\% & 14{,}3\% & 5{,}7\% \\
+ITUB4.SA & 6{,}3\%  & 4{,}9\%  & 0{,}0\% \\
+\bottomrule
+\end{tabular}
+\end{table}

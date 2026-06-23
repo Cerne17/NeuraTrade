@@ -1,0 +1,62 @@
+\section{M6 --- Correlação com Eventos e Comparação Setorial}
+\label{sec:m6}
+
+\subsection{Validação narrativa}
+Complementando a avaliação quantitativa (Seção~\ref{sec:m5}), as anomalias detectadas no
+teste (limiar estático p95) são cruzadas com uma linha do tempo curada de eventos
+econômicos e políticos brasileiros de 2010--2024 (\texttt{src/events.py}; ADR-0008). Cada
+evento é classificado como \emph{sistêmico} (afeta todos os ativos) ou \emph{específico} de
+um \emph{ticker}. Considera-se um evento ``coberto'' quando há ao menos uma anomalia dentro
+de uma tolerância de $\pm$\texttt{window\_size} ($\pm$30 dias), justificada pelo fato de a
+unidade de detecção ser a janela de 30 passos.
+
+A cobertura narrativa global é de $\approx$50\%, mas o número agregado esconde o resultado
+relevante --- o \textbf{casamento entre evento e ativo afetado}:
+\begin{itemize}[noitemsep]
+  \item \textbf{AMER3} cobre 9 de 10 eventos a ela associados, incluindo a fraude contábil
+        (jan/2023) e a recuperação judicial --- o sinal mais forte do \emph{dataset}.
+  \item PETR4, VALE3 e ITUB4 cobrem cerca de 2 eventos cada (de 6--8): seus modelos disparam
+        sobretudo em eventos \emph{sistêmicos} e nos choques setoriais de maior magnitude,
+        permanecendo silenciosos em eventos de impacto difuso --- coerente com um detector
+        calibrado para a cauda do erro (p95).
+\end{itemize}
+
+\subsection{Comparação setorial}
+Com um modelo por ativo, comparam-se as taxas de marcação entre setores
+(Tabela~\ref{tab:setorial}). As taxas reproduzem o achado da M4: PETR4 (energia) e VALE3
+(mineração) são estáveis ($\approx$3\%), enquanto AMER3 (varejo) exibe regime de
+volatilidade prolongada (26{,}7\% no estático, recalibrado para 14{,}3\% no dinâmico) e
+ITUB4 (financeiro) fica em posição intermediária. A diferença reflete o \emph{ativo}, não
+necessariamente o \emph{setor} ($n=1$ por setor): trata-se de estudo de caso qualitativo,
+não de inferência estatística (ADR-0006).
+
+\begin{table}[h]
+\centering
+\caption{Taxa de janelas anômalas no teste (2020--2024) por ativo/setor.}
+\label{tab:setorial}
+\begin{tabular}{llccc}
+\toprule
+\textbf{Ticker} & \textbf{Setor} & \textbf{Limiar p95} & \textbf{Estático (\%)} & \textbf{Dinâmico (\%)} \\
+\midrule
+PETR4.SA & Energia/commodities & 0{,}124 & 2{,}9  & 2{,}9  \\
+VALE3.SA & Mineração           & 0{,}082 & 2{,}7  & 3{,}4  \\
+AMER3.SA & Varejo              & 0{,}077 & 26{,}7 & 14{,}3 \\
+ITUB4.SA & Financeiro          & 0{,}088 & 11{,}0 & 4{,}9  \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Contágio sistêmico: o teste da COVID}
+Um evento sistêmico deve aparecer em \emph{todos} os ativos. No \emph{crash} da COVID
+(fev--mai/2020), os quatro modelos sinalizam anomalia de forma concentrada no período
+(PETR4: 35; VALE3: 33; ITUB4: 54; AMER3: 56 janelas), confirmando o contágio entre setores.
+Em contraste, eventos setor-específicos --- Brumadinho ($\to$ VALE3), fraude Americanas
+($\to$ AMER3), intervenção na Petrobras ($\to$ PETR4) --- isolam-se nos ativos afetados.
+A combinação dos dois comportamentos evidencia que os modelos, treinados por ativo, captam
+tanto choques de mercado amplos quanto eventos idiossincráticos --- o objetivo de
+generalização cruzada declarado na proposta.
+
+\paragraph{Limitações em aberto.} O estudo de sensibilidade da janela dinâmica
+(\texttt{dynamic\_window} $\in \{126, 252, 504\}$) previsto no ADR-0005 e a calibração das
+magnitudes de injeção relativas a $\sigma$ (ADR-0006) permanecem pendentes e são os próximos
+refinamentos antes do fechamento do artigo.

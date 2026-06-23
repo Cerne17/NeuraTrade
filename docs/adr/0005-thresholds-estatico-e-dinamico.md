@@ -1,6 +1,6 @@
 # ADR-0005: Threshold estático (p95) e dinâmico (janela causal)
 
-- **Status:** aceito (janela dinâmica PROVISÓRIA)
+- **Status:** aceito (`dynamic_window=252` confirmado em M7)
 - **Data:** 2026-06-22
 - **Proveniência:** misto
 - **Milestone:** M4 (Detecção & Thresholds)
@@ -49,6 +49,22 @@ duas estratégias de limiar — é uma das contribuições declaradas no README.
 >   regime local e reduz para ~14% (AMER3) e ~5% (ITUB4), sem usar o futuro. Em ativos
 >   estáveis (PETR4, VALE3) os dois quase coincidem (~3%). Confirma o valor do esquema dinâmico.
 > - `dynamic_window=252` segue **provisório**; estudo de sensibilidade (126/252/504) fica para M5.
+
+> **Atualização (M7, 2026-06-23) — estudo de sensibilidade `dynamic_window`.**
+> Fração de janelas de teste marcadas (limiar dinâmico) por tamanho de janela:
+>
+> | Ticker | 126 | 252 | 504 |
+> | --- | --- | --- | --- |
+> | PETR4.SA | 8,5% | 2,9% | 0,0% |
+> | VALE3.SA | 8,2% | 3,4% | 0,3% |
+> | AMER3.SA | 15,2% | 14,3% | 5,7% |
+> | ITUB4.SA | 6,3% | 4,9% | 0,0% |
+>
+> Comportamento monotônico: `126` é reativo (≈8% — segue o ruído local, infla falsos
+> positivos), `504` super-suaviza (≈0% nos ativos estáveis — aproxima-se de um limiar
+> global e perde a capacidade de marcar qualquer coisa). **`252` é confirmado**: produz
+> taxas próximas da base-rate alvo (~5% do p95) sem colapsar nem oscilar. Status de
+> PROVISÓRIO removido.
 
 ## Alternativas consideradas
 
