@@ -187,8 +187,9 @@ NeuraTrade/
 │   ├── cache_data.py         # refaz data/raw via yfinance (passo de rede)
 │   ├── build_figures.py      # regenera report/figures/
 │   └── README.md
-├── notebooks/                # ESTUDOS (orquestram src/, versionados com saídas)
+├── notebooks/                # ESTUDOS + guia de uso (orquestram src/, com saídas)
 │   ├── README.md             # índice dos estudos por fase
+│   ├── 00_quickstart.ipynb   # guia de uso: pipeline + fetch + inferência
 │   └── 01_eda … 11_ohlcv_full.ipynb
 ├── docs/adr/                 # Architecture Decision Records (0001–0011)
 ├── report/                   # relatório LaTeX (preliminar)
