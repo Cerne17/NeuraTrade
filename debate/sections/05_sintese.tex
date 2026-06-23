@@ -1,0 +1,48 @@
+\section{Síntese e limitações assumidas}
+\label{sec:debate-sintese}
+
+As confrontações compartilham um fio condutor: cada decisão do NeuraTrade
+otimiza para o \emph{problema real} --- detecção não supervisionada, em séries
+temporais, com normalidade específica por ativo --- e não para um \emph{checklist}
+genérico de boas práticas. Resumindo as defesas:
+
+\begin{itemize}[noitemsep]
+  \item \textbf{Desbalanceamento:} dissolvido pela reformulação \emph{one-class}
+        (treina só no normal); reaparece na avaliação e é tratado com P/R/F1 e
+        reporte da taxa-base, nunca acurácia.
+  \item \textbf{Arquitetura (LSTM-AE):} única combinação que satisfaz
+        simultaneamente ``sem rótulos'', ``sequencial'' e ``não linear''. Entrada
+        univariada e janela de 30 por estacionariedade e parcimônia. Rede rasa e
+        gargalo 16 dimensionados ao volume de dados, com a dimensão latente
+        \emph{verificada} por sensibilidade.
+  \item \textbf{Validação:} três níveis com separação temporal estrita
+        (\texttt{shuffle=False}); seleção de modelos por \emph{grid} sobre
+        validação temporal; $k$-fold clássico evitado por ser inválido em séries
+        temporais.
+  \item \textbf{Múltiplas redes:} a normalidade é específica do ativo e a
+        comparação setorial é o objetivo --- ambos exigem um modelo por ativo.
+\end{itemize}
+
+\subsection{O que ficou em aberto (e por quê)}
+Listamos junto, para não dispersar, as limitações assumidas ao longo do texto:
+
+\begin{enumerate}[noitemsep]
+  \item \textbf{Validação cruzada temporal completa} (\texttt{TimeSeriesSplit} /
+        \emph{walk-forward}) em vez do \emph{holdout} único, para estimativas com
+        variância (Seção~\ref{sec:debate-valid-cv}).
+  \item \textbf{Sensibilidade de hiperparâmetros mais ampla:} \texttt{latent\_dim}
+        nos quatro ativos e múltiplos \emph{seeds}; varredura de
+        \texttt{lstm\_units} e \texttt{dropout} (Seção~\ref{sec:debate-arq-prof}).
+  \item \textbf{Entrada multivariada (OHLCV):} habilitaria detectar anomalias de
+        volume, hoje invisíveis (Seção~\ref{sec:debate-arq-input}).
+  \item \textbf{Erro por máximo na janela} (em vez da média), para combater a
+        diluição de choques pontuais e elevar o \emph{recall}.
+  \item \textbf{Arquitetura intermediária} entre ``um por ativo'' e ``rede única''
+        (modelo global com \emph{embedding} de ativo), relevante ao escalar para
+        muitos ativos (Seção~\ref{sec:debate-multi}).
+\end{enumerate}
+
+Nenhum desses itens invalida os resultados atuais; todos são caminhos de
+fortalecimento. O compromisso do projeto é declarar essas fronteiras
+explicitamente --- a alternativa (silenciá-las) seria a única falha
+metodológica de fato grave.

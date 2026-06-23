@@ -1,0 +1,82 @@
+\documentclass[11pt,a4paper]{article}
+
+% ============================================================
+% Relatório de CONFRONTAÇÕES TEÓRICAS — NeuraTrade
+% Defesa, ponto a ponto, das decisões de modelagem do projeto, incluindo
+% trade-offs e limitações assumidas. Público: banca / leitor crítico.
+%
+% Compilar (a partir de debate/):  tectonic main.tex
+% ============================================================
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{hyperref}
+\usepackage{xurl}
+
+\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
+\graphicspath{{../report/figures/}}
+
+% --- Caixas de argumentação ---
+\theoremstyle{definition}
+\newtheorem*{confronto}{\textbf{Confrontação}}
+\newtheorem*{honesto}{\textbf{Limitação assumida}}
+\newtheorem*{tradeoff}{\textbf{Trade-off}}
+\newtheorem*{intuicao}{Intuição}
+
+% --- Código Python ---
+\definecolor{codegray}{gray}{0.96}
+\definecolor{codekw}{RGB}{0,0,170}
+\definecolor{codestr}{RGB}{160,0,0}
+\definecolor{codecom}{RGB}{0,120,0}
+\lstdefinestyle{py}{
+  language=Python, backgroundcolor=\color{codegray},
+  basicstyle=\ttfamily\footnotesize, keywordstyle=\color{codekw}\bfseries,
+  stringstyle=\color{codestr}, commentstyle=\color{codecom}\itshape,
+  numbers=left, numberstyle=\tiny\color{gray}, numbersep=6pt,
+  frame=single, framesep=4pt, rulecolor=\color{gray!40},
+  breaklines=true, showstringspaces=false, tabsize=4, captionpos=b, xleftmargin=14pt,
+}
+\lstset{style=py}
+
+\title{\textbf{NeuraTrade --- Confrontações Teóricas}\\[0.3em]
+\large Defesa das decisões de modelagem: dados, arquitetura, validação e
+estratégia de múltiplos modelos}
+\author{Projeto NeuraTrade --- Redes Neurais (2026.1)}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent Este documento responde, de forma direta e crítica, às principais
+objeções teóricas que o desenho do NeuraTrade pode receber. Cada seção abre com
+a \textbf{Confrontação} (a pergunta difícil), apresenta a resposta fundamentada
+e, quando cabe, registra explicitamente o \textbf{Trade-off} aceito e a
+\textbf{Limitação assumida}. O princípio é o mesmo do projeto: preferir a
+honestidade metodológica à aparência de completude. Detalhes de implementação
+remetem aos \emph{Architecture Decision Records} (ADRs) em \texttt{docs/adr/};
+a fundamentação didática dos conceitos está no \emph{Guia Teórico}
+(\texttt{teoria/}).
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\input{sections/00_intro}
+\input{sections/01_desbalanceamento}
+\input{sections/02_arquitetura}
+\input{sections/03_validacao}
+\input{sections/04_multiplas_redes}
+\input{sections/05_sintese}
+
+\end{document}

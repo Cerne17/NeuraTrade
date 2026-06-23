@@ -1,0 +1,110 @@
+\section{Metodologia de validação}
+\label{sec:debate-valid}
+
+\begin{confronto}
+Como o projeto valida os modelos? Há um conjunto de teste honesto? A separação
+respeita a natureza temporal dos dados, ou há vazamento?
+\end{confronto}
+
+\subsection{Três níveis de separação}
+A validação opera em três níveis, deliberadamente distintos:
+
+\begin{enumerate}[noitemsep]
+  \item \textbf{Treino} (2010--2019): aprende a normalidade.
+  \item \textbf{Validação} (bloco final do treino, $\approx$2018--2019, via
+        \texttt{validation\_split=0,1} com \texttt{shuffle=False}): governa o
+        \emph{early stopping} e a calibração de hiperparâmetros. \textbf{Não} é o
+        teste.
+  \item \textbf{Teste} (2020--2024): nunca visto no treino; é onde as anomalias
+        são detectadas e as métricas reportadas.
+\end{enumerate}
+
+\paragraph{O detalhe crítico: \texttt{shuffle=False}.}
+O \texttt{validation\_split} do Keras separa a \emph{última fração} do array
+\emph{antes} de embaralhar. Com \texttt{shuffle=True}, cada época re-embaralharia
+o treino e --- combinada com janelas sobrepostas --- misturaria amostras
+temporalmente adjacentes entre treino e validação, vazando padrão futuro. Com
+\texttt{shuffle=False}, treino e validação ficam em blocos cronológicos
+contíguos. Esta é a defesa central contra vazamento, e está registrada como
+decisão crítica (ADR-0004).
+
+\begin{honesto}
+Há um vazamento \emph{residual} conhecido: janelas na fronteira treino/validação
+compartilham alguns dias, por causa da sobreposição de janelas. O efeito é
+pequeno e foi assumido e documentado, não ignorado.
+\end{honesto}
+
+\subsection{Validação cruzada para seleção de modelos}
+\label{sec:debate-valid-cv}
+
+\begin{confronto}
+Para escolher o modelo ótimo entre opções pré-determinadas, usou-se
+\emph{validação cruzada}? Onde está o $k$-fold?
+\end{confronto}
+
+Aqui é preciso ser direto: \textbf{não usamos $k$-fold clássico --- e isso é
+intencional, não um esquecimento.}
+
+\paragraph{Por que $k$-fold padrão é inválido aqui.}
+A validação cruzada $k$-fold embaralha e particiona os dados assumindo que as
+amostras são \emph{independentes e identicamente distribuídas} (i.i.d.). Séries
+temporais violam isso: as observações são dependentes e ordenadas. Um \emph{fold}
+de treino contendo dias \emph{posteriores} aos do \emph{fold} de teste constitui
+vazamento de futuro --- exatamente o pecado da Seção~\ref{sec:debate-valid}. Em
+detecção de anomalias isso é ainda pior, pois infla artificialmente a aparência
+de desempenho.
+
+\paragraph{O que de fato fizemos: seleção por \emph{grid} sobre validação temporal.}
+A ``comparação de múltiplos modelos para escolher o ótimo'' aconteceu, mas pela
+via apropriada a séries temporais --- avaliar candidatos numa validação que
+respeita o tempo:
+\begin{itemize}[noitemsep]
+  \item \textbf{Dimensão latente} $\in\{8,16,32\}$: comparadas pela
+        \texttt{val\_loss} no bloco de validação cronológico; resultado plano,
+        16 confirmado (Seção~\ref{sec:debate-arq-prof}).
+  \item \textbf{Esquema de limiar} (estático p95 vs.\ dinâmico causal) e
+        \textbf{tamanho da janela dinâmica} $\in\{126,252,504\}$: comparados pela
+        taxa de marcação e pelo comportamento sob mudança de regime no teste; 252
+        confirmado.
+  \item \textbf{Modelo profundo vs.\ \emph{baseline}}: o LSTM-AE é confrontado
+        com um \emph{baseline} de $z$-score em janela móvel, para evidenciar
+        ganho sobre a heurística trivial.
+\end{itemize}
+
+\paragraph{A forma correta de CV temporal (e nosso caminho de rigor).}
+A validação cruzada que \emph{seria} válida aqui é a de série temporal ---
+\emph{walk-forward} / janela expansível, em que cada \emph{fold} treina no
+passado e valida no futuro imediato, nunca o contrário:
+
+\begin{lstlisting}[caption={Validação cruzada temporal (walk-forward) com scikit-learn.}]
+from sklearn.model_selection import TimeSeriesSplit
+tscv = TimeSeriesSplit(n_splits=5)
+for treino_idx, val_idx in tscv.split(X):
+    # treino_idx sempre ANTES de val_idx -> sem vazamento de futuro
+    modelo = build_lstm_autoencoder()
+    modelo.fit(X[treino_idx], X[treino_idx], shuffle=False, ...)
+    avalia(modelo, X[val_idx])
+\end{lstlisting}
+
+\begin{honesto}
+O projeto usou um \textbf{único} \emph{holdout} temporal de validação (não uma
+$k$-fold temporal com vários cortes). Para a seleção de hiperparâmetros conduzida
+--- de baixa dimensionalidade e com resultados planos/robustos --- isso é
+suficiente e defensável. Porém, um \texttt{TimeSeriesSplit} (\emph{walk-forward})
+daria estimativas com \emph{variância} (média $\pm$ desvio entre cortes) e uma
+seleção de modelo estatisticamente mais sólida. Está registrado como o próximo
+passo de rigor --- e o ADR-0004 já o aponta como alternativa considerada.
+\end{honesto}
+
+\subsection{Validação substantiva: além da perda}
+Vale frisar que a \texttt{val\_loss} não é o único juiz. Como não há rótulos de
+anomalia reais, a validação do \emph{detector} (não só do reconstrutor) se dá por
+duas vias complementares (detalhadas no relatório principal):
+\begin{itemize}[noitemsep]
+  \item \textbf{Quantitativa:} injeção sintética de anomalias em posições
+        conhecidas $\to$ Precision/Recall/F1.
+  \item \textbf{Narrativa:} as anomalias detectadas coincidem com eventos reais
+        (COVID, fraude da Americanas, Brumadinho)?
+\end{itemize}
+Essa dupla checagem é a resposta honesta para ``como validar um modelo sem
+gabarito''.

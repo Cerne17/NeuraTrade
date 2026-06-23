@@ -1,0 +1,68 @@
+\section{Base de dados extremamente desbalanceada}
+\label{sec:debate-desbal}
+
+\begin{confronto}
+Anomalias são, por definição, raríssimas: talvez 1\% dos dias, ou menos. Em
+classificação supervisionada, uma classe tão minoritária arruína o treino --- o
+modelo aprende a dizer sempre ``normal'' e acerta 99\%. Como o projeto lida com
+um desbalanceamento tão extremo?
+\end{confronto}
+
+\subsection{A resposta: o problema foi reformulado, não ``balanceado''}
+A premissa da pergunta é de \emph{classificação supervisionada}. O NeuraTrade
+\textbf{não} é supervisionado e \textbf{não} classifica em duas classes. A
+estratégia evita o desbalanceamento na origem, reformulando a tarefa como
+\textbf{aprendizado de uma classe} (\emph{one-class learning}) via reconstrução:
+
+\begin{itemize}[noitemsep]
+  \item Treina-se \textbf{somente com dados ``normais''} (2010--2019). A classe
+        minoritária (anomalias) \emph{nem entra} no treino --- logo não existe
+        proporção entre classes para desbalancear.
+  \item O modelo aprende a \textbf{reconstruir} o normal. A anomalia é detectada
+        pelo \emph{fracasso} de reconstrução (erro alto), não por um rótulo de
+        classe. É a mesma lógica de detecção de fraude/falha por
+        \emph{novelty detection}.
+\end{itemize}
+
+\paragraph{Intuição.} Em vez de mostrar ao modelo milhões de dias normais e um
+punhado de anômalos (e implorar para ele não ignorar o punhado), mostramos
+\emph{só} o normal e deixamos a anomalia ser ``tudo aquilo que ele não consegue
+reproduzir''. O desequilíbrio de contagem deixa de ser uma variável do treino.
+
+\subsection{Por que não as técnicas usuais de balanceamento}
+As ferramentas clássicas contra desbalanceamento seriam contraproducentes aqui:
+\begin{itemize}[noitemsep]
+  \item \textbf{Oversampling / SMOTE:} sintetizaria ``anomalias'' interpolando
+        exemplos --- mas não temos exemplos rotulados de anomalia, e interpolar
+        em série temporal quebraria a estrutura sequencial.
+  \item \textbf{Undersampling do normal:} jogaria fora justamente os dados que
+        \emph{definem} a normalidade que queremos aprender.
+  \item \textbf{Pesos de classe:} pressupõem duas classes no treino, que não
+        existem na formulação \emph{one-class}.
+\end{itemize}
+
+\subsection{Onde o desbalanceamento reaparece --- e como o tratamos}
+Ele não some de todo: ressurge na \textbf{avaliação}. Ao injetar 50 anomalias
+sintéticas numa série de $\approx$1200 janelas de teste, o \emph{ground-truth} é
+fortemente desbalanceado ($\approx$4\% positivos). Isso tem duas implicações que
+o projeto trata explicitamente:
+
+\begin{enumerate}[noitemsep]
+  \item \textbf{Acurácia é inútil} num cenário assim (dizer ``tudo normal'' dá
+        $\approx$96\% de acurácia e zero utilidade). Por isso reportamos
+        \textbf{Precision, Recall e F1}, não acurácia.
+  \item \textbf{Teto de precisão pela taxa-base.} O limiar p95 marca $\approx$5\%
+        das janelas por construção; contra $\approx$4\% de positivos reais, há um
+        piso de falsos positivos que limita a \emph{precision} máxima. Esse
+        número é reportado \emph{junto} das métricas, para não inflar a leitura.
+\end{enumerate}
+
+\begin{tradeoff}
+O paradigma \emph{one-class} resolve o desbalanceamento, mas paga um preço: como
+nunca vemos anomalias rotuladas, não há como o modelo aprender a
+\emph{discriminar} tipos de anomalia, nem otimizar diretamente uma fronteira de
+decisão. Ele só sabe ``isto não parece normal''. Para um problema sem rótulos
+confiáveis (o nosso caso), é a troca certa; para um cenário com rótulos
+abundantes, um classificador supervisionado com ponderação de classe poderia
+superar.
+\end{tradeoff}
