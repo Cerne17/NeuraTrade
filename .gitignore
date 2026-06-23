@@ -16,6 +16,7 @@ env/
 # === Dados gerados (raw é commitado de propósito) ===
 data/processed/
 data/interim/
+data/inference/            # janelas baixadas para inferência (scripts/fetch_window.py)
 !data/raw/
 !data/raw/*.csv
 
