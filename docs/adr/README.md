@@ -40,12 +40,18 @@ Valores `PROVISÓRIO` aparecem marcados também no `config.yaml`.
 | [0007](0007-coleta-e-tratamento-amer3.md) | Coleta/cache, `auto_adjust`, tratamento do caso AMER3 | misto |
 | [0008](0008-linha-do-tempo-eventos.md) | Linha do tempo de eventos + tolerância de matching ($\pm$`window_size`) | DECISÃO DE PROJETO |
 | [0009](0009-agregacao-erro-janela.md) | Agregação do erro por janela: `mean`/`max`/`percentil` (Recall) | DECISÃO DE PROJETO · **aceito** (M8) |
-| [0010](0010-validacao-walk-forward.md) | Validação Walk-Forward (`TimeSeriesSplit`) para seleção de hiperparâmetros | FUNDAMENTADO · **proposto** |
-| [0011](0011-tensor-multivariado-ohlcv.md) | Tensor multivariado OHLCV `(30,1)→(30,5)`, scaler por coluna, `log1p` volume | DECISÃO DE PROJETO · **proposto** |
+| [0010](0010-validacao-walk-forward.md) | Validação Walk-Forward (`TimeSeriesSplit`) para seleção de hiperparâmetros | FUNDAMENTADO · **aceito** (M8) |
+| [0011](0011-tensor-multivariado-ohlcv.md) | Tensor multivariado OHLCV `(30,1)→(30,5)`, scaler por coluna, `log1p` volume | DECISÃO DE PROJETO · **aceito** (M8, Etapa 1) |
 
-> **Fase 2 (M8):** ADR-0009 foi **validado** (notebook `07_aggregation_recalibration`, issue #47):
-> a agregação `max` mais que dobrou o Recall sem perder Precision. ADRs 0010–0011 estão
-> **implementados** em `src/` (`validation.py`, `preprocess_ticker_multivariate`), com calibração
-> e notebooks de orquestração ainda pendentes — não reportar resultados finais a partir deles.
+> **Fase 2 (M8) — concluída e validada por experimento:**
+> - **ADR-0009** (`07_aggregation_recalibration`): agregação `max` dobrou o Recall (0,16→0,35) e
+>   ainda elevou a Precision (0,55→0,84).
+> - **ADR-0010** (`08_walkforward`): `latent_dim=16` confirmado; modelo insensível ao gargalo em
+>   [8, 32] (diferenças $\ll$ desvio inter-fold).
+> - **ADR-0011** (`09_multivariate_ohlcv`): Close+Volume `(30,2)` atribui o pico de volume ao
+>   canal de volume (Δpreço ≈ 0) — capacidade ausente no univariado.
+>
+> Os modelos `max`/multivariado **não** são o default em produção: a troca fica condicionada a
+> reportar M4–M6 sob a nova configuração.
 
 Template para novos ADRs: [TEMPLATE.md](TEMPLATE.md).

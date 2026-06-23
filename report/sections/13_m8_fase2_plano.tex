@@ -3,10 +3,11 @@
 
 As limitações declaradas na Seção~\ref{sec:limitacoes} não são acidentes, mas fronteiras
 assumidas. A segunda fase do projeto (milestone~M8) ataca três delas com decisões registradas
-nos ADR-0009, 0010 e 0011. A lógica reusável das três já está implementada em \texttt{src/}; a
-agregação do erro (ADR-0009) foi, além disso, \textbf{calibrada e medida}
-(Seção~\ref{sec:m8-pooling-result}). As demais aguardam os notebooks de orquestração. Esta
-seção documenta o plano, a evidência disponível e a ordem de prioridade.
+nos ADR-0009, 0010 e 0011. As três foram implementadas em \texttt{src/} e \textbf{validadas por
+experimento} (notebooks \texttt{07}--\texttt{09}): a agregação \emph{max} dobrou o \emph{recall}
+(Seção~\ref{sec:m8-pooling-result}), a validação walk-forward confirmou \texttt{latent\_dim}
+(Seção~\ref{sec:m8-walkforward}) e a entrada Close+Volume passou a atribuir anomalias de volume
+(Seção~\ref{sec:m8-multivariado}). Esta seção documenta plano, evidência e prioridade.
 
 \subsection{Agregação do erro por janela: \emph{max}/percentil (ADR-0009)}
 \label{sec:m8-pooling}
@@ -64,6 +65,14 @@ restrição metodológica central do projeto é preservada \textbf{por fold}: o 
 partição, sem cruzar a fronteira treino/validação (ADR-0001). Esta mudança não altera o detector
 em produção --- é instrumento de rigor e credibilidade na escolha do modelo final.
 
+\par\noindent\textbf{Resultado (notebook \texttt{08\_walkforward}).} Avaliando
+$\texttt{latent\_dim} \in \{8, 16, 32\}$ com $5$ folds nos quatro ativos, o \texttt{val\_loss}
+médio entre ativos foi $0{,}01554$ ($8$), $\mathbf{0{,}01541}$ ($16$) e $0{,}01546$ ($32$). O
+valor \textbf{16 é confirmado} (menor média), validando por experimento a escolha de projeto do
+ADR-0003. Mais relevante, as três dimensões \textbf{empatam} --- as diferenças (4ª casa decimal)
+são muito menores que o desvio entre folds ($\approx 0{,}004$): no intervalo testado o tamanho do
+gargalo \emph{não} é hiperparâmetro sensível, evidência positiva de robustez da reconstrução.
+
 \subsection{Entrada multivariada OHLCV (ADR-0011)}
 \label{sec:m8-multivariado}
 O modelo é univariado (log-retorno de \texttt{Close}), tornando anomalias puramente de volume
@@ -75,6 +84,34 @@ $\sim 10^{-2}$) exigem \texttt{MinMaxScaler} \textbf{por coluna}; a não-estacio
 exige \texttt{log1p} antes de escalar (sob pena de saturação no range pós-2020); e o MSE
 desbalanceado entre canais recomenda registrar o erro \textbf{por canal}, indispensável para
 atribuir a anomalia (\emph{volume-driven} vs.\ \emph{price-driven}).
+
+\par\noindent\textbf{Resultado (notebook \texttt{09\_multivariate\_ohlcv}).} A Etapa 1
+(Close+Volume, $(30,2)$) foi treinada nos quatro ativos ($\texttt{val\_loss} \approx 0{,}002$,
+sem colapso de canal). No teste decisivo, um pico de volume ($k\sigma$) foi injetado apenas no
+canal de volume e o erro per-canal (\emph{max}) variou conforme a Tabela~\ref{tab:m8-multi}:
+
+\begin{table}[h]
+\centering
+\caption{Variação média do erro per-canal nas janelas com pico de volume injetado --- a
+anomalia é atribuída ao canal de volume (ADR-0011).}
+\label{tab:m8-multi}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Ativo} & \textbf{$\Delta$ erro canal preço} & \textbf{$\Delta$ erro canal volume} \\
+\midrule
+PETR4.SA & $+0{,}00002$ & $\mathbf{+0{,}05084}$ \\
+VALE3.SA & $-0{,}00011$ & $\mathbf{+0{,}07575}$ \\
+AMER3.SA & $+0{,}00011$ & $\mathbf{+0{,}35980}$ \\
+ITUB4.SA & $-0{,}00002$ & $\mathbf{+0{,}05799}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent O canal de volume dispara enquanto o de preço permanece praticamente inalterado
+($\Delta \approx 0$): a anomalia é corretamente \textbf{atribuída ao volume} --- precisamente a
+capacidade ausente no modelo univariado, que tornava as anomalias de volume invisíveis
+(Seção~\ref{sec:limitacoes}). Confirma também a necessidade do \texttt{log1p} e do escalonamento
+por coluna: sem eles o volume dominaria a perda.
 
 \subsection{Prioridade: maior retorno sobre o esforço}
 \label{sec:m8-prioridade}

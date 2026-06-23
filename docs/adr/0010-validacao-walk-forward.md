@@ -1,6 +1,6 @@
 # ADR-0010: Validação Walk-Forward (TimeSeriesSplit)
 
-- **Status:** proposto
+- **Status:** aceito (executado em M8, notebook `08_walkforward`)
 - **Data:** 2026-06-23
 - **Proveniência:** FUNDAMENTADO (rigor metodológico de séries temporais)
 - **Milestone:** M8 (Evolução da Modelagem · Fase 2)
@@ -47,6 +47,28 @@ produção; o modelo final é retreinado com o melhor hiperparâmetro sobre o tr
 - **Semântica dos folds:** o treino é "normalidade" 2010–2019 ([ADR-0001](0001-split-temporal-antes-do-scaler.md));
   documentar o que cada fold representa para que o `val_loss` seja interpretável.
 - Resultado pode atualizar [ADR-0003](0003-arquitetura-autoencoder.md) (`latent_dim`).
+
+> **Atualização (M8, 2026-06-23) — execução e evidência (issue #50).**
+> Implementado em [src/validation.py](../../src/validation.py) e orquestrado no notebook
+> `08_walkforward`: `TimeSeriesSplit` com `n_splits=5`, scaler refitado por fold, janelas dentro
+> de cada recorte. Seleção de `latent_dim ∈ {8, 16, 32}` sobre os quatro ativos (período de
+> treino), `val_loss` médio entre ativos:
+>
+> | `latent_dim` | val\_loss médio (4 ativos) | desvio entre ativos |
+> | --- | --- | --- |
+> | 8  | 0,015537 | 0,004453 |
+> | **16** | **0,015406** | 0,004398 |
+> | 32 | 0,015462 | 0,004317 |
+>
+> - **`latent_dim = 16` confirmado** (menor `val_loss` médio), validando a escolha de projeto
+>   do [ADR-0003](0003-arquitetura-autoencoder.md).
+> - **Achado principal — insensibilidade:** as três dimensões empatam (diferenças na 4ª casa
+>   decimal, $\ll$ desvio inter-fold $\approx 0{,}004$). No intervalo [8, 32] o tamanho do
+>   gargalo **não** é hiperparâmetro sensível: a reconstrução é robusta à compressão. Isso é uma
+>   evidência positiva de robustez, não um empate inconclusivo.
+> - O valor de `config.yaml` (`latent_dim=16`) permanece, agora **fundamentado por experimento**
+>   em vez de só por design. A malha walk-forward fica disponível para validar futuros
+>   hiperparâmetros e o modelo multivariado ([ADR-0011](0011-tensor-multivariado-ohlcv.md)).
 
 ## Alternativas consideradas
 

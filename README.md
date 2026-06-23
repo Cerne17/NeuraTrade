@@ -83,7 +83,9 @@ anomaly-detection-b3/
 │   ├── 04_detection_thresholds.ipynb
 │   ├── 05_evaluation_synthetic.ipynb
 │   ├── 06_events_correlation.ipynb
-│   └── 07_aggregation_recalibration.ipynb   # M8 · agregação max/percentil
+│   ├── 07_aggregation_recalibration.ipynb   # M8 · agregação max/percentil
+│   ├── 08_walkforward.ipynb                 # M8 · seleção de latent_dim (walk-forward)
+│   └── 09_multivariate_ohlcv.ipynb          # M8 · Close+Volume, anomalia de volume
 ├── models/                   # pesos treinados (não versionado)
 ├── figures/                  # saídas para o relatório
 └── report/                   # relatório LaTeX
@@ -106,6 +108,8 @@ Os notebooks são numerados na ordem de execução e mapeiam as fases do projeto
 | `05_evaluation_synthetic`      | Injeção de anomalias artificiais; Precision, Recall, F1           |
 | `06_events_correlation`        | Sobreposição das anomalias com eventos econômicos/políticos       |
 | `07_aggregation_recalibration` | M8 · agregação `max`/`percentil` do erro + recalibração do limiar (ADR-0009) |
+| `08_walkforward`               | M8 · seleção de `latent_dim` por validação walk-forward (ADR-0010) |
+| `09_multivariate_ohlcv`        | M8 · entrada Close+Volume; atribuição de anomalia de volume (ADR-0011) |
 
 ---
 

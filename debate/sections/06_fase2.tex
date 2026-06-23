@@ -40,16 +40,21 @@ hiperparâmetros. É instrumento de credibilidade, não de desempenho --- e é a
 reportada, sem inflar sua contribuição.
 \end{honesto}
 A regra anti-vazamento (ADR-0001) é preservada \textbf{por fold}: scaler reajustado só no treino
-de cada corte, janelas geradas dentro da partição.
+de cada corte, janelas geradas dentro da partição. Rodada (notebook \texttt{08}), confirmou
+\texttt{latent\_dim}=16 e revelou que o modelo é \emph{insensível} ao gargalo em $[8,32]$ --- a
+escolha de projeto, antes só justificada, ficou \textbf{fundamentada por experimento}.
 
 \subsection{Univariado $\to$ entrada multivariada (OHLCV)}
 \label{sec:debate-fase2-multi}
 Os itens~2 e~3 da síntese (anomalias de volume, hoje invisíveis) tornam-se a transição para um
 tensor multivariado (ADR-0011), começando por Close+Volume.
 \begin{tradeoff}
-Ganha-se um canal precursor (volume) ao custo de $5\times$ a entrada, mais capacidade e mais
-risco de \emph{overfitting} --- razão pela qual depende da validação \emph{walk-forward} já
-disponível e começa pelo mínimo informativo, não pelo OHLCV completo.
+Ganha-se um canal precursor (volume) ao custo de mais capacidade e risco de \emph{overfitting}
+--- razão pela qual começa pelo mínimo informativo (Close+Volume, $2$ canais), não pelo OHLCV
+completo. Treinada e testada (notebook \texttt{09}): um pico injetado só no canal de volume
+elevou o erro \emph{daquele} canal ($+0{,}05$ a $+0{,}36$) e deixou o canal de preço em
+$\approx 0$ --- a anomalia de volume, antes \textbf{invisível}, é detectada e atribuída. O custo
+de capacidade não degradou o treino (\texttt{val\_loss} ainda menor que o univariado).
 \end{tradeoff}
 
 \subsection{Por que nesta ordem}
