@@ -38,5 +38,6 @@ Valores `PROVISÓRIO` aparecem marcados também no `config.yaml`.
 | [0005](0005-thresholds-estatico-e-dinamico.md) | Threshold estático p95 + dinâmico causal | misto |
 | [0006](0006-avaliacao-injecao-e-setorial.md) | Avaliação: injeção sintética + P/R/F1 + comparação setorial | misto |
 | [0007](0007-coleta-e-tratamento-amer3.md) | Coleta/cache, `auto_adjust`, tratamento do caso AMER3 | misto |
+| [0008](0008-linha-do-tempo-eventos.md) | Linha do tempo de eventos + tolerância de matching ($\pm$`window_size`) | DECISÃO DE PROJETO |
 
 Template para novos ADRs: [TEMPLATE.md](TEMPLATE.md).

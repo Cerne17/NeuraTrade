@@ -50,3 +50,24 @@ mineração, varejo, financeiro).
 
 - **Rótulos manuais de anomalia real:** subjetivo e não reproduzível; injeção dá verdade controlada.
 - **Apenas validação narrativa:** insuficiente para métrica quantitativa exigida pela proposta.
+
+> **Atualização (M5/M6, 2026-06-23) — implementação e evidência.**
+> - **Espaço de injeção:** os `price_shock` são somados ao log-retorno **já escalado**
+>   (`apply_scaler`), não ao preço bruto — é o espaço em que o modelo foi treinado e evita
+>   que a magnitude do choque varie com o nível de preço do ativo (`src/evaluate.py:inject_price_shocks`).
+> - **Regra de rotulagem por janela:** uma janela é positiva se **qualquer** passo injetado
+>   cair nela (`labels_to_window_labels`), pois um choque eleva o erro da janela inteira. O
+>   vetor de rótulos segue a indexação de `make_windows`, mantendo alinhamento exato com `X_test`.
+>   Métricas via `sklearn` com `zero_division=0` (`compute_metrics`).
+> - **Tolerância de matching narrativo:** $\pm$`window_size` (30 dias) entre anomalia e evento
+>   (ver [ADR-0008](0008-linha-do-tempo-eventos.md), que formaliza a regra e a curadoria dos eventos).
+> - **Evidência empírica (teste 2020–2024):** com magnitude **absoluta** `0.15`, o *recall* é
+>   uniformemente baixo nos ativos estáveis (PETR4/VALE3 recall <7%; o choque compete com o
+>   ruído normal) e razoável onde o erro de base é alto (AMER3 estático: P≈0,69 R≈0,30 F1≈0,42).
+>   Isto **confirma** a necessidade de calibrar o choque em $k\sigma$ por ativo: a magnitude
+>   absoluta torna a dificuldade incomparável entre setores. A avaliação atual valida o
+>   *pipeline* de métricas, não é resultado final.
+> - **Escopo:** apenas *price shocks* implementados nesta etapa; `volume_spike` (chave no
+>   `config.yaml`) segue previsto mas não usado.
+> - **Pendente:** calibração relativa a $\sigma$ e estudo de sensibilidade de `dynamic_window`
+>   ([ADR-0005](0005-thresholds-estatico-e-dinamico.md)).
