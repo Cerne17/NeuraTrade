@@ -51,7 +51,11 @@ Valores `PROVISÓRIO` aparecem marcados também no `config.yaml`.
 > - **ADR-0011** (`09_multivariate_ohlcv`): Close+Volume `(30,2)` atribui o pico de volume ao
 >   canal de volume (Δpreço ≈ 0) — capacidade ausente no univariado.
 >
-> Os modelos `max`/multivariado **não** são o default em produção: a troca fica condicionada a
-> reportar M4–M6 sob a nova configuração.
+> **Consolidação (M9):**
+> - **`max` adotado como default** (`10_max_default_decision`): no teste real 2020–2024 marca a
+>   mesma fração de janelas que `mean` (~0,10), sem inflar falsos positivos. `config.yaml` →
+>   `aggregation: max`; atualiza ADR-0005/0009.
+> - **OHLCV completo rejeitado** (`11_ohlcv_full`): piora `val_loss` em 2/4 ativos sem ganho de
+>   atribuição → permanece **Close+Volume**. `latent_dim` multivariado também insensível ([8,32]).
 
 Template para novos ADRs: [TEMPLATE.md](TEMPLATE.md).

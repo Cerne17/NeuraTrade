@@ -75,9 +75,23 @@ A redução acontece em duas etapas, **nesta ordem**: primeiro média sobre o ei
 >   tanto falsos negativos quanto falsos positivos. A perda de Precision prevista **não** se
 >   materializou neste cenário.
 > - **Recomendação:** adotar `max` como agregação de detecção. `percentile` (p90) fica como
->   alternativa mais conservadora. O default de `config.yaml` permanece `mean` para preservar a
->   reprodutibilidade dos números de M4–M6; a troca para `max` é uma edição de configuração,
->   a consolidar quando os resultados de M4–M6 forem reportados sob a nova agregação.
+>   alternativa mais conservadora.
+
+> **Atualização (M9, 2026-06-23) — `max` adotado como default (issue #58).**
+> Notebook `10_max_default_decision` reportou a detecção no **teste real (2020–2024)** sob cada
+> agregação. A fração média de janelas marcadas (4 ativos) foi:
+>
+> | Agregação | frac. estático | frac. dinâmico |
+> | --- | --- | --- |
+> | `mean` | 0,108 | 0,064 |
+> | **`max`** | **0,103** | **0,080** |
+> | `percentile` | 0,112 | 0,048 |
+>
+> `max` **não explode** a fração marcada --- fica praticamente igual a `mean` no teste real,
+> próxima da taxa-base do p95 (~5–10%). Some-se o ganho de Recall/Precision na injeção sintética
+> e a troca é **segura**: `config.yaml` passa a `aggregation: max` por default. `mean` permanece
+> disponível e é a agregação dos resultados históricos de M4–M6 (cujos notebooks conservam suas
+> saídas originais). Atualiza também a [ADR-0005](0005-thresholds-estatico-e-dinamico.md).
 
 ## Alternativas consideradas
 

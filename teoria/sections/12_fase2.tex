@@ -104,3 +104,14 @@ ao injetar um pico de volume, o erro do \textbf{canal de volume sobe} (de $+0{,}
 e o do canal de preço fica em $\approx 0$ --- a anomalia é atribuída corretamente ao volume.
 Decisão em ADR-0011.
 \end{naprat}
+
+\subsection{Fecho da Fase 2 (M9)}
+\label{sec:fase2-m9}
+Os três experimentos viraram decisão. A agregação \textbf{\emph{max}} foi testada nos dados reais
+(não só nos sintéticos) e passou a ser o \emph{default}: marcou a mesma fração de janelas que a
+média ($\approx 10\%$), sem ``ver anomalia em tudo''. O \textbf{OHLCV completo} foi testado e
+\emph{descartado} --- acrescentar Abertura/Máxima/Mínima ao Close+Volume não melhorou (e às vezes
+piorou) a reconstrução; ficamos no par Close+Volume. E o tamanho do gargalo (\texttt{latent\_dim})
+mostrou-se \emph{insensível} também no modelo multivariado. Lição geral: medir é barato e às vezes
+contraria nossa intuição --- aqui, a suposta redundância do OHLC não era tão forte quanto se
+pensava, mas o resultado ainda assim recomendou a simplicidade.

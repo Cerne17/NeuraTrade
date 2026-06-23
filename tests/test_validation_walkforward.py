@@ -7,7 +7,7 @@ passado daquele fold, nunca o futuro.
 import numpy as np
 import pandas as pd
 
-from src.validation import walk_forward_splits
+from src.validation import walk_forward_splits, walk_forward_splits_multivariate
 
 
 def _series(n=120):
@@ -49,3 +49,20 @@ def test_janela_nao_cruza_fronteira_train_val():
     for f in walk_forward_splits(s, n_splits=3, window_size=4):
         inter = f["train_index"].intersection(f["val_index"])
         assert len(inter) == 0
+
+
+def test_walkforward_multivariado_shape_e_scaler_por_coluna():
+    # Frame de 2 features; folds devem preservar os canais e escalar por coluna.
+    idx = pd.date_range("2010-01-01", periods=120, freq="B")
+    feats = pd.DataFrame(
+        {"Close": np.linspace(0, 1, 120), "Volume": np.linspace(10, 20, 120)},
+        index=idx,
+    )
+    folds = list(walk_forward_splits_multivariate(feats, n_splits=4, window_size=5))
+    assert len(folds) == 4
+    for f in folds:
+        assert f["X_train"].shape[1:] == (5, 2)   # janela x 2 canais
+        assert f["scaler"].data_min_.shape == (2,)  # min/max por coluna
+        # scaler ajustado só no treino do fold (não vê o futuro)
+        train_max = feats.iloc[: len(f["train_index"])].to_numpy().max(axis=0)
+        assert np.allclose(f["scaler"].data_max_, train_max)
