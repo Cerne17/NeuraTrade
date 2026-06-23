@@ -1,3 +1,6 @@
-*.ipynb filter=nbstripout
+# nbstripout DESATIVADO (M7): notebooks versionados COM saidas, para que um
+# leitor acompanhe logica + resultados sem rodar localmente. Trade-off aceito:
+# diffs de .ipynb maiores e risco de conflito em saidas. Para reativar o strip,
+# restaurar a linha `*.ipynb filter=nbstripout`.
 *.zpln filter=nbstripout
 *.ipynb diff=ipynb

@@ -60,3 +60,7 @@ scripts/
 .gemini/
 .agent/
 CLAUDE.md
+
+# === Figuras de rascunho dos notebooks (save_fig grava aqui) ===
+# As figuras DO relatorio ficam versionadas em report/figures/.
+/figures/
