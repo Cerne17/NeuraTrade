@@ -1,0 +1,173 @@
+\section{Escolha e desenho da arquitetura}
+\label{sec:debate-arq}
+
+\subsection{Por que um LSTM-Autoencoder}
+\label{sec:debate-arq-lstmae}
+
+\begin{confronto}
+Há dezenas de detectores de anomalia. Por que justamente um autoencoder
+recorrente, e não um método estatístico clássico, um classificador, ou outra
+arquitetura de rede?
+\end{confronto}
+
+A escolha resulta do cruzamento de três exigências do problema, que eliminam as
+alternativas uma a uma:
+
+\begin{enumerate}[noitemsep]
+  \item \textbf{Não supervisionado} (não há rótulos). Isso descarta classificadores
+        supervisionados (\emph{random forest}, redes de classificação) e métodos
+        que exigem exemplos de anomalia.
+  \item \textbf{Sequencial / temporal} (a ordem dos dias carrega informação; há
+        dependência e regimes de volatilidade que se estendem por semanas). Isso
+        enfraquece métodos que tratam cada dia como ponto independente
+        (\emph{Isolation Forest}, \emph{One-Class SVM} sobre \emph{features}
+        estáticas, $z$-score pontual).
+  \item \textbf{Padrão complexo e não linear} de ``normalidade''. Isso desfavorece
+        modelos lineares puros (ARIMA, limiar fixo sobre o retorno).
+\end{enumerate}
+
+O \textbf{autoencoder} atende (1): aprende a normalidade por reconstrução, sem
+rótulos. A parte \textbf{LSTM} atende (2) e (3): processa a janela como sequência,
+com memória de longo prazo e não-linearidade. A combinação --- comprimir uma
+janela temporal e medir o erro ao reconstruí-la --- é o casamento natural das
+três exigências.
+
+\begin{table}[h]
+\centering
+\caption{Por que as alternativas foram preteridas.}
+\label{tab:alternativas}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{p{4.2cm} p{9.5cm}}
+\toprule
+\textbf{Alternativa} & \textbf{Motivo de não adoção} \\
+\midrule
+$z$-score / média móvel & Linear e pontual; serve de \emph{baseline} (e foi
+implementado como tal), mas não capta padrão sequencial. \\
+ARIMA / GARCH & Fortes em séries financeiras, mas assumem forma paramétrica;
+o objetivo do projeto é justamente uma abordagem \emph{neural} de representação aprendida. \\
+Isolation Forest / OC-SVM & Não supervisionados, porém sobre vetores de
+\emph{features} sem ordem temporal nativa. \\
+AE com camadas densas (MLP) & Perde a estrutura sequencial: trataria os 30 passos
+como 30 \emph{features} independentes. \\
+AE convolucional (1D-CNN) & Capta padrão local, mas a dependência de longo alcance
+é melhor servida pela memória explícita da LSTM. \\
+VAE / GAN & Mais expressivos, porém mais difíceis de treinar e fora do escopo da
+proposta; registrados como trabalho futuro. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{intuicao}
+A LSTM dá ``memória'' e a estrutura de autoencoder dá ``aprender só o normal''.
+Tirar qualquer uma das duas quebra um requisito: sem LSTM, ignoramos o tempo;
+sem autoencoder, precisaríamos de rótulos.
+\end{intuicao}
+
+\subsection{Por que os nós de entrada (a representação de entrada)}
+\label{sec:debate-arq-input}
+
+\begin{confronto}
+A entrada da rede é um tensor de forma $(30, 1)$: 30 passos no tempo, 1 variável
+por passo. Por que uma única variável (e não OHLCV completo)? Por que 30 passos?
+\end{confronto}
+
+\paragraph{Uma variável: o log-retorno do fechamento.}
+A entrada é o \textbf{log-retorno diário} $r_t = \ln(P_t/P_{t-1})$, e só ele.
+Justificativas:
+\begin{itemize}[noitemsep]
+  \item \textbf{Estacionariedade.} O preço bruto tem tendência (cresce ao longo
+        dos anos); o log-retorno remove essa tendência, dando à rede um alvo de
+        ``normalidade'' estável no tempo. Treinar sobre preço faria o normal de
+        2010 (preços baixos) parecer anômalo em 2019.
+  \item \textbf{Comparabilidade entre ativos} e imunidade a \emph{splits}
+        (o log transforma fatores multiplicativos em deslocamentos aditivos).
+  \item \textbf{Parcimônia.} Com $\approx$2450 janelas de treino por ativo, uma
+        entrada univariada mantém o número de parâmetros compatível com o volume
+        de dados (Seção~\ref{sec:debate-arq-prof}), reduzindo risco de
+        \emph{overfitting}.
+\end{itemize}
+
+\paragraph{Por que não OHLCV (multivariado).}
+Volume e preços máximo/mínimo carregam informação real, mas: (i) multiplicariam
+os parâmetros sem aumentar os dados; (ii) exigiriam normalização conjunta
+cuidadosa; (iii) tornariam a detecção menos interpretável (erro misturando
+escalas diferentes). A decisão é \emph{deliberadamente univariada} --- e sua
+principal consequência (anomalias puramente de volume são invisíveis) é assumida
+e registrada como trabalho futuro (autoencoder multivariado).
+
+\paragraph{Por que 30 passos.}
+A janela $L=30$ ($\approx$6 semanas úteis) é a granularidade da ``frase'' que a
+LSTM lê. É o valor consagrado nas implementações de referência de detecção com
+LSTM (Li, 2020; Valkov) e equilibra: janela curta demais não captura regime;
+longa demais dilui eventos pontuais e reduz o número de janelas de treino. A
+forma final $(n,\,30,\,1)$ é exatamente o que a camada LSTM espera.
+
+\begin{tradeoff}
+Univariado + janela de 30: maximiza estabilidade e parcimônia, ao custo de
+cegueira a sinais fora do retorno do fechamento (volume, \emph{intraday}) e a
+anomalias mais curtas que a resolução da janela.
+\end{tradeoff}
+
+\subsection{Profundidade da rede e neurônios por camada}
+\label{sec:debate-arq-prof}
+
+\begin{confronto}
+Por que uma rede tão rasa? Por que 64 unidades nas LSTMs e um gargalo de 16?
+Como esses números foram escolhidos --- e não chutados?
+\end{confronto}
+
+A rede tem \textbf{38.737} parâmetros, distribuídos assim:
+
+\begin{table}[h]
+\centering
+\caption{Arquitetura camada a camada (entrada $(30,1)$, um modelo por ativo).}
+\label{tab:camadas}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{l l r p{5.2cm}}
+\toprule
+\textbf{Camada} & \textbf{Saída} & \textbf{Params} & \textbf{Papel} \\
+\midrule
+Input (janela)            & $(30,1)$  & 0      & janela de log-retornos \\
+LSTM (encoder, 64)        & $(64)$    & 16.896 & comprime a sequência em um vetor \\
+Dropout (0,2)             & $(64)$    & 0      & regularização \\
+Dense (gargalo, 16, ReLU) & $(16)$    & 1.040  & \emph{bottleneck}: força a compressão \\
+RepeatVector(30)          & $(30,16)$ & 0      & replica o latente para o decoder \\
+LSTM (decoder, 64, seq)   & $(30,64)$ & 20.736 & reconstrói passo a passo \\
+Dropout (0,2)             & $(30,64)$ & 0      & regularização \\
+TimeDistributed Dense(1)  & $(30,1)$  & 65     & projeta de volta ao espaço do retorno \\
+\midrule
+\multicolumn{2}{l}{\textbf{Total}} & \textbf{38.737} & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Profundidade (rasa) é proporcional aos dados.}
+São $\approx$2450 janelas de treino por ativo. Uma regra prática saudável é
+manter os parâmetros na mesma ordem de grandeza (ou abaixo) do produto
+amostras$\times$sinal, sob risco de \emph{overfitting}. Com $\approx$38,7\,mil
+parâmetros para $\approx$2450 janelas de 30 passos, já estamos num regime em que
+a regularização (\emph{dropout}, \emph{early stopping}) importa --- aprofundar a
+rede pioraria isso sem ganho, dado que o sinal (uma série univariada) é simples.
+Uma camada LSTM em cada ponta é suficiente para a expressividade necessária.
+
+\paragraph{64 unidades: \emph{default} de literatura.}
+\texttt{lstm\_units=64} e \texttt{dropout=0,2} reproduzem a implementação de
+referência (Valkov), padrão consolidado em AE-LSTM para séries financeiras ---
+proveniência ``\emph{default} de literatura'', não arbitrária.
+
+\paragraph{Gargalo de 16: decisão de projeto \emph{verificada}.}
+A literatura não padroniza a dimensão latente. Fixou-se 16 (compressão
+$\approx 4{:}1$ sobre as 64 unidades) e, crucialmente, \textbf{mediu-se a
+sensibilidade}: treinando PETR4 com $\texttt{latent\_dim}\in\{8,16,32\}$, a perda
+de validação foi praticamente idêntica ($0{,}00342 / 0{,}00343 / 0{,}00342$).
+Ou seja, o gargalo \emph{não é restrição ativa} nessa faixa --- até 8 bastaria,
+e 16 foi mantido com folga. Isso responde diretamente à objeção do ``chute'': o
+valor foi confirmado por experimento, não por fé.
+
+\begin{honesto}
+O estudo de \texttt{latent\_dim} foi conduzido em \emph{um} ativo (PETR4) e com
+um único \emph{seed}. A planura observada é forte evidência, mas uma varredura
+nos quatro ativos e com múltiplos \emph{seeds} seria mais robusta. Igualmente,
+\texttt{lstm\_units} e \texttt{dropout} foram herdados da literatura, sem
+varredura própria --- assumido como escopo.
+\end{honesto}

@@ -1,0 +1,70 @@
+\section{Múltiplas redes vs.\ uma rede única}
+\label{sec:debate-multi}
+
+\begin{confronto}
+Treinar quatro modelos separados (um por ativo) desperdiça dados e esforço. Por
+que não uma única rede, treinada com os quatro ativos juntos, que generalizaria
+melhor?
+\end{confronto}
+
+\subsection{A razão de fundo: ``normalidade'' é específica do ativo}
+O detector funciona aprendendo \emph{o que é normal}. Mas a normalidade de cada
+ativo é distinta: a volatilidade típica, a autocorrelação e o regime de risco de
+PETR4 (energia, sensível a petróleo e política) não são os de ITUB4 (banco,
+mais estável) nem os de AMER3 (varejo, que entrou em colapso). Uma rede única
+aprenderia uma normalidade \emph{média} --- e a média de comportamentos
+heterogêneos não descreve bem nenhum deles.
+
+\begin{intuicao}
+Um médico que atende só cardiologistas aprende com precisão o ``normal'' daquele
+grupo. Um clínico que mistura recém-nascidos, atletas e idosos num só padrão de
+referência classificaria mal todos: o batimento normal de um bebê alarmaria como
+anômalo num idoso. Cada ativo é uma ``população'' com sua fisiologia.
+\end{intuicao}
+
+\subsection{O objetivo do projeto exige a separação}
+A proposta do NeuraTrade é \textbf{comparar a generalização entre setores}
+(energia, mineração, varejo, financeiro). Essa comparação \emph{só faz sentido}
+com um modelo por ativo: é o que permite afirmar ``o detector de AMER3 cobre 9
+de 10 dos seus eventos'' ou ``um choque sistêmico (COVID) acende em todos os
+quatro''. Uma rede única dissolveria a unidade de análise (o ativo/setor) que é
+o próprio objeto de estudo.
+
+\subsection{Os contra-argumentos, honestamente}
+A rede única tem vantagens reais, que reconhecemos:
+
+\begin{table}[h]
+\centering
+\caption{Modelo por ativo (adotado) vs.\ rede única (alternativa).}
+\label{tab:multi}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{p{4.0cm} p{4.6cm} p{4.9cm}}
+\toprule
+ & \textbf{Um modelo por ativo (adotado)} & \textbf{Rede única (todos os ativos)} \\
+\midrule
+Especificidade & Alta: capta o regime de cada ativo & Baixa: aprende uma média \\
+Dados por modelo & $\approx$2450 janelas & $\approx$9800 janelas (4$\times$) \\
+Comparação setorial & Direta e interpretável & Indireta / perdida \\
+Risco de \emph{overfitting} & Maior (menos dados) & Menor (mais dados) \\
+Custo / manutenção & 4 modelos para treinar e versionar & 1 modelo \\
+Transferência entre ativos & Nenhuma & Implícita (pode ajudar ativos com pouco histórico) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Por que, no saldo, a separação vence aqui.} O volume de dados por
+ativo ($\approx$2450 janelas) é \emph{suficiente} para a rede pequena adotada
+(Seção~\ref{sec:debate-arq-prof}), então o principal trunfo da rede única (mais
+dados) não é decisivo. Já a especificidade da normalidade e a exigência de
+comparação setorial são centrais ao problema. O custo de manter quatro modelos
+pequenos é baixo e a configuração é centralizada (um \texttt{config.yaml}, o
+mesmo código, só o ativo muda).
+
+\begin{tradeoff}
+Modelo por ativo troca ``mais dados e um artefato único'' por ``especificidade e
+comparabilidade setorial''. Para um problema cujo \emph{objetivo declarado} é
+comparar setores, a troca é favorável. Num cenário com centenas de ativos, ou
+com ativos de histórico curto, uma \textbf{arquitetura intermediária} ---
+um modelo global com \emph{embedding} de ativo, ou \emph{fine-tuning} por ativo
+sobre uma base compartilhada --- seria o próximo passo natural.
+\end{tradeoff}

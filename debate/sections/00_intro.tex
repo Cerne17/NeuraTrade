@@ -1,0 +1,24 @@
+\section{Como ler este documento}
+\label{sec:debate-intro}
+
+As perguntas aqui enfrentadas são do tipo que uma banca faz para testar se o
+projeto entende as \emph{consequências} de suas escolhas --- não apenas se
+seguiu uma receita. Por isso cada decisão é defendida junto com o que ela
+\emph{custa} e o que ela \emph{deixa de fora}.
+
+Recapitulando o objeto em uma linha: o NeuraTrade detecta anomalias de forma
+\textbf{não supervisionada} em quatro ações da B3 (PETR4, VALE3, AMER3, ITUB4),
+treinando um \textbf{LSTM-Autoencoder por ativo} sobre log-retornos de
+2010--2019 (``normalidade'') e sinalizando, em 2020--2024, as janelas cujo
+\textbf{erro de reconstrução} ultrapassa um limiar.
+
+\medskip
+\noindent\textbf{Mapa das confrontações:}
+\begin{enumerate}[noitemsep]
+  \item Base de dados extremamente desbalanceada (Seção~\ref{sec:debate-desbal}).
+  \item Escolha e desenho da arquitetura (Seção~\ref{sec:debate-arq}):
+    por que LSTM-Autoencoder, por que os nós de entrada, profundidade e largura.
+  \item Metodologia de validação (Seção~\ref{sec:debate-valid}), incluindo o
+    papel da validação cruzada na seleção de modelos.
+  \item Por que múltiplas redes em vez de uma rede única (Seção~\ref{sec:debate-multi}).
+\end{enumerate}
