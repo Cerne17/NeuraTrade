@@ -51,11 +51,10 @@ runs/
 Thumbs.db             # Windows
 *~                    # backups do Vim/Neovim
 
-# === Scripts (ferramenta local) ===
-# Geradores de notebook (build_0*.py) NAO sao versionados (so o .ipynb resultante).
-# Utilitarios uteis ao projeto sao reincluidos por excecao abaixo.
-scripts/*
-!scripts/build_figures.py
+# === Scripts (M10) ===
+# scripts/ agora e VERSIONADO: utilitarios uteis ao leitor (runner da pipeline,
+# cache de dados, regeneracao de figuras). Ver scripts/README.md.
+# Geradores ad-hoc de notebook nao sao mantidos aqui (notebooks ja vem com saidas).
 
 # === Agentes ===
 .claude/
