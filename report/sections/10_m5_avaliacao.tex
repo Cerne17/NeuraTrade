@@ -1,0 +1,68 @@
+\section{M5 --- Avaliação Quantitativa por Injeção Sintética}
+\label{sec:m5}
+
+\subsection{Motivação e desenho}
+O problema é não supervisionado: não há rótulos de anomalia reais. Para obter
+métricas quantitativas (\emph{Precision}, \emph{Recall}, F1) injetam-se anomalias em
+posições \emph{conhecidas} da série de teste, produzindo um \emph{ground-truth}
+controlado (ADR-0006). Foram inseridos $n=50$ \emph{price shocks} por ativo, em posições
+aleatórias (\emph{seed} fixa), somando um delta de magnitude \texttt{price\_shock}$=0{,}15$
+ao log-retorno \textbf{já escalado} --- o mesmo espaço em que o modelo foi treinado.
+Injetar no preço bruto produziria choques de magnitude variável conforme o nível de preço
+do ativo.
+
+\subsection{Regra de rotulagem por janela}
+Como o modelo processa janelas de 30 passos, um choque em qualquer posição eleva o erro de
+reconstrução de toda a janela. Adota-se, portanto, a regra: uma janela é positiva se
+\textbf{qualquer} passo injetado cair dentro dela. Os vetores de rótulo e de \emph{flags}
+do detector ficam alinhados janela a janela, seguindo a mesma indexação de
+\texttt{make\_windows} (Seção~\ref{sec:m2}), o que evita desalinhamento temporal no cálculo
+das métricas.
+
+\subsection{Resultados}
+A Tabela~\ref{tab:metrics} apresenta as métricas por ativo, comparando limiar estático
+(p95 do treino) e dinâmico (calculado sobre os erros da série perturbada). O padrão é
+claro e metodologicamente informativo:
+\begin{itemize}[noitemsep]
+  \item O \emph{recall} é \textbf{uniformemente baixo} nos ativos de regime estável
+        (PETR4, VALE3: recall $<7\%$). Com magnitude \emph{absoluta} de $0{,}15$ no espaço
+        escalado, o choque sintético é comparável ao ruído normal desses ativos e raramente
+        empurra a janela acima do limiar.
+  \item Onde o regime de erro de base é mais alto (AMER3, ITUB4), os choques são detectados
+        com mais frequência (AMER3 estático: recall $\approx$30\%, F1 $\approx$0{,}42).
+  \item O limiar dinâmico tende a elevar a \emph{precision} (ex.\ VALE3 e ITUB4 acima de
+        0{,}9), por se ajustar ao ruído local, mas sem ganho de \emph{recall}.
+\end{itemize}
+
+\begin{table}[h]
+\centering
+\caption{Precision / Recall / F1 do detector contra o \emph{ground-truth} sintético
+($n=50$ \emph{price shocks}, \texttt{price\_shock}$=0{,}15$).}
+\label{tab:metrics}
+\begin{tabular}{llccc}
+\toprule
+\textbf{Ticker} & \textbf{Limiar} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} \\
+\midrule
+PETR4.SA & estático & 0{,}139 & 0{,}006 & 0{,}011 \\
+PETR4.SA & dinâmico & 0{,}548 & 0{,}020 & 0{,}038 \\
+VALE3.SA & estático & 0{,}111 & 0{,}005 & 0{,}009 \\
+VALE3.SA & dinâmico & 0{,}964 & 0{,}061 & 0{,}115 \\
+AMER3.SA & estático & 0{,}694 & 0{,}303 & 0{,}421 \\
+AMER3.SA & dinâmico & 0{,}605 & 0{,}120 & 0{,}200 \\
+ITUB4.SA & estático & 0{,}769 & 0{,}130 & 0{,}222 \\
+ITUB4.SA & dinâmico & 0{,}939 & 0{,}036 & 0{,}069 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Leitura crítica}
+O \emph{recall} baixo \textbf{não} indica falha do detector, mas que a magnitude de injeção é
+\textbf{provisória e absoluta}: a dificuldade da tarefa varia arbitrariamente entre ativos,
+penalizando os de baixa volatilidade. Esta é a evidência empírica que motiva a recomendação
+do ADR-0006: calibrar o choque em $k$ desvios-padrão do retorno \emph{de cada ativo}, tornando
+a dificuldade comparável entre setores. A avaliação corrente, portanto, é um piso
+metodológico --- valida o \emph{pipeline} de métricas (injeção $\to$ rotulagem $\to$
+P/R/F1), e não um resultado final. Adicionalmente, a taxa-base de $\approx$5\% imposta pelo
+p95 (Seção~\ref{sec:m4}) limita a \emph{precision} máxima atingível e deve ser lida em
+conjunto. A injeção de \emph{volume spikes} (chave \texttt{volume\_spike} no
+\texttt{config.yaml}) permanece prevista mas ainda não implementada nesta etapa.

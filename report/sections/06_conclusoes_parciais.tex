@@ -3,7 +3,9 @@
 
 Até este ponto, o projeto estabeleceu uma base reprodutível (M0), validou a
 qualidade dos dados (M1), construiu a representação de entrada (M2), treinou os modelos
-(M3) e formalizou os limiares de detecção (M4). Os principais resultados parciais são:
+(M3), formalizou os limiares de detecção (M4), avaliou-os quantitativamente por injeção
+sintética (M5) e cruzou as detecções com eventos reais e setores (M6). Os principais
+resultados parciais são:
 \begin{itemize}[noitemsep]
   \item Infraestrutura com configuração centralizada, \emph{seeds} fixas e proveniência
         documentada de cada hiperparâmetro, separando escolhas fundamentadas de valores
@@ -20,13 +22,20 @@ qualidade dos dados (M1), construiu a representação de entrada (M2), treinou o
   \item Limiares de detecção implementados: sob mudança de regime, o estático satura
         (AMER3 $\approx$27\%) enquanto o dinâmico causal se recalibra ($\approx$14\%),
         evidência empírica a favor do esquema dinâmico (Seção~\ref{sec:m4}).
+  \item \emph{Pipeline} de avaliação quantitativa pronto: injeção sintética $\to$ rotulagem
+        por janela $\to$ Precision/Recall/F1 (Seção~\ref{sec:m5}). A magnitude absoluta
+        provisória ($0{,}15$) produz \emph{recall} baixo em ativos estáveis, evidenciando
+        empiricamente a necessidade de calibrar o choque em $k\sigma$ por ativo.
+  \item Validação narrativa e setorial (Seção~\ref{sec:m6}): eventos sistêmicos (COVID)
+        disparam em todos os ativos e eventos idiossincráticos isolam-se no ativo afetado
+        (AMER3 cobre 9/10 de seus eventos), confirmando a generalização cruzada por ativo.
 \end{itemize}
 
-\paragraph{Próximos passos (M5 --- Avaliação).} Avaliar quantitativamente (Precision,
-Recall, F1) via injeção de anomalias sintéticas em posições conhecidas, comparando limiar
-estático, dinâmico e o baseline, com calibração das magnitudes de injeção e da janela
-dinâmica relativas a cada ativo. A etapa final (M6) cobrirá a correlação com eventos
-históricos e a comparação setorial.
+\paragraph{Próximos passos (M7 --- Refinamento e fechamento).} Calibrar as magnitudes de
+injeção relativas ao desvio-padrão de cada ativo (ADR-0006) e conduzir o estudo de
+sensibilidade da janela dinâmica (\texttt{dynamic\_window} $\in \{126, 252, 504\}$, ADR-0005),
+revalidando as métricas; estender a injeção a \emph{volume spikes}; e consolidar as
+evidências no artigo final.
 
 \paragraph{Registro de decisões.} Todas as decisões de configuração estão documentadas
 como ADRs em \texttt{docs/adr/}. Este relatório é atualizado a cada fechamento de
