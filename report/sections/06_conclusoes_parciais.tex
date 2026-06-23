@@ -31,11 +31,17 @@ resultados parciais são:
         (AMER3 cobre 9/10 de seus eventos), confirmando a generalização cruzada por ativo.
 \end{itemize}
 
-\paragraph{Próximos passos (M7 --- Refinamento e fechamento).} Calibrar as magnitudes de
-injeção relativas ao desvio-padrão de cada ativo (ADR-0006) e conduzir o estudo de
-sensibilidade da janela dinâmica (\texttt{dynamic\_window} $\in \{126, 252, 504\}$, ADR-0005),
-revalidando as métricas; estender a injeção a \emph{volume spikes}; e consolidar as
-evidências no artigo final.
+\paragraph{Refinamentos da M7.} Três pendências metodológicas foram fechadas: (i) o estudo de
+sensibilidade da janela dinâmica confirmou \texttt{dynamic\_window}=252 (126 é ruidoso, 504
+colapsa a marcação --- Seção~\ref{sec:m4-sensibilidade}); (ii) a injeção foi recalibrada para
+magnitude relativa $k\sigma$ por ativo, revelando que a detectabilidade é limitada pela
+diluição do choque na janela e pelo regime de erro do ativo, não pela magnitude
+(Seção~\ref{sec:m5-ksigma}); (iii) a injeção de \emph{volume spikes} foi caracterizada como
+fora do escopo da arquitetura univariada atual.
+
+\paragraph{Próximos passos.} Consolidar as evidências no artigo final e, como trabalho futuro,
+avaliar um autoencoder multivariado (OHLCV) que viabilize \emph{volume spikes} e um erro de
+reconstrução por máximo na janela, ambos para aumentar a sensibilidade a choques pontuais.
 
 \paragraph{Registro de decisões.} Todas as decisões de configuração estão documentadas
 como ADRs em \texttt{docs/adr/}. Este relatório é atualizado a cada fechamento de

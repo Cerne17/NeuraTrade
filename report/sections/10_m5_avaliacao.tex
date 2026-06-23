@@ -64,5 +64,44 @@ a dificuldade comparável entre setores. A avaliação corrente, portanto, é um
 metodológico --- valida o \emph{pipeline} de métricas (injeção $\to$ rotulagem $\to$
 P/R/F1), e não um resultado final. Adicionalmente, a taxa-base de $\approx$5\% imposta pelo
 p95 (Seção~\ref{sec:m4}) limita a \emph{precision} máxima atingível e deve ser lida em
-conjunto. A injeção de \emph{volume spikes} (chave \texttt{volume\_spike} no
-\texttt{config.yaml}) permanece prevista mas ainda não implementada nesta etapa.
+conjunto.
+
+\subsection{Calibração relativa \texorpdfstring{$k\sigma$}{k-sigma}}
+\label{sec:m5-ksigma}
+Atendendo à recomendação do ADR-0006, a injeção foi reimplementada com magnitude
+\textbf{relativa}: $\text{mag} = k\sigma$, com $\sigma$ igual ao desvio-padrão dos retornos
+escalados de treino (normalidade) de cada ativo e $k=4$ (um choque de quatro desvios-padrão).
+Assim ``um choque de $4\sigma$'' tem o mesmo significado estatístico em todos os ativos. A
+Tabela~\ref{tab:ksigma} traz as métricas resultantes (limiar estático).
+
+\begin{table}[h]
+\centering
+\caption{Métricas com choque relativo de $4\sigma$ por ativo (limiar estático).}
+\label{tab:ksigma}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Ticker} & \textbf{mag ($4\sigma$)} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} \\
+\midrule
+PETR4.SA & 0{,}345 & 0{,}205 & 0{,}009 & 0{,}018 \\
+VALE3.SA & 0{,}246 & 0{,}396 & 0{,}024 & 0{,}046 \\
+AMER3.SA & 0{,}273 & 0{,}763 & 0{,}429 & 0{,}549 \\
+ITUB4.SA & 0{,}312 & 0{,}826 & 0{,}185 & 0{,}303 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A calibração melhora as métricas onde já havia sinal (AMER3 F1 $0{,}42 \to 0{,}55$), mas o
+resultado central é negativo e instrutivo: \textbf{a magnitude não equaliza a dificuldade
+entre ativos}. Mesmo a $4\sigma$ --- e em testes a $6\sigma$ --- o \emph{recall} dos ativos
+estáveis permanece baixo. A restrição dominante não é o tamanho do choque, mas (i) a altura
+do limiar p95 relativa ao regime de erro de cada ativo e (ii) a \textbf{diluição por janela}:
+um choque de um único passo entra no MAE \emph{médio} de uma janela de 30 passos, contribuindo
+cerca de $1/30$ do erro. Aumentar a sensibilidade exigiria choques multi-passo, um erro por
+\emph{máximo} na janela (em vez de média) ou um limiar por ativo mais agressivo --- registrado
+como trabalho futuro.
+
+\paragraph{\emph{Volume spikes}.} A injeção de \emph{volume spikes} (chave
+\texttt{volume\_spike}) \textbf{não é aplicável} à arquitetura atual: o modelo é univariado
+(entrada = log-retornos de \texttt{Close}), de modo que uma perturbação de volume não altera o
+erro de reconstrução. Avaliá-la exigiria um autoencoder multivariado (OHLCV), o que reabriria
+M3/M4; fica registrada como trabalho futuro (ADR-0006).
