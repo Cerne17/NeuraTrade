@@ -55,6 +55,15 @@ ITUB4.SA & dinâmico & 0{,}939 & 0{,}036 & 0{,}069 \\
 \end{tabular}
 \end{table}
 
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.95\textwidth]{m5_distribuicao_erro}
+\caption{Distribuição do erro de reconstrução (MAE) de treino e teste, com o limiar p95
+(tracejado). A cauda direita da distribuição de teste além do limiar concentra as janelas
+candidatas a anomalia; o deslocamento treino\,$\to$\,teste é mais acentuado no AMER3.}
+\label{fig:m5-dist}
+\end{figure}
+
 \subsection{Leitura crítica}
 O \emph{recall} baixo \textbf{não} indica falha do detector, mas que a magnitude de injeção é
 \textbf{provisória e absoluta}: a dificuldade da tarefa varia arbitrariamente entre ativos,

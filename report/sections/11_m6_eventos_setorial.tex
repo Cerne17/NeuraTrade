@@ -21,6 +21,15 @@ relevante --- o \textbf{casamento entre evento e ativo afetado}:
         calibrado para a cauda do erro (p95).
 \end{itemize}
 
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{m6_amer3_detalhe}
+\caption{AMER3 (2022--2024): erro de reconstrução, janelas anômalas (pontos vermelhos) e
+eventos (linhas pontilhadas). O pico de erro de jan/2023 coincide com a fraude contábil e o
+pedido de recuperação judicial.}
+\label{fig:m6-amer3}
+\end{figure}
+
 \subsection{Comparação setorial}
 Com um modelo por ativo, comparam-se as taxas de marcação entre setores
 (Tabela~\ref{tab:setorial}). As taxas reproduzem o achado da M4: PETR4 (energia) e VALE3
@@ -55,6 +64,14 @@ Em contraste, eventos setor-específicos --- Brumadinho ($\to$ VALE3), fraude Am
 A combinação dos dois comportamentos evidencia que os modelos, treinados por ativo, captam
 tanto choques de mercado amplos quanto eventos idiossincráticos --- o objetivo de
 generalização cruzada declarado na proposta.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{m6_covid_contagio}
+\caption{\emph{Crash} da COVID (fev--mai/2020): os quatro ativos, de setores distintos,
+sinalizam anomalias concentradas no mesmo período, confirmando o contágio sistêmico.}
+\label{fig:m6-covid}
+\end{figure}
 
 \paragraph{Limitações em aberto.} O estudo de sensibilidade da janela dinâmica
 (\texttt{dynamic\_window} $\in \{126, 252, 504\}$) previsto no ADR-0005 e a calibração das
