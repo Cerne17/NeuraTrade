@@ -1,0 +1,69 @@
+\section{Séries temporais e redes recorrentes (LSTM)}
+\label{sec:lstm}
+
+\subsection{Por que uma MLP comum não basta}
+Uma MLP trata cada entrada como um conjunto de números \emph{sem ordem}. Mas em
+uma série temporal a \textbf{ordem é a informação}: ``subiu três dias e caiu no
+quarto'' é diferente de ``caiu e subiu três''. Precisamos de uma rede que tenha
+\emph{memória} da sequência.
+
+\subsection{Redes recorrentes (RNN)}
+\begin{definicao}[RNN]
+Uma rede recorrente processa a sequência passo a passo, carregando um
+\textbf{estado} (uma ``memória'') que é atualizado a cada novo elemento. Assim, a
+saída no dia $t$ depende não só de $x_t$, mas de tudo que veio antes.
+\end{definicao}
+
+RNNs simples têm um problema: ao processar sequências longas, o sinal de
+aprendizado ou \emph{some} (gradiente que desaparece) ou \emph{explode}, e a rede
+``esquece'' o que viu há muitos passos.
+
+\subsection{LSTM: memória com portões}
+A \textbf{LSTM} (\emph{Long Short-Term Memory}) resolve isso com uma célula de
+memória controlada por \textbf{portões} (\emph{gates}) --- pequenas
+sub-redes que decidem, a cada passo:
+\begin{itemize}[noitemsep]
+  \item \textbf{esquecer}: o que descartar da memória antiga;
+  \item \textbf{entrada}: o que da informação nova guardar;
+  \item \textbf{saída}: o que da memória expor como resultado do passo.
+\end{itemize}
+
+\begin{intuicao}
+Pense na LSTM como um leitor com um caderno de anotações. A cada frase ele
+decide o que apagar, o que anotar de novo e o que usar agora. Esse controle
+ativo da memória deixa a LSTM lembrar de padrões relevantes por muito mais tempo
+que uma RNN simples --- ideal para capturar regimes de volatilidade que se
+estendem por semanas.
+\end{intuicao}
+
+\subsection{Janelas deslizantes: fatiando o tempo}
+A LSTM recebe \emph{sequências de tamanho fixo}. Convertemos a série contínua em
+pedaços com a técnica da \textbf{janela deslizante}: uma janela de comprimento
+$L$ varre a série de uma em uma posição.
+
+\begin{exemplo}
+Série $[a,b,c,d,e]$ com janelas de tamanho 3 vira:
+$[a,b,c],\ [b,c,d],\ [c,d,e]$. Cada janela é uma ``frase'' de 3 dias que a LSTM
+lê inteira.
+\end{exemplo}
+
+\begin{lstlisting}[caption={Gerando janelas de tamanho fixo a partir de um vetor 1D.}]
+import numpy as np
+def make_windows(valores, L=30, passo=1):
+    idx = range(0, len(valores) - L + 1, passo)
+    janelas = np.stack([valores[i:i+L] for i in idx])
+    return janelas[..., np.newaxis]   # forma (n_janelas, L, 1)
+\end{lstlisting}
+
+A forma final \texttt{(n\_janelas, L, 1)} é o que a LSTM espera: $n$ exemplos, cada
+um com $L$ passos no tempo e $1$ variável por passo (o log-retorno).
+
+\begin{naprat}
+Usamos janelas de \textbf{30 passos} (\texttt{window\_size=30}) --- cerca de seis
+semanas úteis ---, valor consagrado em implementações de referência de detecção
+de anomalias com LSTM. As janelas são geradas \emph{dentro} de cada partição
+(treino e teste separadamente), para que nenhuma janela cruze a fronteira
+temporal e reintroduza vazamento. Uma consequência (importante na avaliação): como
+as janelas se sobrepõem, um único dia anômalo aparece em até 30 janelas
+consecutivas --- uma anomalia vira uma ``rajada'' de marcações.
+\end{naprat}

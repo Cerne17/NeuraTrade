@@ -1,0 +1,42 @@
+\section{O problema, em uma frase}
+\label{sec:intro}
+
+\textbf{Queremos que um computador aprenda sozinho como é o comportamento
+``normal'' do preço de uma ação e, depois, aponte os dias em que esse
+comportamento foge do normal} --- sem que ninguém precise dizer de antemão
+quais dias são ``estranhos''.
+
+Isso é \emph{detecção não supervisionada de anomalias}. ``Não supervisionada''
+porque não temos uma lista de respostas certas (quais dias são anômalos);
+o modelo precisa inferir a normalidade apenas observando os dados.
+
+\begin{intuicao}
+Pense em alguém que ouve uma orquestra todos os dias por dez anos. Sem nunca
+ter recebido uma ``lista de erros'', essa pessoa passa a estranhar
+imediatamente quando um instrumento desafina --- porque aprendeu, por
+exposição, como soa o normal. Nosso modelo faz o mesmo com preços de ações.
+\end{intuicao}
+
+\subsection{O caso concreto do NeuraTrade}
+Estudamos quatro ações da bolsa brasileira (B3), uma por setor:
+\textbf{PETR4} (Petrobras, energia), \textbf{VALE3} (Vale, mineração),
+\textbf{AMER3} (Americanas, varejo) e \textbf{ITUB4} (Itaú, financeiro).
+Treinamos um modelo \emph{por ação} usando os anos de 2010 a 2019 como
+``período normal'', e depois pedimos a ele que examine 2020 a 2024 e sinalize
+os trechos anômalos. Por fim, conferimos se os trechos sinalizados coincidem
+com eventos reais (crise da COVID, fraude da Americanas, etc.).
+
+\subsection{Como ler este guia}
+A ordem é de baixo para cima: primeiro os tijolos (finanças, estatística,
+redes neurais), depois como eles se montam no modelo (LSTM-Autoencoder) e,
+enfim, como detectamos e avaliamos anomalias. Três tipos de caixa aparecem ao
+longo do texto:
+
+\begin{itemize}[noitemsep]
+  \item \textbf{Intuição} --- a ideia em linguagem comum, sem fórmulas.
+  \item \textbf{Exemplo} --- um caso numérico pequeno, às vezes fora de finanças.
+  \item \textbf{No NeuraTrade} --- a ponte entre a teoria e a decisão real do projeto.
+\end{itemize}
+
+\noindent Os trechos de código são em Python e servem para tornar a ideia
+concreta; entendê-los não é obrigatório para acompanhar o raciocínio.

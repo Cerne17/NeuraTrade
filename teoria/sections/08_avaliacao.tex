@@ -1,0 +1,97 @@
+\section{Avaliação: como saber se está funcionando}
+\label{sec:avaliacao}
+
+\subsection{O dilema: não temos gabarito}
+Por ser não supervisionado, não temos uma lista oficial de dias anômalos para
+comparar. Como medir acerto sem gabarito? Criamos um \textbf{gabarito artificial}.
+
+\subsection{Injeção sintética de anomalias}
+\begin{definicao}[Injeção sintética]
+Inserimos, de propósito, perturbações (\emph{choques}) em \emph{posições
+conhecidas} da série de teste. Como sabemos exatamente onde colocamos cada
+choque, podemos verificar se o detector os encontra.
+\end{definicao}
+
+\begin{lstlisting}[caption={Injetar choques em posições aleatórias (gera o gabarito).}]
+import numpy as np
+rng = np.random.default_rng(42)         # seed fixa -> reprodutivel
+pos = rng.choice(len(serie), size=50, replace=False)
+perturbada = serie.copy()
+perturbada[pos] += magnitude            # o "choque"
+gabarito = np.zeros(len(serie), int); gabarito[pos] = 1
+\end{lstlisting}
+
+\subsection{As métricas: precisão, revocação e F1}
+Comparando o que o detector marcou com o gabarito, cada janela cai em uma de
+quatro caixas (a \textbf{matriz de confusão}):
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+ & \textbf{É anomalia (gabarito)} & \textbf{Não é} \\
+\midrule
+\textbf{Detector marcou}    & VP (verdadeiro positivo) & FP (falso positivo) \\
+\textbf{Detector não marcou}& FN (falso negativo)      & VN (verdadeiro negativo) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{definicao}[Precision, Recall, F1]
+\begin{align*}
+\text{Precision} &= \frac{VP}{VP+FP} \quad\text{(dos que marquei, quantos eram mesmo?)},\\
+\text{Recall} &= \frac{VP}{VP+FN} \quad\text{(das anomalias reais, quantas peguei?)},\\
+\text{F1} &= 2\cdot\frac{\text{Precision}\cdot\text{Recall}}{\text{Precision}+\text{Recall}} \quad\text{(média harmônica das duas)}.
+\end{align*}
+\end{definicao}
+
+\begin{intuicao}[Exemplo médico]
+Um teste de doença. \textbf{Recall} alto: pega quase todos os doentes (poucos
+escapam) --- mas pode alarmar gente saudável. \textbf{Precision} alta: quando
+alarma, quase sempre acerta --- mas pode deixar passar casos. Quase sempre há um
+\emph{trade-off}: aumentar um tende a baixar o outro. O \textbf{F1} resume os
+dois em um número, punindo desequilíbrios (se um for baixo, o F1 cai).
+\end{intuicao}
+
+\begin{lstlisting}[caption={Métricas com scikit-learn.}]
+from sklearn.metrics import precision_score, recall_score, f1_score
+p  = precision_score(gabarito_janela, marcado_janela, zero_division=0)
+r  = recall_score(gabarito_janela, marcado_janela, zero_division=0)
+f1 = f1_score(gabarito_janela, marcado_janela, zero_division=0)
+\end{lstlisting}
+
+\subsection{Duas armadilhas que aprendemos na prática}
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.92\textwidth]{m5_distribuicao_erro}
+\caption{Distribuição do erro de reconstrução (treino vs.\ teste) com o limiar
+p95. A cauda à direita do limiar concentra as janelas marcadas; o deslocamento
+treino$\to$teste é bem maior no AMER3.}
+\label{fig:teoria-m5}
+\end{figure}
+
+\begin{itemize}[noitemsep]
+  \item \textbf{Taxa-base.} Como o p95 já marca $\approx$5\% das janelas por
+        construção (Seção~\ref{sec:estatistica}), há um piso de falsos positivos
+        que limita a \emph{precision} máxima. Sempre se reporta isso junto.
+  \item \textbf{Diluição por janela.} O erro é a \emph{média} sobre 30 passos.
+        Um choque de um único dia contribui só $\approx 1/30$ do erro da janela ---
+        logo é facilmente ``afogado''. Por isso o \emph{recall} de choques pontuais
+        é naturalmente baixo, sobretudo em ativos calmos.
+\end{itemize}
+
+\begin{definicao}[Calibração relativa $k\sigma$]
+Em vez de um choque de tamanho absoluto (igual para todos), usamos um choque de
+$k$ \emph{desvios-padrão} do próprio ativo: $\text{mag}=k\sigma$. Assim ``um
+choque de $4\sigma$'' tem o mesmo significado estatístico em todas as ações,
+tornando a dificuldade comparável entre elas.
+\end{definicao}
+
+\begin{naprat}
+Injetamos 50 choques por ativo e medimos P/R/F1 para os dois limiares.
+Descoberta honesta e instrutiva: mesmo calibrando em $4\sigma$, o \emph{recall}
+permanece baixo nos ativos estáveis --- não por culpa do choque, mas pela
+\textbf{diluição por janela} e pela altura do limiar. Conclusão: a avaliação
+sintética \emph{valida o procedimento de medição}, não entrega um número final
+de desempenho. Caminhos futuros: choques de vários dias ou usar o \emph{máximo}
+(em vez da média) do erro na janela.
+\end{naprat}

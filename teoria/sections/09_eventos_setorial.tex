@@ -1,0 +1,63 @@
+\section{Validação narrativa e comparação setorial}
+\label{sec:eventos}
+
+A avaliação sintética (Seção~\ref{sec:avaliacao}) é controlada porém artificial.
+Falta o teste de realidade: \textbf{as anomalias detectadas coincidem com eventos
+que de fato abalaram o mercado?}
+
+\subsection{Cruzar com a história}
+Montamos uma linha do tempo curada de eventos econômicos e políticos brasileiros
+de 2010 a 2024 (crash da COVID, fraude da Americanas, Brumadinho, intervenção na
+Petrobras, \emph{impeachment}, etc.). Cada evento é classificado como:
+\begin{itemize}[noitemsep]
+  \item \textbf{sistêmico}: afeta todo o mercado (ex.: COVID);
+  \item \textbf{idiossincrático}: específico de uma empresa (ex.: fraude da
+        Americanas $\to$ só AMER3).
+\end{itemize}
+
+\begin{definicao}[Tolerância de \emph{matching}]
+Dizemos que um evento foi ``coberto'' se houve ao menos uma anomalia detectada
+dentro de $\pm 30$ dias dele. A tolerância de 30 dias não é arbitrária: é o
+próprio tamanho da janela (\texttt{window\_size}), a granularidade natural da
+detecção. Datas de eventos também são âncoras aproximadas (o anúncio e a reação
+do mercado podem diferir em dias).
+\end{definicao}
+
+\subsection{Os dois testes que isso permite}
+\begin{itemize}[noitemsep]
+  \item \textbf{Contágio (sistêmico):} um evento que abala tudo deve acender
+        anomalia em \emph{todos} os ativos. A Figura~\ref{fig:teoria-m6} mostra o
+        crash da COVID disparando nos quatro, de setores distintos.
+  \item \textbf{Especificidade (idiossincrático):} um evento de uma empresa deve
+        acender \emph{só} nela. A fraude da Americanas isola-se em AMER3;
+        Brumadinho, em VALE3.
+\end{itemize}
+
+A combinação dos dois mostra que o modelo, treinado por ativo, captura tanto
+choques amplos de mercado quanto problemas específicos --- o objetivo de
+``generalização cruzada entre setores'' do projeto.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{m6_covid_contagio}
+\caption{Crash da COVID (fev--mai/2020): os quatro ativos, de setores diferentes,
+sinalizam anomalias concentradas no mesmo período --- evidência de contágio
+sistêmico.}
+\label{fig:teoria-m6}
+\end{figure}
+
+\begin{intuicao}[Por que cobertura ``só'' de 50\% não é ruim]
+A cobertura agregada de eventos fica em torno de 50\%, mas o número cru engana:
+o detector é calibrado para a \emph{cauda} (5\% maiores erros), então
+deliberadamente ignora eventos de impacto difuso e dispara nos mais fortes. O que
+importa é o \emph{casamento certo}: AMER3 cobre 9 de 10 dos seus eventos. Um
+detector que acendesse em tudo teria 100\% de cobertura e nenhuma utilidade ---
+de novo, o trade-off precision/recall da Seção~\ref{sec:avaliacao}.
+\end{intuicao}
+
+\begin{naprat}
+Como há \emph{uma} ação por setor ($n=1$), a comparação setorial é um
+\textbf{estudo de caso qualitativo}, não inferência estatística: diferenças
+podem refletir a empresa, não o setor. Reportamos isso explicitamente para não
+exagerar nas conclusões.
+\end{naprat}

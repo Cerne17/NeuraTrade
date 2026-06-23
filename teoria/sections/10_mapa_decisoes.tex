@@ -1,0 +1,52 @@
+\section{Mapa: decisão $\to$ teoria $\to$ registro}
+\label{sec:mapa}
+
+Cada decisão de projeto está registrada como um \emph{Architecture Decision
+Record} (ADR) em \texttt{docs/adr/}. A tabela abaixo liga cada ADR à seção
+teórica deste guia que o fundamenta, servindo de índice de estudo.
+
+\begin{table}[h]
+\centering
+\caption{Decisões do projeto, o conceito que as sustenta e onde estudá-lo.}
+\label{tab:mapa}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{p{1.4cm} p{6.2cm} p{5.2cm}}
+\toprule
+\textbf{ADR} & \textbf{Decisão} & \textbf{Base teórica (seção)} \\
+\midrule
+0001 & Split temporal \emph{antes} da normalização; scaler só no treino &
+Vazamento temporal (\ref{sec:vazamento}); normalização (\ref{sec:estatistica}) \\
+0002 & Janela de 30 passos (\texttt{window\_size}) &
+Janelas deslizantes (\ref{sec:lstm}) \\
+0003 & Arquitetura LSTM-Autoencoder, \texttt{latent\_dim}=16, perda MSE &
+Autoencoder (\ref{sec:autoencoder}); LSTM (\ref{sec:lstm}); perdas (\ref{sec:nn}) \\
+0004 & Treino: Adam, \emph{early stopping}, \texttt{shuffle=False} &
+Aprendizado e overfitting (\ref{sec:nn}); vazamento (\ref{sec:vazamento}) \\
+0005 & Limiar estático p95 + limiar dinâmico causal (252) &
+Percentil (\ref{sec:estatistica}); detecção e causalidade (\ref{sec:deteccao}) \\
+0006 & Avaliação por injeção sintética; calibração $k\sigma$; setorial &
+Métricas e matriz de confusão (\ref{sec:avaliacao}) \\
+0007 & Coleta, \texttt{auto\_adjust}, tratamento do AMER3 &
+Preço, \emph{splits} e log-retorno (\ref{sec:financas}) \\
+0008 & Linha do tempo de eventos; tolerância $\pm$\texttt{window\_size} &
+Validação narrativa e setorial (\ref{sec:eventos}) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{O fio condutor}
+Vale reter a corrente lógica que une tudo:
+\begin{enumerate}[noitemsep]
+  \item Preço $\to$ \textbf{log-retorno} (estaciona e compara) [\ref{sec:financas}].
+  \item Split temporal + normalização só no treino (\textbf{sem vazamento})
+        [\ref{sec:vazamento}].
+  \item Fatiar em \textbf{janelas} de 30 passos para a LSTM [\ref{sec:lstm}].
+  \item \textbf{LSTM-Autoencoder} aprende a reconstruir o normal
+        [\ref{sec:autoencoder}].
+  \item \textbf{Erro de reconstrução} alto = anomalia; limiar por
+        \textbf{percentil} [\ref{sec:deteccao}].
+  \item Avaliar com \textbf{injeção sintética} e P/R/F1; cruzar com
+        \textbf{eventos reais} [\ref{sec:avaliacao}, \ref{sec:eventos}].
+\end{enumerate}
+Cada elo existe para proteger o seguinte de uma falha conceitual --- a maioria
+delas, alguma forma de espiar o futuro.
