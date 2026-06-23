@@ -71,3 +71,31 @@ mineração, varejo, financeiro).
 >   `config.yaml`) segue previsto mas não usado.
 > - **Pendente:** calibração relativa a $\sigma$ e estudo de sensibilidade de `dynamic_window`
 >   ([ADR-0005](0005-thresholds-estatico-e-dinamico.md)).
+
+> **Atualização (M7, 2026-06-23) — calibração $k\sigma$, dilución por janela e escopo de volume.**
+> - **Implementado:** `inject_price_shocks` agora suporta magnitude **relativa**
+>   `mag = k_sigma * sigma` (`config.yaml: evaluation.shock_k_sigma = 4.0`), com `sigma` =
+>   desvio-padrão dos retornos escalados de **treino** (normalidade) por ativo. O modo
+>   absoluto (`shock_magnitude`) fica como override legado.
+> - **Métricas com choque de $4\sigma$ (limiar estático):**
+>
+>   | Ticker | mag | Precision | Recall | F1 |
+>   | --- | --- | --- | --- | --- |
+>   | PETR4.SA | 0,345 | 0,205 | 0,009 | 0,018 |
+>   | VALE3.SA | 0,246 | 0,396 | 0,024 | 0,046 |
+>   | AMER3.SA | 0,273 | 0,763 | 0,429 | 0,549 |
+>   | ITUB4.SA | 0,312 | 0,826 | 0,185 | 0,303 |
+>
+> - **Achado (importante):** a calibração $k\sigma$ é a injeção metodologicamente correta,
+>   mas **não equaliza a dificuldade entre ativos**. Mesmo a $4\sigma$ (e a $6\sigma$) o
+>   *recall* permanece baixo nos ativos estáveis. A restrição dominante **não** é a magnitude
+>   do choque, mas (i) a altura do limiar p95 relativa ao regime de erro de cada ativo e
+>   (ii) a **diluição por janela**: um choque de um único passo entra no MAE médio de uma
+>   janela de 30 passos, contribuindo ~1/30 do erro. Caminhos para aumentar sensibilidade
+>   (trabalho futuro): choques multi-passo, erro por **máximo** na janela em vez de média, ou
+>   limiar por ativo mais agressivo.
+> - **Volume spikes — fora de escopo:** o modelo é **univariado** (entrada = log-retornos de
+>   `Close`; `make_windows` produz `(n, 30, 1)`). Volume não é \emph{feature}, logo um
+>   *volume spike* não altera o erro de reconstrução e é indetectável pela arquitetura atual.
+>   A chave `evaluation.volume_spike` fica marcada como NÃO IMPLEMENTADA; avaliá-la exigiria
+>   um autoencoder multivariado (OHLCV), o que reabriria M3/M4 — registrado como trabalho futuro.
