@@ -46,12 +46,13 @@ train:
 # Detecção de anomalias via erro de reconstrução. Ver ADR-0005.
 detection:
   threshold_percentile: 95  # estatico: percentil do erro de TREINO (README). p95 robusto vs. max de Li (2020).
-  dynamic_window: 252        # dinamico: janela movel CAUSAL (~1 ano util de pregao). Provisorio; calibrar em M4.
+  dynamic_window: 252        # dinamico: janela movel CAUSAL (~1 ano util). Confirmado em M7: 126 ruidoso, 504 super-suave (~0%). ADR-0005.
 
 # Avaliação por injeção sintética. Ver ADR-0006 (Liu et al. 2025).
 evaluation:
   n_injections: 50          # PROVISORIO: sem fonte para o numero. Calibrar em M5.
-  price_shock: 0.15         # PROVISORIO: calibrar relativo a distribuicao real dos retornos.
-  volume_spike: 5.0         # PROVISORIO: multiplicador de volume; calibrar em M5.
+  shock_k_sigma: 4.0        # choque relativo = k * sigma do retorno escalado (4-sigma). Calibracao M7, ADR-0006.
+  price_shock: 0.15         # LEGADO: choque absoluto (modo override). Substituido por shock_k_sigma.
+  volume_spike: 5.0         # NAO IMPLEMENTADO: modelo e univariado (so log-retornos); exige extensao multivariada. ADR-0006.
 
 figures_dir: "figures"

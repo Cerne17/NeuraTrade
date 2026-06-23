@@ -21,6 +21,8 @@ def inject_price_shocks(
     test_scaled: np.ndarray,
     n_injections: int | None = None,
     shock_magnitude: float | None = None,
+    k_sigma: float | None = None,
+    sigma: float | None = None,
     seed: int | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Injeta price shocks em posições aleatórias da série de teste (issue #22).
@@ -29,13 +31,23 @@ def inject_price_shocks(
     espaço em que o modelo foi treinado. Injetar no preço bruto produziria um
     choque de magnitude variável dependendo do nível de preço do ativo.
 
+    Magnitude do choque (ADR-0006): por padrão é **relativa** à dispersão do
+    ativo, ``mag = k_sigma * sigma`` --- assim um "choque de k desvios-padrão"
+    tem o mesmo significado estatístico em todos os ativos, em vez de um valor
+    absoluto cuja dificuldade varia por ativo. Passe ``shock_magnitude`` para
+    forçar um valor absoluto (modo legado).
+
     Args:
         test_scaled: vetor 1D de log-retornos escalados do período de teste.
         n_injections: número de posições a perturbar. Usa
             ``CONFIG["evaluation"]["n_injections"]`` se ``None``.
-        shock_magnitude: delta somado ao log-retorno na posição injetada. Usa
-            ``CONFIG["evaluation"]["price_shock"]`` se ``None``. **PROVISÓRIO**
-            (ADR-0006): calibrar em k desvios-padrão do retorno real do ativo.
+        shock_magnitude: delta **absoluto** somado ao log-retorno escalado. Se
+            informado, tem precedência sobre ``k_sigma`` (modo legado, ADR-0006).
+        k_sigma: múltiplo de desvios-padrão do choque relativo. Usa
+            ``CONFIG["evaluation"]["shock_k_sigma"]`` se ``None``.
+        sigma: dispersão de referência (idealmente o desvio-padrão da
+            **normalidade**, i.e. dos retornos escalados de treino). Se ``None``,
+            usa ``np.std(test_scaled)``. Ignorado quando ``shock_magnitude`` é dado.
         seed: seed do gerador. Usa ``CONFIG["seed"]`` se ``None``.
 
     Returns:
@@ -47,10 +59,16 @@ def inject_price_shocks(
     """
     cfg = CONFIG["evaluation"]
     n = n_injections if n_injections is not None else cfg["n_injections"]
-    mag = shock_magnitude if shock_magnitude is not None else cfg["price_shock"]
     seed = seed if seed is not None else CONFIG["seed"]
 
     values = np.asarray(test_scaled, dtype="float32").ravel()
+
+    if shock_magnitude is not None:
+        mag = float(shock_magnitude)
+    else:
+        k = k_sigma if k_sigma is not None else cfg["shock_k_sigma"]
+        s = sigma if sigma is not None else float(np.std(values))
+        mag = float(k) * s
 
     if n > len(values):
         raise ValueError(
