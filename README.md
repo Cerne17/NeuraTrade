@@ -77,6 +77,22 @@ ITUB4.SA       max           1215         0.37819         0.0560        0.0543
 
 > **Rodando no Google Colab?** Veja o guia abaixo.
 
+### Aplicar os modelos a uma janela nova (fora do treino)
+
+Para rodar os modelos treinados em um período recente (ex.: Q1/2025) sem retreinar:
+
+```bash
+# 1) baixa a janela nova (não toca no cache de treino data/raw/)
+python scripts/fetch_window.py --start 2025-01-01 --end 2025-03-31
+
+# 2) inferência interativa: digita intervalo + ticker, lista as janelas anômalas
+python scripts/run_inference.py
+```
+
+A normalização e o limiar continuam sendo os do **treino** (normalidade 2010–2019), não
+reajustados sobre o período novo — "anomalia" segue significando *desvio da normalidade
+aprendida* (ADR-0001). Em código: `from src.inference import infer_all`.
+
 ---
 
 ## Google Colab
@@ -161,10 +177,13 @@ NeuraTrade/
 │   ├── detect.py             # erro de reconstrução (mean/max/percentil), limiares
 │   ├── validation.py         # validação Walk-Forward (TimeSeriesSplit), uni e multivariado
 │   ├── evaluate.py           # injeção sintética, precision/recall/f1
+│   ├── inference.py          # aplica modelos a janelas novas (fora do treino)
 │   ├── events.py             # linha do tempo de eventos BR
 │   └── viz.py                # plots padronizados
 ├── scripts/                  # UTILITÁRIOS (atalhos operacionais)
 │   ├── run_pipeline.py       # wrapper da CLI
+│   ├── fetch_window.py       # baixa uma janela nova (ex.: Q1/2025) → data/inference/
+│   ├── run_inference.py      # inferência interativa em janelas à escolha
 │   ├── cache_data.py         # refaz data/raw via yfinance (passo de rede)
 │   ├── build_figures.py      # regenera report/figures/
 │   └── README.md
