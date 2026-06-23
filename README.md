@@ -75,8 +75,70 @@ AMER3.SA       max           1215          0.2844         0.2700        0.1251
 ITUB4.SA       max           1215         0.37819         0.0560        0.0543
 ```
 
-**Colab:** clone o repo, `pip install -e .`, depois
-`from src.config import set_seeds, CONFIG; set_seeds()`.
+> **Rodando no Google Colab?** Veja o guia abaixo.
+
+---
+
+## Google Colab
+
+Roda inteiramente no Colab — útil para ter GPU grátis no treino e não instalar nada localmente.
+
+### 1. Setup (primeira célula)
+
+Crie um notebook novo em [colab.research.google.com](https://colab.research.google.com) e cole:
+
+```python
+# clona o repositório e instala o pacote (data/raw já vem versionado → roda offline)
+!git clone https://github.com/Cerne17/NeuraTrade.git
+%cd NeuraTrade
+!pip install -q -e .
+
+from src.config import set_seeds, CONFIG
+set_seeds()                      # reprodutibilidade (seed=42)
+print("tickers:", CONFIG["tickers"], "| agregação:", CONFIG["detection"]["aggregation"])
+```
+
+> O Colab já traz TensorFlow; o `pip install -e .` apenas registra o pacote `src` e garante as
+> demais dependências. Se o Colab pedir, clique em **"Restart runtime"** após a instalação e
+> rode a célula de setup de novo (sem reclonar: `%cd /content/NeuraTrade`).
+
+### 2. GPU (opcional, acelera o treino)
+
+**Runtime → Change runtime type → Hardware accelerator: T4 GPU.** Sem GPU o treino dos quatro
+modelos roda em CPU em poucos minutos; a detecção (sem `--train`) não precisa de GPU.
+
+### 3. Rodar a pipeline
+
+```python
+# treina os 4 modelos e imprime o resumo por ativo (models/ não é versionado)
+!python -m src --train
+
+# execuções seguintes (modelos já treinados na sessão):
+!python -m src
+```
+
+Ou chamando a função diretamente, para inspecionar o resultado como `DataFrame`:
+
+```python
+from src.pipeline import run_pipeline, summarize
+res = run_pipeline(train=True)   # 1ª vez; depois train=False
+summarize(res)
+```
+
+### 4. Rodar os estudos (notebooks)
+
+Após o clone, abra um notebook pelo painel de arquivos do Colab
+(`notebooks/03_train.ipynb`, etc.) **na mesma sessão** — ele já enxerga o `src/` instalado.
+Para abrir um notebook direto do GitHub (**File → Open notebook → GitHub →**
+`Cerne17/NeuraTrade`), adicione a célula de setup do passo 1 no topo antes de rodar as demais.
+
+### 5. Atualizar os dados (opcional, requer rede)
+
+Os CSVs já estão versionados; só rode isto para recriar o cache do zero:
+
+```python
+!python scripts/cache_data.py
+```
 
 ---
 
