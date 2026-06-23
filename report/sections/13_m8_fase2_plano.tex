@@ -2,10 +2,11 @@
 \label{sec:m8-fase2}
 
 As limitações declaradas na Seção~\ref{sec:limitacoes} não são acidentes, mas fronteiras
-assumidas. A segunda fase do projeto (milestone~M8) ataca três delas com mudanças cujas
-decisões já estão registradas como ADRs em status \emph{proposto} (ADR-0009, 0010 e 0011):
-ainda \textbf{não} implementadas nem calibradas, portanto sem impacto nos resultados aqui
-reportados. Esta seção documenta o plano e a ordem de prioridade.
+assumidas. A segunda fase do projeto (milestone~M8) ataca três delas com decisões registradas
+nos ADR-0009, 0010 e 0011. A lógica reusável das três já está implementada em \texttt{src/}; a
+agregação do erro (ADR-0009) foi, além disso, \textbf{calibrada e medida}
+(Seção~\ref{sec:m8-pooling-result}). As demais aguardam os notebooks de orquestração. Esta
+seção documenta o plano, a evidência disponível e a ordem de prioridade.
 
 \subsection{Agregação do erro por janela: \emph{max}/percentil (ADR-0009)}
 \label{sec:m8-pooling}
@@ -19,9 +20,38 @@ feita em duas etapas e nesta ordem: média sobre o eixo de \emph{features}, depo
 sobre o eixo \emph{temporal}.
 \par\noindent\textbf{Cuidado metodológico:} \emph{max}/percentil alteram toda a distribuição do
 erro; o limiar p95, calibrado sobre a média, \textbf{não} transfere e precisa ser recalculado
-sobre o mesmo escore agregado do treino (sob pena de inflar falsos positivos). O ganho esperado
-em \emph{recall} vem acompanhado de possível perda de \emph{precision}, a ser medida por P/R/F1
-nos quatro ativos.
+sobre o mesmo escore agregado do treino (sob pena de inflar falsos positivos).
+
+\subsubsection*{Evidência empírica (notebook \texttt{07\_aggregation\_recalibration})}
+\label{sec:m8-pooling-result}
+O limiar estático foi recalibrado por agregação e a injeção sintética de M5 ($k\sigma$) foi
+reavaliada nos quatro ativos. O p95 de \emph{max}/percentil é $\approx$3--4$\times$ o da média
+(p.\,ex.\ PETR4: $0{,}124$ vs.\ $0{,}408$), confirmando que reaproveitar o limiar antigo seria
+um erro. A Tabela~\ref{tab:m8-pooling} resume as métricas médias (limiar estático recalibrado):
+
+\begin{table}[h]
+\centering
+\caption{Agregação do erro por janela vs.\ Precision/Recall/F1, média dos quatro ativos com
+limiar estático recalibrado (ADR-0009).}
+\label{tab:m8-pooling}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Agregação} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} \\
+\midrule
+\texttt{mean} (anterior) & 0,548 & 0,162 & 0,229 \\
+\textbf{\texttt{max}} & \textbf{0,842} & \textbf{0,351} & \textbf{0,468} \\
+\texttt{percentile} (p90) & 0,706 & 0,209 & 0,288 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent O resultado é mais forte que o previsto: \emph{max} não apenas \textbf{dobrou o
+\emph{recall}} ($0{,}162 \to 0{,}351$) como, contrariando a hipótese de um \emph{trade-off},
+\textbf{também elevou a \emph{precision}} ($0{,}548 \to 0{,}842$). Com o choque de um dia
+separando-se nitidamente da normalidade no pior passo e o limiar recalibrado, caem
+simultaneamente falsos negativos e falsos positivos. Recomenda-se adotar \emph{max} na detecção;
+o \emph{default} de configuração permanece \texttt{mean} até que M4--M6 sejam reportados sob a
+nova agregação, preservando a reprodutibilidade dos números atuais.
 
 \subsection{Validação Walk-Forward (ADR-0010)}
 \label{sec:m8-walkforward}

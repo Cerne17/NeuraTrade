@@ -55,9 +55,11 @@ validation:
 detection:
   threshold_percentile: 95  # estatico: percentil do erro de TREINO (README). p95 robusto vs. max de Li (2020).
   dynamic_window: 252        # dinamico: janela movel CAUSAL (~1 ano util). Confirmado em M7: 126 ruidoso, 504 super-suave (~0%). ADR-0005.
-  # M8/ADR-0009: agregacao do erro na janela. Default mean = comportamento historico.
-  aggregation: "mean"        # mean (atual) | max | percentile. max/percentile preservam choque de 1 dia (Recall).
-  aggregation_percentile: 90 # usado quando aggregation == percentile. EXIGE recalibrar threshold (issue #47).
+  # M8/ADR-0009: agregacao do erro na janela. Default mean = reprodutibilidade de M4-M6.
+  # Evidencia (notebook 07, issue #47): max dobrou Recall (0.16->0.35) E elevou Precision
+  # (0.55->0.84). Recomendado max na deteccao; trocar quando M4-M6 forem reportados sob max.
+  aggregation: "mean"        # mean (atual) | max (recomendado) | percentile (p90, conservador).
+  aggregation_percentile: 90 # usado quando aggregation == percentile. EXIGE recalibrar threshold.
 
 # Avaliação por injeção sintética. Ver ADR-0006 (Liu et al. 2025).
 evaluation:
