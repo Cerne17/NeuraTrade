@@ -63,27 +63,32 @@ def apply_scaler(scaler: MinMaxScaler, series: pd.Series) -> np.ndarray:
 def make_windows(
     values: np.ndarray, window_size: int | None = None, step: int | None = None
 ) -> np.ndarray:
-    """Janelas deslizantes (issue #12).
+    """Janelas deslizantes (issue #12; multivariado em ADR-0011).
+
+    Aceita entrada 1D (univariado) ou 2D ``(T, n_features)`` (multivariado). Um
+    vetor 1D é tratado como uma única feature, preservando a saída histórica
+    ``(n_janelas, window_size, 1)``.
 
     Args:
-        values: vetor 1D (uma partição já normalizada).
+        values: vetor 1D ou matriz 2D ``(T, n_features)`` já normalizada.
         window_size/step: usam ``CONFIG["preprocessing"]`` se ``None``.
 
     Returns:
-        Tensor ``(n_janelas, window_size, 1)`` pronto para o LSTM. Vazio se a
-        partição for menor que ``window_size``.
+        Tensor ``(n_janelas, window_size, n_features)`` pronto para o LSTM. Vazio
+        se a partição for menor que ``window_size``.
     """
     window_size = window_size or CONFIG["preprocessing"]["window_size"]
     step = step or CONFIG["preprocessing"]["step"]
 
-    values = np.asarray(values, dtype="float32").ravel()
-    n = len(values)
+    values = np.asarray(values, dtype="float32")
+    if values.ndim == 1:
+        values = values[:, np.newaxis]
+    n, n_features = values.shape
     if n < window_size:
-        return np.empty((0, window_size, 1), dtype="float32")
+        return np.empty((0, window_size, n_features), dtype="float32")
 
     idx = range(0, n - window_size + 1, step)
-    windows = np.stack([values[i : i + window_size] for i in idx])
-    return windows[..., np.newaxis]
+    return np.stack([values[i : i + window_size] for i in idx])
 
 
 def preprocess_ticker(
@@ -113,4 +118,96 @@ def preprocess_ticker(
         "scaler": scaler,
         "train_index": r_train.index,
         "test_index": r_test.index,
+    }
+
+
+# --------------------------------------------------------------------------- #
+# Pipeline multivariado (OHLCV) — ADR-0011                                     #
+# --------------------------------------------------------------------------- #
+
+# Colunas de preço recebem log-retorno (estacionariza, igual ao caminho
+# univariado); Volume recebe log1p (nível, mas comprime a não-estacionariedade
+# que satura o MinMaxScaler no pós-2020). ADR-0011.
+PRICE_COLS = ("Open", "High", "Low", "Close")
+
+
+def build_features(
+    df: pd.DataFrame,
+    features: list[str] | None = None,
+    volume_log1p: bool = True,
+) -> pd.DataFrame:
+    """Monta o frame de features multivariadas (ADR-0011).
+
+    Cada coluna de preço (``Open/High/Low/Close``) vira log-retorno diário; o
+    ``Volume`` vira ``log1p(Volume)`` quando ``volume_log1p`` (padrão). As linhas
+    com ``NaN`` introduzidas pelo log-retorno (primeiro passo) são descartadas, de
+    modo que todas as colunas ficam alinhadas no mesmo índice.
+
+    Args:
+        features: colunas a usar, na ordem desejada. Usa
+            ``CONFIG["preprocessing"]["features"]`` se ``None``.
+        volume_log1p: aplica ``log1p`` ao ``Volume`` antes de escalar.
+
+    Returns:
+        ``DataFrame`` com uma coluna por feature, índice cronológico alinhado.
+    """
+    if features is None:
+        features = CONFIG["preprocessing"].get("features", ["Close"])
+
+    cols = {}
+    for feat in features:
+        if feat == "Volume":
+            cols[feat] = np.log1p(df[feat]) if volume_log1p else df[feat].astype(float)
+        elif feat in PRICE_COLS:
+            cols[feat] = np.log(df[feat] / df[feat].shift(1))
+        else:
+            raise ValueError(
+                f"feature desconhecida: {feat!r} (use OHLCV: {PRICE_COLS} ou 'Volume')."
+            )
+
+    return pd.DataFrame(cols, index=df.index)[features].dropna()
+
+
+def preprocess_ticker_multivariate(
+    df: pd.DataFrame,
+    features: list[str] | None = None,
+    train_end: str | None = None,
+    window_size: int | None = None,
+    step: int | None = None,
+    volume_log1p: bool = True,
+) -> dict:
+    """Pipeline multivariado de um ativo (ADR-0011): features → split → scaler → janelas.
+
+    Mantém a metodologia univariada ([ADR-0001]): split temporal **antes** da
+    normalização e ``MinMaxScaler`` ajustado **só no treino**. O ``MinMaxScaler``
+    escala **por coluna** — essencial porque Volume (~1e7) e log-retorno (~1e-2)
+    têm escalas incompatíveis; um scaler global faria o Volume dominar a perda.
+
+    Returns:
+        dict com ``X_train``/``X_test`` (tensores ``(n, window, n_features)``), o
+        ``scaler`` ajustado, os índices de datas e a lista ``features`` (ordem dos
+        canais, para atribuição do erro per-canal).
+    """
+    if features is None:
+        features = CONFIG["preprocessing"].get("features", ["Close"])
+    train_end = train_end or CONFIG["data"]["train_end"]
+
+    feats = build_features(df, features=features, volume_log1p=volume_log1p)
+    cut = pd.Timestamp(train_end)
+    train = feats.loc[feats.index <= cut]
+    test = feats.loc[feats.index > cut]
+
+    # Scaler por coluna, ajustado SÓ no treino (anti-vazamento, ADR-0001).
+    scaler = MinMaxScaler()
+    scaler.fit(train.to_numpy())
+    train_scaled = scaler.transform(train.to_numpy())
+    test_scaled = scaler.transform(test.to_numpy())
+
+    return {
+        "X_train": make_windows(train_scaled, window_size, step),
+        "X_test": make_windows(test_scaled, window_size, step),
+        "scaler": scaler,
+        "train_index": train.index,
+        "test_index": test.index,
+        "features": list(features),
     }
