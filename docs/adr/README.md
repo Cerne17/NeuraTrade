@@ -39,5 +39,11 @@ Valores `PROVISÓRIO` aparecem marcados também no `config.yaml`.
 | [0006](0006-avaliacao-injecao-e-setorial.md) | Avaliação: injeção sintética + P/R/F1 + comparação setorial | misto |
 | [0007](0007-coleta-e-tratamento-amer3.md) | Coleta/cache, `auto_adjust`, tratamento do caso AMER3 | misto |
 | [0008](0008-linha-do-tempo-eventos.md) | Linha do tempo de eventos + tolerância de matching ($\pm$`window_size`) | DECISÃO DE PROJETO |
+| [0009](0009-agregacao-erro-janela.md) | Agregação do erro por janela: `mean`/`max`/`percentil` (Recall) | DECISÃO DE PROJETO · **proposto** |
+| [0010](0010-validacao-walk-forward.md) | Validação Walk-Forward (`TimeSeriesSplit`) para seleção de hiperparâmetros | FUNDAMENTADO · **proposto** |
+| [0011](0011-tensor-multivariado-ohlcv.md) | Tensor multivariado OHLCV `(30,1)→(30,5)`, scaler por coluna, `log1p` volume | DECISÃO DE PROJETO · **proposto** |
+
+> **Fase 2 (M8):** ADRs 0009–0011 estão em status **proposto** — decisões registradas, ainda
+> sem implementação nem calibração. Não reportar resultados finais a partir deles.
 
 Template para novos ADRs: [TEMPLATE.md](TEMPLATE.md).
