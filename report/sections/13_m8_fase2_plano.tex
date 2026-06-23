@@ -66,12 +66,13 @@ partição, sem cruzar a fronteira treino/validação (ADR-0001). Esta mudança 
 em produção --- é instrumento de rigor e credibilidade na escolha do modelo final.
 
 \par\noindent\textbf{Resultado (notebook \texttt{08\_walkforward}).} Avaliando
-$\texttt{latent\_dim} \in \{8, 16, 32\}$ com $5$ folds nos quatro ativos, o \texttt{val\_loss}
-médio entre ativos foi $0{,}01554$ ($8$), $\mathbf{0{,}01541}$ ($16$) e $0{,}01546$ ($32$). O
-valor \textbf{16 é confirmado} (menor média), validando por experimento a escolha de projeto do
-ADR-0003. Mais relevante, as três dimensões \textbf{empatam} --- as diferenças (4ª casa decimal)
-são muito menores que o desvio entre folds ($\approx 0{,}004$): no intervalo testado o tamanho do
-gargalo \emph{não} é hiperparâmetro sensível, evidência positiva de robustez da reconstrução.
+$\texttt{latent\_dim} \in \{8, 16, 32\}$ com $\texttt{n\_splits}=10$ (Kohavi, 1995) nos quatro
+ativos, o \texttt{val\_loss} médio entre ativos foi $0{,}01543$ ($8$), $\mathbf{0{,}01540}$ ($16$)
+e $0{,}01545$ ($32$). O valor \textbf{16 é confirmado} (menor média), validando por experimento a
+escolha de projeto do ADR-0003. Mais relevante, as três dimensões \textbf{empatam} --- as
+diferenças (4ª casa decimal) são muito menores que o desvio entre folds: no intervalo testado o
+tamanho do gargalo \emph{não} é hiperparâmetro sensível, evidência positiva de robustez da
+reconstrução.
 
 \subsection{Entrada multivariada OHLCV (ADR-0011)}
 \label{sec:m8-multivariado}

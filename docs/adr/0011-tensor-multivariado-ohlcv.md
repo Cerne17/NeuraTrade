@@ -96,9 +96,12 @@ O caminho univariado permanece o default.
 >   Ainda assim, a informação extra não ajudou a detecção — o argumento de parcimônia se sustenta
 >   pelo resultado, não pela colinearidade.
 > - **`latent_dim` multivariado (#60):** walk-forward (`walk_forward_splits_multivariate`) sobre
->   Close+Volume deu `val_loss` médio $0{,}01415$ (8), $0{,}01427$ (16), $0{,}01433$ (32) — de
->   novo **insensível**, com leve vantagem para 8. Mantém-se `latent_dim=16` por consistência com
->   o univariado ([ADR-0003](0003-arquitetura-autoencoder.md)); a diferença é desprezível.
+>   Close+Volume, com `n_splits=10` ([ADR-0010](0010-validacao-walk-forward.md)), deu `val_loss`
+>   médio $0{,}016485$ (8), $0{,}016416$ (16), $0{,}016311$ (32) — de novo **insensível** (range
+>   $\approx 0{,}0002$). Curiosidade reveladora: o "melhor" `latent_dim` **mudou** de 8 (sob 5
+>   folds) para 32 (sob 10 folds) — justamente porque os três estão dentro do ruído, o argmin é
+>   instável e não significa nada. Mantém-se `latent_dim=16` por consistência com o univariado
+>   ([ADR-0003](0003-arquitetura-autoencoder.md)); a diferença é desprezível.
 > - **`config.yaml`** segue `features: [Close, Volume]`. O univariado permanece o default em
 >   produção; o multivariado é a via para anomalias de volume quando requisitado.
 
