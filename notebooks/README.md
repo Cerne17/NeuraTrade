@@ -10,6 +10,12 @@ Estão versionados **com saídas**, para registrar a evolução — não apenas 
 Execute na ordem numérica. Cada um consome `data/raw/` (versionado) e, a partir de M3,
 modelos em `models/` (gerados por `03_train` ou `python -m src --train`).
 
+## Comece aqui — guia de uso
+
+| # | Notebook | Conteúdo |
+| - | -------- | -------- |
+| 00 | `00_quickstart` | **Guia de uso** (não é um estudo): roda a pipeline completa, puxa uma janela de dados nova, faz inferência com os modelos e visualiza as anomalias — com o script/CLI equivalente em cada passo. |
+
 ## Fase 1 — pipeline base (M1–M6)
 
 | # | Notebook | Estudo |
