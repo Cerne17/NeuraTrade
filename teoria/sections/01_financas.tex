@@ -1,0 +1,75 @@
+\section{Fundamentos de finanças: do preço ao retorno}
+\label{sec:financas}
+
+\subsection{Preço não é a melhor variável}
+O dado bruto de uma ação é o \textbf{preço de fechamento} de cada dia. Mas o
+preço, sozinho, é um número difícil de comparar: uma ação que custa R\$50 e
+sobe R\$1 variou muito menos, proporcionalmente, do que uma de R\$5 que sobe
+R\$1. Além disso, preços tendem a crescer ao longo dos anos (inflação,
+crescimento), o que confunde um modelo que busca padrões estáveis.
+
+\subsection{Retorno: a variação relativa}
+\begin{definicao}[Retorno simples]
+O retorno simples do dia $t$ é a variação percentual do preço:
+\[
+R_t = \frac{P_t - P_{t-1}}{P_{t-1}} = \frac{P_t}{P_{t-1}} - 1 ,
+\]
+onde $P_t$ é o preço de fechamento no dia $t$.
+\end{definicao}
+
+\subsection{Log-retorno: a versão que usamos}
+Na prática trabalhamos com o \textbf{log-retorno}, o logaritmo natural da razão
+entre preços consecutivos:
+\[
+r_t = \ln\!\left(\frac{P_t}{P_{t-1}}\right).
+\]
+
+\begin{intuicao}
+Para variações pequenas (o caso quase sempre), $r_t \approx R_t$: uma alta de
+1\% dá $r_t \approx 0{,}00995$. A vantagem do logaritmo é matemática e prática:
+\begin{itemize}[noitemsep]
+  \item \textbf{Somam-se no tempo.} O log-retorno de uma semana é a soma dos
+        log-retornos diários. Com retornos simples teríamos que multiplicar
+        $(1+R_1)(1+R_2)\dots$, bem menos cômodo.
+  \item \textbf{Simetria.} Cair de 100 para 50 e voltar de 50 para 100 dá
+        log-retornos $-0{,}69$ e $+0{,}69$ (opostos exatos); com retorno simples
+        seriam $-50\%$ e $+100\%$, assimétricos.
+  \item \textbf{Imune a fatores multiplicativos} como desdobramentos de ações
+        (\emph{splits}), porque o log transforma multiplicação em soma.
+\end{itemize}
+\end{intuicao}
+
+\begin{exemplo}
+Preço passa de $P_{t-1}=20{,}00$ para $P_t=20{,}40$.
+Retorno simples: $20{,}40/20{,}00 - 1 = 0{,}02$ (2\%).
+Log-retorno: $\ln(20{,}40/20{,}00) = \ln(1{,}02) \approx 0{,}0198$. Quase iguais.
+\end{exemplo}
+
+\begin{lstlisting}[caption={Log-retorno em uma linha com pandas/numpy.}]
+import numpy as np
+# precos: serie diaria de fechamento (P_t)
+log_ret = np.log(precos / precos.shift(1)).dropna()
+\end{lstlisting}
+
+\subsection{Volatilidade: o ``nível de agitação''}
+\begin{definicao}[Volatilidade]
+Volatilidade é o quanto os retornos oscilam. Mede-se, em geral, pelo
+\emph{desvio-padrão} dos retornos (Seção~\ref{sec:estatistica}): retornos muito
+espalhados $\Rightarrow$ alta volatilidade; retornos quase constantes
+$\Rightarrow$ baixa volatilidade.
+\end{definicao}
+
+Mercados alternam \textbf{regimes}: períodos calmos (baixa volatilidade) e
+períodos turbulentos (alta volatilidade, tipicamente em crises). Esse conceito
+será central: uma anomalia é, grosso modo, um comportamento incompatível com o
+regime recente.
+
+\begin{naprat}
+Usamos o \textbf{log-retorno diário do preço de fechamento} como única variável
+de entrada do modelo. A escolha está registrada como decisão de projeto: é
+invariante a \emph{splits} e estaciona a série (remove a tendência de
+crescimento do preço), facilitando o aprendizado do que é ``normal''. Uma
+consequência importante (Seção~\ref{sec:vazamento}) é que o período de treino
+2010--2019, embora chamado de ``normal'', contém crises reais (recessão de
+2014--2016, Lava Jato): ``normal'' aqui é \emph{relativo ao que o modelo viu}.
+\end{naprat}

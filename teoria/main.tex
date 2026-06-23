@@ -1,0 +1,92 @@
+\documentclass[11pt,a4paper]{article}
+
+% ============================================================
+% Relatório TEÓRICO — NeuraTrade
+% Guia autocontido da teoria por trás de cada decisão do projeto.
+% Público-alvo: leitor com pouca base em redes neurais, finanças e
+% estatística. Cada conceito vem com intuição, exemplo e o uso no projeto.
+%
+% Compilar (a partir de teoria/):  tectonic main.tex
+% ============================================================
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{hyperref}
+\usepackage{xurl}
+
+\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
+\graphicspath{{../report/figures/}}
+
+% --- Caixas didáticas (amsthm, estilo "definition" = texto reto) ---
+\theoremstyle{definition}
+\newtheorem{definicao}{Definição}[section]
+\newtheorem{intuicao}[definicao]{Intuição}
+\newtheorem{exemplo}[definicao]{Exemplo}
+\newtheorem*{naprat}{No NeuraTrade}
+
+% --- Estilo de código (Python) ---
+\definecolor{codegray}{gray}{0.96}
+\definecolor{codekw}{RGB}{0,0,170}
+\definecolor{codestr}{RGB}{160,0,0}
+\definecolor{codecom}{RGB}{0,120,0}
+\lstdefinestyle{py}{
+  language=Python,
+  backgroundcolor=\color{codegray},
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{codekw}\bfseries,
+  stringstyle=\color{codestr},
+  commentstyle=\color{codecom}\itshape,
+  numbers=left, numberstyle=\tiny\color{gray}, numbersep=6pt,
+  frame=single, framesep=4pt, rulecolor=\color{gray!40},
+  breaklines=true, showstringspaces=false, tabsize=4,
+  captionpos=b, xleftmargin=14pt,
+}
+\lstset{style=py}
+
+\title{\textbf{NeuraTrade --- Guia Teórico}\\[0.3em]
+\large A teoria por trás de cada decisão: finanças, estatística e redes
+neurais explicadas do zero}
+\author{Projeto NeuraTrade --- Redes Neurais (2026.1)}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent Este documento é um \textbf{guia autocontido}: ele explica, partindo
+de quase nenhum pré-requisito, toda a teoria que sustenta o projeto NeuraTrade
+--- a detecção não supervisionada de anomalias em ações da B3 com um
+\emph{LSTM-Autoencoder}. A cada conceito apresentamos a \emph{intuição}, um
+\emph{exemplo} (no domínio do projeto ou fora dele), um trecho de \emph{código}
+quando ajuda, e a caixa \textbf{``No NeuraTrade''} ligando a teoria à decisão
+concreta tomada. Ao final, um mapa liga cada decisão ao seu registro (ADR) e há
+um glossário. Não é preciso ler o código do projeto para entender este texto.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\input{sections/00_intro}
+\input{sections/01_financas}
+\input{sections/02_estatistica}
+\input{sections/03_vazamento_temporal}
+\input{sections/04_redes_neurais}
+\input{sections/05_series_lstm}
+\input{sections/06_autoencoder}
+\input{sections/07_deteccao}
+\input{sections/08_avaliacao}
+\input{sections/09_eventos_setorial}
+\input{sections/10_mapa_decisoes}
+\input{sections/11_glossario}
+
+\end{document}

@@ -1,0 +1,53 @@
+\section{Glossário}
+\label{sec:glossario}
+
+\begin{description}[style=nextline,leftmargin=0pt,itemsep=2pt]
+  \item[Anomalia] Comportamento que destoa do padrão normal aprendido. Aqui:
+        janela cujo erro de reconstrução supera o limiar.
+  \item[Autoencoder] Rede que comprime a entrada em um gargalo e a reconstrói;
+        o erro de reconstrução denuncia o que é estranho.
+  \item[Batch (lote)] Subconjunto de exemplos processado antes de atualizar os
+        pesos.
+  \item[Bottleneck (gargalo)] Camada estreita do autoencoder que força a
+        compressão; seu tamanho é a \emph{latent\_dim}.
+  \item[Causalidade] Propriedade de usar apenas informação do passado; essencial
+        para não vazar o futuro no limiar dinâmico.
+  \item[Desvio-padrão ($\sigma$)] Medida do espalhamento típico dos dados em
+        torno da média; base da volatilidade.
+  \item[Dropout] Desligar neurônios ao acaso durante o treino para combater
+        \emph{overfitting}.
+  \item[Early stopping] Parar o treino quando a perda de validação para de
+        melhorar, restaurando os melhores pesos.
+  \item[Época (epoch)] Uma passada completa por todos os dados de treino.
+  \item[Erro de reconstrução] Diferença (MAE ou MSE) entre a janela de entrada e
+        a reconstruída; o medidor de anomalia.
+  \item[F1] Média harmônica de \emph{precision} e \emph{recall}.
+  \item[Gradiente descendente] Algoritmo que ajusta os pesos descendo a
+        ``encosta'' da função de perda.
+  \item[Janela deslizante] Recorte de comprimento fixo que varre a série, gerando
+        as sequências de entrada da LSTM.
+  \item[Log-retorno] $\ln(P_t/P_{t-1})$; variação relativa que soma no tempo e é
+        imune a \emph{splits}.
+  \item[LSTM] Rede recorrente com portões que controlam uma memória de longo
+        prazo, boa para sequências.
+  \item[MAE / MSE] Erro absoluto médio / erro quadrático médio; o MSE pune mais
+        os desvios grandes, o MAE é mais robusto.
+  \item[Normalização Min--Max] Reescala linear para $[0,1]$ usando mínimo e máximo
+        (aprendidos só no treino).
+  \item[Overfitting] Decorar o treino em vez de generalizar.
+  \item[Percentil (p95)] Valor abaixo do qual cai dada fração dos dados; o p95
+        deixa 5\% acima.
+  \item[Precision] Dos itens marcados como anomalia, a fração que era anomalia de
+        fato.
+  \item[Recall] Das anomalias reais, a fração que o detector encontrou.
+  \item[Regime] Estado prolongado do mercado (calmo ou turbulento) caracterizado
+        pelo nível de volatilidade.
+  \item[Seed] Semente do gerador aleatório; fixá-la torna os resultados
+        reprodutíveis.
+  \item[Taxa-base] Fração de marcações inevitável por construção do limiar (aqui
+        $\approx$5\% pelo p95); limita a \emph{precision} máxima.
+  \item[Vazamento (leakage)] Uso indevido de informação do futuro, que infla
+        artificialmente o desempenho medido.
+  \item[Volatilidade] Intensidade da oscilação dos retornos; medida pelo
+        desvio-padrão.
+\end{description}

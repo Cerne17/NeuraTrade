@@ -1,0 +1,77 @@
+\section{Fundamentos de estatística e probabilidade}
+\label{sec:estatistica}
+
+Para decidir o que é ``fora do normal'' precisamos descrever o normal com
+números. Estatística é a linguagem disso.
+
+\subsection{Distribuição, média e desvio-padrão}
+\begin{definicao}[Distribuição]
+A distribuição de um conjunto de valores diz \emph{quais valores aparecem e com
+que frequência}. Visualiza-se com um \textbf{histograma}: barras cuja altura é a
+contagem de valores em cada faixa.
+\end{definicao}
+
+\begin{definicao}[Média e desvio-padrão]
+A \textbf{média} $\mu = \frac{1}{n}\sum_i x_i$ é o centro de massa dos dados.
+O \textbf{desvio-padrão} $\sigma = \sqrt{\frac{1}{n}\sum_i (x_i-\mu)^2}$ mede o
+espalhamento típico em torno da média: pequeno $\sigma$ = valores agrupados,
+grande $\sigma$ = valores dispersos.
+\end{definicao}
+
+\begin{intuicao}
+As alturas de pessoas adultas têm média $\approx 1{,}70$\,m e desvio-padrão
+$\approx 0{,}10$\,m. Alguém com $1{,}72$\,m é banal; com $2{,}10$\,m é
+\emph{raro} --- está a quatro desvios-padrão da média. ``Quantos desvios-padrão
+de distância'' é uma medida natural de ``quão incomum''.
+\end{intuicao}
+
+\subsection{Percentil: cortando pela frequência, não pela fórmula}
+\begin{definicao}[Percentil]
+O percentil $p$ é o valor abaixo do qual caem $p\%$ das observações. O
+percentil 95 (p95) é o valor que deixa 95\% dos dados abaixo e 5\% acima.
+\end{definicao}
+
+\begin{exemplo}
+Em 100 provas com notas ordenadas, o p95 é (aproximadamente) a 95\textsuperscript{a}
+nota: só 5 alunos tiraram acima dela. Quem passa do p95 está no topo dos 5\%.
+\end{exemplo}
+
+\begin{intuicao}[Por que percentil e não ``média + k desvios''?]
+A regra ``$\mu + k\sigma$'' pressupõe que os dados seguem o sino da curva
+normal. Retornos financeiros \emph{não} seguem: têm \textbf{caudas pesadas}
+(eventos extremos são mais comuns do que a curva normal preveria). O percentil
+é \textbf{não paramétrico} --- não assume formato nenhum, apenas conta
+frequências --- por isso é mais robusto aqui.
+\end{intuicao}
+
+\begin{naprat}
+O limiar que separa ``normal'' de ``anômalo'' (Seção~\ref{sec:deteccao}) é o
+\textbf{percentil 95 do erro de reconstrução}: marcamos como suspeitos os 5\%
+de maior erro. Isso embute uma \emph{taxa-base} de $\approx$5\% de marcações
+mesmo em dados normais --- um detalhe que volta a importar na avaliação
+(Seção~\ref{sec:avaliacao}).
+\end{naprat}
+
+\subsection{Normalização: colocar tudo na mesma escala}
+Redes neurais aprendem melhor quando os números de entrada vivem em uma faixa
+pequena e comparável (tipicamente $[0,1]$). A \textbf{normalização Min--Max}
+faz isso linearmente:
+\[
+x' = \frac{x - x_{\min}}{x_{\max} - x_{\min}} .
+\]
+O menor valor vira 0, o maior vira 1, e o resto fica proporcional no meio.
+
+\begin{lstlisting}[caption={Min--Max com scikit-learn.}]
+from sklearn.preprocessing import MinMaxScaler
+scaler = MinMaxScaler()
+scaler.fit(treino.reshape(-1, 1))     # aprende min e max -- so do treino!
+treino_norm = scaler.transform(treino.reshape(-1, 1))
+teste_norm  = scaler.transform(teste.reshape(-1, 1))
+\end{lstlisting}
+
+\begin{intuicao}
+O detalhe crucial está no comentário do código: o \texttt{scaler} aprende
+$x_{\min}, x_{\max}$ \textbf{apenas no treino}. Por quê? Porque usar o mínimo e
+o máximo do período de teste seria espiar o futuro. Esse é o tema da próxima
+seção.
+\end{intuicao}

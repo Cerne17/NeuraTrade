@@ -1,0 +1,71 @@
+\section{Detecção: do erro ao alarme}
+\label{sec:deteccao}
+
+Temos um medidor de anomalia (o erro de reconstrução). Falta a regra que
+transforma um número contínuo em uma decisão ``anômalo ou não''. Essa regra é o
+\textbf{limiar} (\emph{threshold}).
+
+\subsection{Erro de reconstrução por janela}
+Para cada janela de 30 passos, comparamos a reconstrução com a entrada e
+resumimos a diferença em um número --- usamos o \textbf{MAE} (Seção~\ref{sec:nn}),
+robusto a \emph{outliers}:
+
+\begin{lstlisting}[caption={Erro de reconstrução (MAE) por janela.}]
+import numpy as np
+recon = modelo.predict(X)          # X: (n_janelas, 30, 1)
+erro  = np.mean(np.abs(recon - X), axis=(1, 2))   # um valor por janela
+\end{lstlisting}
+
+\subsection{Limiar estático: uma linha fixa}
+\begin{definicao}[Limiar estático]
+Um valor fixo, calculado como o \textbf{percentil 95 do erro no treino}.
+Qualquer janela de teste com erro acima dele é marcada como anômala.
+\end{definicao}
+
+Calculá-lo \emph{no treino} (e não no teste) evita vazamento: o limiar reflete a
+normalidade aprendida, não o período sob avaliação.
+
+\begin{intuicao}
+É como definir ``febre'' por um termômetro travado em 37,8\,°C. Simples e
+estável --- mas não se adapta. Se a pessoa naturalmente vive mais quente por um
+período (mudança de regime), o termômetro fixo apita o tempo todo.
+\end{intuicao}
+
+\subsection{Limiar dinâmico: uma linha que se adapta}
+\begin{definicao}[Limiar dinâmico]
+O percentil 95 recalculado continuamente sobre uma \textbf{janela móvel} dos
+erros recentes (252 dias úteis $\approx$ 1 ano). Acompanha o regime local de
+volatilidade.
+\end{definicao}
+
+O ponto delicado é a \textbf{causalidade}: a janela móvel só pode usar o
+\emph{passado}. Se incluísse o próprio ponto (ou o futuro), uma anomalia ajudaria
+a definir o limiar que deveria detectá-la --- vazamento de novo. Garantimos a
+causalidade com um deslocamento de uma posição (\texttt{shift(1)}): cada ponto é
+avaliado contra a estatística dos dias \emph{anteriores} a ele.
+
+\begin{lstlisting}[caption={Limiar dinâmico causal (só passado), com pandas.}]
+import pandas as pd
+s = pd.Series(erro)
+# shift(1) exclui o proprio ponto -> janela usa apenas o passado
+limiar_din = s.shift(1).rolling(252, min_periods=252).quantile(0.95)
+\end{lstlisting}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{m4_erro_limiares}
+\caption{Erro de reconstrução no teste (2020--2024) com o limiar estático
+(tracejado vermelho) e o dinâmico (verde). Onde o regime muda muito (AMER3), o
+estático ``satura'' e marca quase tudo; o dinâmico se recalibra. Em ativos
+estáveis os dois quase coincidem.}
+\label{fig:teoria-m4}
+\end{figure}
+
+\begin{naprat}
+Comparamos os dois limiares (uma das contribuições do projeto). No AMER3, após a
+fraude, o erro fica permanentemente alto: o estático marca $\approx$27\% das
+janelas (perde utilidade), enquanto o dinâmico cai para $\approx$14\% ao tratar o
+novo patamar como o ``normal recente''. Em PETR4/VALE3 (estáveis) ambos ficam em
+$\approx$3\%. Estudamos ainda o tamanho da janela móvel: 126 dias fica
+ruidoso, 504 super-suaviza (marca quase nada), e \textbf{252} é o equilíbrio.
+\end{naprat}

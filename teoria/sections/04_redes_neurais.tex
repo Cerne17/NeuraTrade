@@ -1,0 +1,90 @@
+\section{Redes neurais do zero}
+\label{sec:nn}
+
+\subsection{O neurônio artificial}
+\begin{definicao}[Neurônio]
+Um neurônio recebe números de entrada $x_1,\dots,x_n$, multiplica cada um por um
+\textbf{peso} $w_i$, soma tudo com um \textbf{viés} $b$, e passa o resultado por
+uma \textbf{função de ativação} $f$:
+\[
+y = f\!\left(\textstyle\sum_i w_i x_i + b\right).
+\]
+\end{definicao}
+
+\begin{intuicao}
+Os pesos dizem ``quanto cada entrada importa''. Treinar a rede é, no fundo, achar
+os pesos que fazem a saída ser útil. A ativação $f$ introduz
+\emph{não-linearidade}: sem ela, empilhar neurônios daria sempre uma simples
+combinação linear, incapaz de representar padrões complexos. Uma ativação muito
+usada é a \textbf{ReLU}, $f(z)=\max(0,z)$: deixa passar o positivo, zera o
+negativo.
+\end{intuicao}
+
+\subsection{Camadas e a rede densa (MLP)}
+Empilhando neurônios em \textbf{camadas} --- a saída de uma alimenta a próxima ---
+obtemos uma rede. Quando cada neurônio se liga a todos da camada seguinte, é uma
+camada \textbf{densa} (\emph{fully connected}); a rede toda é um \emph{Multilayer
+Perceptron} (MLP).
+
+\begin{lstlisting}[caption={Uma MLP minúscula em Keras (só para fixar a ideia).}]
+from tensorflow import keras
+modelo = keras.Sequential([
+    keras.layers.Dense(8, activation="relu", input_shape=(3,)),
+    keras.layers.Dense(1)               # saida
+])
+\end{lstlisting}
+
+\subsection{Função de perda: medir o erro}
+\begin{definicao}[Função de perda]
+Número que mede o quão erradas estão as previsões. Treinar = ajustar os pesos
+para \emph{minimizar} a perda. Para prever números, duas perdas comuns são:
+\begin{align*}
+\text{MSE} &= \frac{1}{n}\sum_i (\hat{y}_i - y_i)^2 \quad\text{(erro quadrático médio)},\\
+\text{MAE} &= \frac{1}{n}\sum_i |\hat{y}_i - y_i| \quad\text{(erro absoluto médio)}.
+\end{align*}
+\end{definicao}
+
+\begin{intuicao}[MSE vs.\ MAE]
+O MSE eleva o erro ao quadrado, então pune \emph{desproporcionalmente} os
+desvios grandes --- um único ponto muito fora domina a conta. O MAE trata todos
+os desvios em pé de igualdade, sendo mais \textbf{robusto a \emph{outliers}}.
+\end{intuicao}
+
+\subsection{Como a rede aprende: gradiente descendente}
+A perda depende dos pesos. Imagine a perda como a altitude de um terreno
+montanhoso e os pesos como sua posição: queremos descer até o vale. O
+\textbf{gradiente} aponta a direção de subida mais íngreme; então damos passos
+na direção \emph{oposta}. O tamanho do passo é a \textbf{taxa de aprendizado}
+(\emph{learning rate}).
+
+\begin{itemize}[noitemsep]
+  \item \textbf{Época} (\emph{epoch}): uma passada por todos os dados de treino.
+  \item \textbf{Lote} (\emph{batch}): subconjunto processado por vez antes de
+        atualizar os pesos.
+  \item \textbf{Otimizador}: a receita de como dar os passos. Usamos o
+        \texttt{Adam}, que ajusta o passo automaticamente e é o padrão moderno.
+\end{itemize}
+
+\subsection{Overfitting, validação e \emph{early stopping}}
+\begin{definicao}[Overfitting]
+Quando a rede \emph{decora} o treino (inclusive seu ruído) em vez de aprender o
+padrão geral. Sinal: erro baixíssimo no treino, mas alto em dados novos.
+\end{definicao}
+
+Para detectar isso, separamos uma fatia do treino como \textbf{validação} e
+monitoramos a perda nela durante o treino. Enquanto a validação melhora, a rede
+aprende; quando ela começa a piorar (mesmo com o treino ainda melhorando), começou
+o overfitting. O \textbf{\emph{early stopping}} interrompe o treino nesse ponto e
+restaura os melhores pesos. O \textbf{\emph{dropout}} é outra defesa: durante o
+treino, desliga aleatoriamente uma fração dos neurônios, forçando a rede a não
+depender de detalhes específicos.
+
+\begin{naprat}
+Treinamos com a perda \textbf{MSE}, otimizador \textbf{Adam} (taxa $0{,}001$),
+lotes de 32, \emph{dropout} de $0{,}2$ e \textbf{\emph{early stopping}} com
+paciência de 10 épocas (restaurando os melhores pesos). Um detalhe vital para
+série temporal: a validação usa o \emph{bloco final} do treino (não uma amostra
+aleatória) e \texttt{shuffle=False}, para não embaralhar o tempo e recriar o
+vazamento da Seção~\ref{sec:vazamento}. Na detecção (Seção~\ref{sec:deteccao})
+preferimos o \textbf{MAE} como medida de erro, por sua robustez a \emph{outliers}.
+\end{naprat}

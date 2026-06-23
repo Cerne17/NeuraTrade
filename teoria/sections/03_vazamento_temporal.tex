@@ -1,0 +1,64 @@
+\section{Treino, teste e o pecado do vazamento temporal}
+\label{sec:vazamento}
+
+\subsection{Por que dividir os dados}
+Para saber se um modelo \emph{aprendeu} (e não apenas \emph{decorou}), guardamos
+uma parte dos dados que ele nunca vê no treino e a usamos só para avaliar. Em
+problemas comuns, essa divisão é aleatória. Em \textbf{séries temporais}, não
+pode ser.
+
+\subsection{O vazamento (\emph{data leakage}) temporal}
+\begin{definicao}[Vazamento temporal]
+Acontece quando informação do futuro influencia, ainda que indiretamente, o que
+o modelo aprende sobre o passado. O modelo parece ótimo na avaliação, mas
+fracassa no uso real --- porque, na realidade, o futuro não está disponível.
+\end{definicao}
+
+\begin{intuicao}
+Imagine estudar para uma prova com um gabarito que, por engano, inclui as
+questões da prova de amanhã. Sua nota no simulado será excelente e completamente
+enganosa. Embaralhar datas de uma série temporal faz exatamente isso: coloca
+dias de 2024 no material de estudo de um modelo que deveria conhecer só até 2019.
+\end{intuicao}
+
+\subsection{A regra de ouro: dividir \emph{antes}, ajustar só no treino}
+A ordem correta é:
+\begin{enumerate}[noitemsep]
+  \item \textbf{Dividir no tempo}: tudo até uma data de corte é treino; o que
+        vem depois é teste. Sem embaralhar.
+  \item \textbf{Ajustar a normalização só no treino} (aprender $x_{\min},x_{\max}$
+        apenas com o passado) e então \emph{aplicar} essa mesma transformação ao
+        teste.
+\end{enumerate}
+
+Se invertêssemos --- normalizar com todos os dados e só depois dividir --- os
+extremos de 2020--2024 (crash da COVID!) influenciariam a escala usada no
+treino. Vazamento.
+
+\begin{lstlisting}[caption={Split temporal antes do scaler (resumo do pipeline do projeto).}]
+# 1) split TEMPORAL: treino ate 2019, teste depois
+treino = serie[serie.index <= "2019-12-31"]
+teste  = serie[serie.index >  "2019-12-31"]
+
+# 2) scaler aprende SO no treino, depois aplica nos dois
+scaler = MinMaxScaler().fit(treino.values.reshape(-1, 1))
+treino_norm = scaler.transform(treino.values.reshape(-1, 1))
+teste_norm  = scaler.transform(teste.values.reshape(-1, 1))
+\end{lstlisting}
+
+\begin{intuicao}[Um efeito colateral saudável]
+Como a escala vem só do treino, valores de teste podem cair \emph{fora} de
+$[0,1]$ --- por exemplo, um crash maior que tudo visto em 2010--2019. Isso não é
+bug: é justamente o sinal de algo fora do normal, exatamente o que queremos
+detectar.
+\end{intuicao}
+
+\begin{naprat}
+O corte é \textbf{2019-12-31}: treino 2010--2019, teste 2020--2024. O
+\texttt{MinMaxScaler} é ajustado só no treino. Esse cuidado é tão central que
+virou a primeira decisão registrada do projeto. Mas há uma limitação honesta:
+o período de treino contém crises (recessão 2014--2016, Lava Jato, \emph{impeachment}
+de 2016), então o modelo aprende parte da turbulência como ``normal'' --- um
+viés conservador que tende a \emph{subestimar} anomalias. Assumimos e relatamos
+essa limitação em vez de mascará-la.
+\end{naprat}

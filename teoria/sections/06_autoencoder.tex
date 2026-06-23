@@ -1,0 +1,81 @@
+\section{Autoencoder: aprender a normalidade comprimindo}
+\label{sec:autoencoder}
+
+\subsection{A ideia: comprimir e reconstruir}
+\begin{definicao}[Autoencoder]
+Uma rede que tenta copiar a própria entrada na saída, mas é \emph{obrigada a
+passar por um gargalo}. Tem duas partes:
+\begin{itemize}[noitemsep]
+  \item \textbf{Encoder}: comprime a entrada em poucos números --- o
+        \textbf{código} ou \emph{bottleneck} (gargalo).
+  \item \textbf{Decoder}: tenta reconstruir a entrada original a partir desse
+        código comprimido.
+\end{itemize}
+A perda é o quão diferente a reconstrução ficou da entrada (erro de reconstrução).
+\end{definicao}
+
+\begin{intuicao}
+É como pedir a alguém para resumir um texto em uma frase e depois reescrever o
+texto a partir só da frase. Para o resumo permitir uma boa reconstrução, ele
+precisa capturar a \emph{essência} --- os padrões que se repetem. Detalhes
+idiossincráticos se perdem no gargalo.
+\end{intuicao}
+
+\subsection{Por que isso detecta anomalias}
+Aqui está o truque central do projeto. Treinamos o autoencoder \textbf{só com
+dados normais}. Ele se torna especialista em reconstruir o normal --- e
+\emph{apenas} o normal, porque foi só isso que viu.
+
+\begin{itemize}[noitemsep]
+  \item Entrada \textbf{normal} $\Rightarrow$ reconstrução boa $\Rightarrow$ erro
+        \textbf{baixo}.
+  \item Entrada \textbf{anômala} (padrão que ele nunca aprendeu) $\Rightarrow$
+        reconstrução ruim $\Rightarrow$ erro \textbf{alto}.
+\end{itemize}
+
+\textbf{O erro de reconstrução vira o nosso medidor de anomalia.} Não precisamos
+rotular nada: a própria incapacidade de reconstruir denuncia o anômalo. É isso
+que torna o método \emph{não supervisionado}.
+
+\begin{exemplo}[Fora de finanças]
+Um autoencoder treinado só com fotos de gatos aprende a reconstruir gatos com
+fidelidade. Mostre-lhe a foto de um carro: a reconstrução sai borrada e errada
+(erro alto). Sem nunca ter recebido o rótulo ``isto não é gato'', ele acusa o
+estranho pela qualidade da reconstrução.
+\end{exemplo}
+
+\subsection{A arquitetura do NeuraTrade}
+Encadeamos LSTMs nas duas pontas, para respeitar a natureza sequencial dos dados:
+
+\begin{lstlisting}[caption={LSTM-Autoencoder (esqueleto da arquitetura do projeto).}]
+from tensorflow import keras
+L = 30  # passos por janela
+modelo = keras.Sequential([
+    # ENCODER: comprime a janela em um vetor latente
+    keras.layers.LSTM(64, input_shape=(L, 1)),
+    keras.layers.Dropout(0.2),
+    keras.layers.Dense(16, activation="relu"),   # gargalo (latent_dim=16)
+    # DECODER: reconstroi a janela de 30 passos
+    keras.layers.RepeatVector(L),
+    keras.layers.LSTM(64, return_sequences=True),
+    keras.layers.Dropout(0.2),
+    keras.layers.TimeDistributed(keras.layers.Dense(1)),
+])
+modelo.compile(optimizer="adam", loss="mse")
+\end{lstlisting}
+
+\begin{definicao}[Dimensão latente (\emph{latent\_dim})]
+O tamanho do gargalo. Pequeno demais: a rede não consegue nem reconstruir o
+normal (perde sinal). Grande demais: o gargalo deixa de comprimir e a rede pode
+aprender a copiar \emph{qualquer} coisa --- inclusive anomalias ---, perdendo
+poder de detecção. É um equilíbrio.
+\end{definicao}
+
+\begin{naprat}
+Gargalo de \textbf{16} (\texttt{latent\_dim=16}), LSTMs de 64 unidades,
+\emph{dropout} $0{,}2$. Testamos $8/16/32$ e a perda de validação ficou
+\emph{plana} entre eles --- ou seja, o resultado é pouco sensível nessa faixa ---,
+o que confirmou 16 como escolha equilibrada (compressão de $\approx 4{:}1$ sobre
+a janela de 30 passos). Treina-se \textbf{um modelo por ação}, para que cada um
+aprenda a ``normalidade'' específica do seu ativo e setor.
+\end{naprat}
