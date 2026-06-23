@@ -29,7 +29,12 @@ dependencies = [
 dev = [
     "nbstripout>=0.7,<0.8",
     "jupyter>=1.0",
+    "pytest>=8.0",
 ]
 
 [tool.setuptools]
 packages = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

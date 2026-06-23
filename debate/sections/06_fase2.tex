@@ -17,9 +17,12 @@ resultados --- não há ainda ---, mas mostrar que cada limitação tem um camin
 A média sobre 30 passos atenua um choque de um dia (Seção~\ref{sec:debate-sintese}, item~4). A
 correção troca a agregação por \emph{max} ou percentil alto, recuperando o pico.
 \begin{tradeoff}
-Maior \emph{recall} de choques pontuais ao custo de potencial perda de \emph{precision}: o máximo
-é sensível também ao ruído de um único dia. Mitiga-se com o percentil (p90) em vez do máximo puro,
-e mede-se o efeito real com P/R/F1 nos quatro ativos.
+Esperava-se maior \emph{recall} ao custo de \emph{precision} (o máximo é sensível ao ruído de um
+único dia). A medição (notebook \texttt{07}, limiar recalibrado) \textbf{refutou o custo}: o
+máximo dobrou o \emph{recall} ($0{,}16 \to 0{,}35$) e \emph{ainda} elevou a \emph{precision}
+($0{,}55 \to 0{,}84$). O \emph{trade-off} previsto não apareceu neste cenário --- com o pico
+isolado e o limiar recalibrado, falsos negativos e falsos positivos caem juntos. O percentil
+(p90) permanece como opção mais conservadora.
 \end{tradeoff}
 \begin{honesto}
 A mudança invalida o limiar p95 atual (calibrado sobre a média): ele \textbf{tem} de ser

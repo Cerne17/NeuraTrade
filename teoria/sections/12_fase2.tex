@@ -32,10 +32,13 @@ mesma razão que rejeitamos o ``máximo do erro de treino'' como limiar (Seção
 O percentil alto (p.\,ex.\ p90) é o meio-termo: pega quase o pico, sem depender de um só ponto.
 
 \begin{naprat}
-Trocar a média pelo máximo/percentil tende a \textbf{aumentar o \emph{recall}} de choques de um
-dia. Mas o limiar p95 do projeto foi calculado sobre a \emph{média} do erro: como o máximo muda
-toda a distribuição, o limiar precisa ser \textbf{recalibrado} sobre o novo escore --- senão a
-taxa de falsos positivos explode. Decisão em ADR-0009.
+Trocar a média pelo máximo/percentil \textbf{aumenta o \emph{recall}} de choques de um dia. Mas
+o limiar p95 do projeto foi calculado sobre a \emph{média} do erro: como o máximo muda toda a
+distribuição, o limiar precisa ser \textbf{recalibrado} sobre o novo escore --- senão a taxa de
+falsos positivos explode. Medido nos quatro ativos (notebook \texttt{07}), o \emph{máximo} dobrou
+o \emph{recall} (de $0{,}16$ para $0{,}35$) e ainda \emph{aumentou} a \emph{precision} (de
+$0{,}55$ para $0{,}84$): o pico de um dia, antes diluído, fica nítido no pior passo. Decisão em
+ADR-0009.
 \end{naprat}
 
 \subsection{Validação que respeita o tempo: \emph{walk-forward}}

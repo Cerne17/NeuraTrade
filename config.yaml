@@ -24,9 +24,10 @@ data:
 preprocessing:
   window_size: 30           # ADR-0002. Li (2020) e Valkov: TIME_STEPS=30.
   step: 1                   # passo entre janelas
-  # PROPOSTO (M8/ADR-0011): entrada multivariada. Inativo ate implementacao.
-  # features: ["Close"]        # univariado atual; Etapa 1 -> ["Close","Volume"]; Etapa 2 -> OHLCV
-  # volume_log1p: true         # log1p no Volume antes do scaler (nao-estacionariedade)
+  # M8/ADR-0011: entrada multivariada (so o caminho preprocess_ticker_multivariate le isto;
+  # o caminho univariado preprocess_ticker permanece em log-retorno de Close, inalterado).
+  features: ["Close", "Volume"]  # Etapa 1 (Close+Volume); Etapa 2 -> OHLCV completo
+  volume_log1p: true             # log1p no Volume antes do scaler (nao-estacionariedade)
 
 # Arquitetura LSTM-Autoencoder. Ver ADR-0003.
 model:
@@ -46,17 +47,19 @@ train:
   early_stopping_patience: 10
   models_dir: "models"
 
-# PROPOSTO (M8/ADR-0010): validacao Walk-Forward. Inativo ate implementacao.
-# validation:
-#   n_splits: 5               # TimeSeriesSplit: folds expansiveis. Scaler refita POR fold (anti-vazamento).
+# M8/ADR-0010: validacao Walk-Forward (seleção de hiperparametros).
+validation:
+  n_splits: 5               # TimeSeriesSplit: folds expansiveis. Scaler refita POR fold (anti-vazamento).
 
 # Detecção de anomalias via erro de reconstrução. Ver ADR-0005.
 detection:
   threshold_percentile: 95  # estatico: percentil do erro de TREINO (README). p95 robusto vs. max de Li (2020).
   dynamic_window: 252        # dinamico: janela movel CAUSAL (~1 ano util). Confirmado em M7: 126 ruidoso, 504 super-suave (~0%). ADR-0005.
-  # PROPOSTO (M8/ADR-0009): agregacao do erro na janela. Inativo ate implementacao.
-  # aggregation: "mean"        # mean (atual) | max | percentile. max/percentile preservam choque de 1 dia (Recall).
-  # aggregation_percentile: 90 # usado quando aggregation == percentile. EXIGE recalibrar threshold (issue #47).
+  # M8/ADR-0009: agregacao do erro na janela. Default mean = reprodutibilidade de M4-M6.
+  # Evidencia (notebook 07, issue #47): max dobrou Recall (0.16->0.35) E elevou Precision
+  # (0.55->0.84). Recomendado max na deteccao; trocar quando M4-M6 forem reportados sob max.
+  aggregation: "mean"        # mean (atual) | max (recomendado) | percentile (p90, conservador).
+  aggregation_percentile: 90 # usado quando aggregation == percentile. EXIGE recalibrar threshold.
 
 # Avaliação por injeção sintética. Ver ADR-0006 (Liu et al. 2025).
 evaluation:

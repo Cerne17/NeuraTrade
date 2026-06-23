@@ -68,10 +68,11 @@ anomaly-detection-b3/
 ├── src/
 │   ├── config.py             # carrega config.yaml + seeds globais
 │   ├── data.py               # download, cache, load
-│   ├── preprocessing.py      # log-returns, split, scaler, janelas
+│   ├── preprocessing.py      # log-returns, split, scaler, janelas (uni e multivariado)
 │   ├── model.py              # arquitetura do LSTM-Autoencoder
 │   ├── train.py              # treino + callbacks
-│   ├── detect.py             # erro de reconstrução, thresholds
+│   ├── detect.py             # erro de reconstrução (mean/max/percentil), thresholds
+│   ├── validation.py         # validação Walk-Forward (TimeSeriesSplit) — M8
 │   ├── evaluate.py           # injeção sintética, precision/recall/f1
 │   ├── events.py             # linha do tempo de eventos BR
 │   └── viz.py                # plots padronizados
@@ -81,7 +82,8 @@ anomaly-detection-b3/
 │   ├── 03_train.ipynb
 │   ├── 04_detection_thresholds.ipynb
 │   ├── 05_evaluation_synthetic.ipynb
-│   └── 06_events_correlation.ipynb
+│   ├── 06_events_correlation.ipynb
+│   └── 07_aggregation_recalibration.ipynb   # M8 · agregação max/percentil
 ├── models/                   # pesos treinados (não versionado)
 ├── figures/                  # saídas para o relatório
 └── report/                   # relatório LaTeX
@@ -103,6 +105,7 @@ Os notebooks são numerados na ordem de execução e mapeiam as fases do projeto
 | `04_detection_thresholds`      | Erro de reconstrução; threshold estático vs. dinâmico             |
 | `05_evaluation_synthetic`      | Injeção de anomalias artificiais; Precision, Recall, F1           |
 | `06_events_correlation`        | Sobreposição das anomalias com eventos econômicos/políticos       |
+| `07_aggregation_recalibration` | M8 · agregação `max`/`percentil` do erro + recalibração do limiar (ADR-0009) |
 
 ---
 

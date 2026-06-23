@@ -1,6 +1,6 @@
 # ADR-0009: Agregação do erro de reconstrução por janela (max/percentil)
 
-- **Status:** proposto
+- **Status:** aceito (validado em M8, notebook `07_aggregation_recalibration`)
 - **Data:** 2026-06-23
 - **Proveniência:** DECISÃO DE PROJETO
 - **Milestone:** M8 (Evolução da Modelagem · Fase 2)
@@ -53,9 +53,36 @@ A redução acontece em duas etapas, **nesta ordem**: primeiro média sobre o ei
 - **Comparabilidade:** ao reportar resultados, deixar explícito qual agregação gerou cada
   métrica; não comparar Recall de `max` com limiar de `mean`.
 
+> **Atualização (M8, 2026-06-23) — implementação e evidência (issue #47).**
+> Implementado em [src/detect.py](../../src/detect.py): `reconstruction_error` reduz em duas
+> etapas (features → tempo) e aceita `aggregation ∈ {mean, max, percentile}` via `config.yaml`.
+> O limiar estático foi **recalibrado por agregação** sobre o erro de treino.
+>
+> - **O limiar não transfere (confirmado):** o p95 estático de `max`/`percentile` é ~3–4× o de
+>   `mean` (ex.: PETR4 `mean`=0,124 vs `max`=0,408). Reusar o p95 da média sob `max` marcaria
+>   quase tudo — a recalibração é obrigatória.
+> - **Resultado (injeção sintética k·σ, média dos 4 ativos, limiar estático recalibrado):**
+>
+> | Agregação | Precision | Recall | F1 |
+> | --- | --- | --- | --- |
+> | `mean` (anterior) | 0,548 | 0,162 | 0,229 |
+> | **`max`** | **0,842** | **0,351** | **0,468** |
+> | `percentile` (p90) | 0,706 | 0,209 | 0,288 |
+>
+> - **`max` dominou:** mais que **dobrou o Recall** (0,162 → 0,351) e, contra a hipótese inicial,
+>   **também elevou a Precision** (0,548 → 0,842) e o F1. O choque de 1 dia, antes diluído, passa
+>   a separar-se nitidamente da normalidade no pior passo; com limiar recalibrado, isso reduz
+>   tanto falsos negativos quanto falsos positivos. A perda de Precision prevista **não** se
+>   materializou neste cenário.
+> - **Recomendação:** adotar `max` como agregação de detecção. `percentile` (p90) fica como
+>   alternativa mais conservadora. O default de `config.yaml` permanece `mean` para preservar a
+>   reprodutibilidade dos números de M4–M6; a troca para `max` é uma edição de configuração,
+>   a consolidar quando os resultados de M4–M6 forem reportados sob a nova agregação.
+
 ## Alternativas consideradas
 
-- **Manter `mean` (status quo):** rejeitado — é a causa direta do Recall baixo em choques curtos.
+- **Manter `mean` (status quo):** rejeitado — é a causa direta do Recall baixo em choques curtos,
+  agora quantificada (Recall 0,162 vs 0,351 do `max`).
 - **`max` como único modo:** evitado como default — frágil a um ponto ruidoso; oferecido, mas
   o percentil é o compromisso recomendado.
 - **top-k mean (média dos k maiores passos):** equivalente prático ao percentil; pode entrar
