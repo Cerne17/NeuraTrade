@@ -67,7 +67,10 @@ sempre o bloco seguinte. Nunca o futuro entra no treino.
 A regra de ouro do projeto (normalizar só com o treino, ADR-0001) vale \textbf{dentro de cada
 fold}: o \texttt{MinMaxScaler} é reajustado a cada corte, usando apenas o treino daquele fold, e
 as janelas são geradas dentro de cada partição. Custa $K$ vezes mais treino, mas dá média
-$\pm$~desvio do erro por candidato. Decisão em ADR-0010.
+$\pm$~desvio do erro por candidato. Rodado (notebook \texttt{08}) para \texttt{latent\_dim} $\in
+\{8,16,32\}$, os três praticamente empataram (\texttt{val\_loss} $\approx 0{,}0154$): o gargalo
+\textbf{16 foi confirmado} e, de quebra, o modelo mostrou-se \emph{insensível} ao tamanho do
+gargalo nessa faixa --- um sinal de robustez. Decisão em ADR-0010.
 \end{naprat}
 
 \subsection{Mais de uma variável: entrada multivariada (OHLCV)}
@@ -95,6 +98,9 @@ isso começamos por \textbf{Close+Volume} $(30,2)$ e só vamos a OHLCV $(30,5)$ 
 \begin{naprat}
 Com a entrada multivariada o erro vira um \emph{vetor} (um por canal). Guardar o erro
 \textbf{por canal} permite dizer se a anomalia foi de \emph{preço} ou de \emph{volume} --- e é o
-que finalmente habilita a injeção de \texttt{volume\_spike}, hoje impossível por falta do canal
-de volume (Seção~\ref{sec:avaliacao}). Decisão em ADR-0011.
+que finalmente habilita a injeção de \texttt{volume\_spike}, antes impossível por falta do canal
+de volume (Seção~\ref{sec:avaliacao}). Treinado e testado (notebook \texttt{09}, Close+Volume):
+ao injetar um pico de volume, o erro do \textbf{canal de volume sobe} (de $+0{,}05$ a $+0{,}36$)
+e o do canal de preço fica em $\approx 0$ --- a anomalia é atribuída corretamente ao volume.
+Decisão em ADR-0011.
 \end{naprat}

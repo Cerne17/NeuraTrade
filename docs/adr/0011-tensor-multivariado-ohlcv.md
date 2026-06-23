@@ -1,6 +1,6 @@
 # ADR-0011: Tensor multivariado OHLCV (30,1) → (30,5)
 
-- **Status:** proposto
+- **Status:** aceito — Etapa 1 (Close+Volume) validada em M8, notebook `09_multivariate_ohlcv`
 - **Data:** 2026-06-23
 - **Proveniência:** DECISÃO DE PROJETO
 - **Milestone:** M8 (Evolução da Modelagem · Fase 2)
@@ -55,6 +55,33 @@ O caminho univariado permanece o default.
   hoje NÃO implementado por falta de canal de volume).
 - **Maior capacidade, mais overfitting:** 5× a entrada exige mais sinal de "normal"; validar com
   Walk-Forward ([ADR-0010](0010-validacao-walk-forward.md)).
+
+> **Atualização (M8, 2026-06-23) — execução e evidência (issues #52/#53).**
+> Implementado em [src/preprocessing.py](../../src/preprocessing.py)
+> (`preprocess_ticker_multivariate`, `build_features`, `make_windows` ND) e
+> [src/train.py](../../src/train.py) (`n_features` inferido, sufixo `_multi`). Notebook
+> `09_multivariate_ohlcv` treinou a Etapa 1 (Close+Volume, `(30,2)`) nos quatro ativos.
+>
+> - **Treino saudável:** `val_loss` ≈ 0,0021–0,0025 (abaixo do univariado ≈ 0,004; dois canais,
+>   escala por coluna efetiva). Nenhum canal colapsou.
+> - **Atribuição correta (teste decisivo):** injetando um pico de volume (`k·σ`) só no canal de
+>   volume, a variação média do erro per-canal (`max`) nas janelas injetadas foi:
+>
+> | Ticker | Δ erro canal **preço** | Δ erro canal **volume** |
+> | --- | --- | --- |
+> | PETR4.SA | +0,00002 | **+0,05084** |
+> | VALE3.SA | −0,00011 | **+0,07575** |
+> | AMER3.SA | +0,00011 | **+0,35980** |
+> | ITUB4.SA | −0,00002 | **+0,05799** |
+>
+> - **O canal de volume dispara, o de preço não se move** (Δpreço ≈ 0). A anomalia é atribuída
+>   ao volume — exatamente a capacidade que o univariado não tem (a injeção de `volume_spike`,
+>   [ADR-0006](0006-avaliacao-injecao-e-setorial.md), antes impossível, agora é avaliável).
+> - **`log1p` + scaler por coluna confirmados:** sem eles, o volume (~1e7) dominaria a perda e
+>   saturaria pós-2020. Os dois canais conviveram sem que um anulasse o outro.
+> - **Pendente:** Etapa 2 (OHLCV completo `(30,5)`) só se acrescentar sinal sobre Close+Volume;
+>   e validar `latent_dim` do multivariado com a malha walk-forward ([ADR-0010](0010-validacao-walk-forward.md)).
+>   O univariado permanece o default em produção.
 
 ## Alternativas consideradas
 
