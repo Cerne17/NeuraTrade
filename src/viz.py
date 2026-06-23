@@ -61,6 +61,43 @@ def plot_error_distribution(
     return ax
 
 
+def plot_events_overlay(
+    ax: plt.Axes,
+    events: "pd.DataFrame",
+    color: str = "gray",
+) -> None:
+    """Sobrepõe linhas verticais de eventos em um eixo existente (issue #26).
+
+    Cada evento é desenhado como uma linha vertical tracejada; o rótulo é
+    anotado no topo do eixo em texto rotacionado. Projetado para ser chamado
+    após ``plot_error_timeseries``, reutilizando o mesmo ``ax``.
+
+    Args:
+        ax:     eixo já populado com a série de erros.
+        events: DataFrame de ``events_in_range`` (colunas date/label/tickers).
+        color:  cor das linhas e anotações.
+    """
+    import pandas as pd
+
+    if events.empty:
+        return
+
+    ymin, ymax = ax.get_ylim()
+    for _, row in events.iterrows():
+        ax.axvline(row["date"], color=color, ls=":", lw=0.8, alpha=0.7)
+        ax.text(
+            row["date"],
+            ymax,
+            f"  {row['label']}",
+            rotation=90,
+            va="top",
+            ha="left",
+            fontsize=5,
+            color=color,
+            alpha=0.9,
+        )
+
+
 def plot_error_timeseries(
     errors: np.ndarray,
     dates,
