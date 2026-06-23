@@ -5,9 +5,9 @@ controladas da série de teste, produzindo ground-truth binário. O detector é
 então avaliado contra esse ground-truth via Precision / Recall / F1 (issue #23).
 
 Ordem de uso:
-1. ``inject_price_shocks``  — perturba a série e devolve labels.
+1. ``inject_price_shocks``    — perturba a série e devolve labels.
 2. ``labels_to_window_labels`` — converte labels por passo em labels por janela.
-3. ``compute_metrics``       — Precision / Recall / F1 (issue #23).
+3. ``compute_metrics``         — Precision / Recall / F1 (issue #23).
 """
 
 from __future__ import annotations
@@ -101,3 +101,31 @@ def labels_to_window_labels(
         [int(labels[i : i + window_size].any()) for i in starts],
         dtype=int,
     )
+
+
+def compute_metrics(
+    window_flags: np.ndarray,
+    window_labels: np.ndarray,
+) -> dict[str, float]:
+    """Precision, Recall e F1 do detector contra o ground-truth sintético (issue #23).
+
+    ``window_flags`` é a saída de ``flag_anomalies`` (detect.py); ``window_labels``
+    é a saída de ``labels_to_window_labels``. Os dois vetores devem estar alinhados:
+    mesma janela no mesmo índice.
+
+    ``zero_division=0`` evita erro quando o detector não dispara nenhuma flag
+    (Precision indefinida); nesse caso retorna 0.0 para todas as métricas.
+
+    Returns:
+        Dict com chaves ``"precision"``, ``"recall"`` e ``"f1"``, valores em [0, 1].
+    """
+    from sklearn.metrics import f1_score, precision_score, recall_score
+
+    y_true = np.asarray(window_labels, dtype=int)
+    y_pred = np.asarray(window_flags, dtype=int)
+
+    return {
+        "precision": float(precision_score(y_true, y_pred, zero_division=0)),
+        "recall": float(recall_score(y_true, y_pred, zero_division=0)),
+        "f1": float(f1_score(y_true, y_pred, zero_division=0)),
+    }
