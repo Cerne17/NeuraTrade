@@ -83,6 +83,25 @@ O caminho univariado permanece o default.
 >   e validar `latent_dim` do multivariado com a malha walk-forward ([ADR-0010](0010-validacao-walk-forward.md)).
 >   O univariado permanece o default em produção.
 
+> **Atualização (M9, 2026-06-23) — Etapa 2 decidida: ficar em Close+Volume (issues #59/#60).**
+> Notebook `11_ohlcv_full` treinou OHLCV `(30,5)` vs Close+Volume `(30,2)` nos quatro ativos.
+>
+> - **OHLCV não compensa:** o `val_loss` da Etapa 2 **piora** em 2 de 4 ativos (VALE3
+>   $0{,}00232 \to 0{,}00273$; AMER3 $0{,}00254 \to 0{,}00355$) e melhora marginalmente nos
+>   outros — reconstruir 5 canais é mais difícil sem ganho de detecção. A **atribuição do pico de
+>   volume é idêntica** em `(30,2)` e `(30,5)`. **Decisão: permanecer em Close+Volume `(30,2)`;
+>   Etapa 2 (OHLCV completo) rejeitada.**
+> - **Ressalva à premissa de colinearidade:** os *log-retornos* de O/H/L/C **não** são ~99%
+>   correlacionados (corr. observada $0{,}39$–$0{,}75$); o ~99% referia-se aos *níveis* de preço.
+>   Ainda assim, a informação extra não ajudou a detecção — o argumento de parcimônia se sustenta
+>   pelo resultado, não pela colinearidade.
+> - **`latent_dim` multivariado (#60):** walk-forward (`walk_forward_splits_multivariate`) sobre
+>   Close+Volume deu `val_loss` médio $0{,}01415$ (8), $0{,}01427$ (16), $0{,}01433$ (32) — de
+>   novo **insensível**, com leve vantagem para 8. Mantém-se `latent_dim=16` por consistência com
+>   o univariado ([ADR-0003](0003-arquitetura-autoencoder.md)); a diferença é desprezível.
+> - **`config.yaml`** segue `features: [Close, Volume]`. O univariado permanece o default em
+>   produção; o multivariado é a via para anomalias de volume quando requisitado.
+
 ## Alternativas consideradas
 
 - **Manter univariado:** rejeitado — impossibilita anomalias de volume, uma das motivações da Fase 2.

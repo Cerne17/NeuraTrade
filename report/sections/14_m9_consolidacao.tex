@@ -1,0 +1,53 @@
+\section{Consolidação da Fase 2 (M9)}
+\label{sec:m9}
+
+A milestone~M9 fecha os \emph{follow-ups} da Fase 2: leva a agregação \emph{max} dos testes
+sintéticos para os dados reais e decide o \emph{default}; decide a Etapa 2 do multivariado
+(OHLCV completo \emph{vs.} Close+Volume); e valida o gargalo do modelo multivariado.
+
+\subsection{Adoção de \emph{max} como \emph{default} (ADR-0009)}
+\label{sec:m9-max}
+O notebook \texttt{10\_max\_default\_decision} reexecutou a detecção no \textbf{teste real
+(2020--2024)} sob cada agregação. A fração média de janelas marcadas (quatro ativos) foi
+$0{,}108$ (\texttt{mean}), $\mathbf{0{,}103}$ (\texttt{max}) e $0{,}112$ (\texttt{percentile})
+com limiar estático, e $0{,}064$/$0{,}080$/$0{,}048$ com o dinâmico. Ou seja, \emph{max}
+\textbf{não infla} a taxa de marcação no teste real --- fica praticamente igual a \emph{mean},
+próxima da taxa-base do p95. Somado ao ganho de \emph{recall}/\emph{precision} na injeção
+sintética (Seção~\ref{sec:m8-pooling-result}), a troca é segura: \texttt{config.yaml} passa a
+\texttt{aggregation: max} por \emph{default}. Os notebooks de M4--M6 preservam suas saídas
+originais (sob \texttt{mean}) como registro histórico.
+
+\subsection{OHLCV completo \emph{vs.} Close+Volume (ADR-0011, Etapa 2)}
+\label{sec:m9-ohlcv}
+O notebook \texttt{11\_ohlcv\_full} treinou $(30,5)$ e $(30,2)$ nos quatro ativos
+(Tabela~\ref{tab:m9-ohlcv}). O OHLCV completo \textbf{piora} o \texttt{val\_loss} em dois dos
+quatro ativos e a atribuição do pico de volume é idêntica nas duas configurações. \textbf{Decisão:
+permanecer em Close+Volume $(30,2)$}; a Etapa 2 não compensa o custo de reconstruir três canais
+adicionais. Ressalva honesta: os \emph{log-retornos} de O/H/L/C \emph{não} são $\sim$99\%
+colineares (correlação observada $0{,}39$--$0{,}75$; o $\sim$99\% referia-se aos níveis de
+preço) --- mas, mesmo não-redundantes, não melhoraram a detecção.
+
+\begin{table}[h]
+\centering
+\caption{\texttt{val\_loss} de treino: Close+Volume $(30,2)$ vs.\ OHLCV $(30,5)$ (ADR-0011, M9).}
+\label{tab:m9-ohlcv}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Ativo} & \textbf{Close+Volume $(30,2)$} & \textbf{OHLCV $(30,5)$} \\
+\midrule
+PETR4.SA & 0,00214 & 0,00197 \\
+VALE3.SA & \textbf{0,00232} & 0,00273 \\
+AMER3.SA & \textbf{0,00254} & 0,00355 \\
+ITUB4.SA & 0,00237 & 0,00240 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{\texttt{latent\_dim} do modelo multivariado (ADR-0010/0011)}
+\label{sec:m9-latent}
+A malha walk-forward, generalizada para entrada por coluna
+(\texttt{walk\_forward\_splits\_multivariate}), avaliou o gargalo do modelo Close+Volume:
+\texttt{val\_loss} médio $0{,}01415$ ($8$), $0{,}01427$ ($16$), $0{,}01433$ ($32$) --- de novo
+\textbf{insensível}, com leve vantagem para $8$. Mantém-se $16$ por consistência com o
+univariado; a diferença é desprezível. A insensibilidade do gargalo, agora observada em ambas as
+representações, é evidência consistente de robustez da reconstrução.

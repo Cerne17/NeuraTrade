@@ -65,3 +65,17 @@ comparar (1) contra a \emph{baseline} e calibrar (3); \textbf{(3)} o multivariad
 maior alcance, viável apenas depois que o sinal deixa de ser diluído e os números passam a ser
 confiáveis. Corrigir na ordem inversa seria medir uma aposta cara com um instrumento que ainda
 esconde o que se quer medir.
+
+\subsection{Consolidação (M9): das medições às decisões}
+\label{sec:debate-fase2-m9}
+A Fase 2 não parou na medição: M9 converteu cada resultado em decisão de produção, sem
+maquiagem. \textbf{(i)} A agregação \emph{max}, antes só recomendada, foi levada ao \emph{teste
+real} 2020--2024 --- a fração de janelas marcadas ficou igual à de \emph{mean} ($\approx 0{,}10$),
+sem inflar falsos positivos --- e \textbf{adotada como \emph{default}}. \textbf{(ii)} O OHLCV
+completo foi testado e \textbf{rejeitado}: piora o \texttt{val\_loss} em metade dos ativos e não
+melhora a atribuição; fica-se em Close+Volume. Aqui cabe uma \textbf{retratação honesta} --- a
+justificativa original (``O/H/L/C são $\sim$99\% colineares'') estava errada para
+\emph{log-retornos} (correlação real $0{,}4$--$0{,}75$); a decisão de parcimônia se sustenta pelo
+\emph{resultado}, não pela premissa equivocada. \textbf{(iii)} O gargalo do multivariado, como o
+do univariado, mostrou-se insensível em $[8,32]$. O princípio se manteve: preferir a evidência
+--- inclusive quando ela contraria a hipótese de partida --- à narrativa conveniente.

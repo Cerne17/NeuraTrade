@@ -66,6 +66,14 @@ duas estratégias de limiar — é uma das contribuições declaradas no README.
 > taxas próximas da base-rate alvo (~5% do p95) sem colapsar nem oscilar. Status de
 > PROVISÓRIO removido.
 
+> **Atualização (M9, 2026-06-23) — agregação default = `max`.**
+> A partir de M9 (issue #58, [ADR-0009](0009-agregacao-erro-janela.md)), o erro por janela usa
+> agregação **`max`** (pior passo) em vez da média, por default. O esquema de limiares (estático
+> p95 do treino + dinâmico causal 252) é **inalterado**: muda apenas o escore sobre o qual o
+> limiar é calculado --- e, por isso, o limiar é recalibrado sobre o erro `max` do treino. No
+> teste real 2020–2024 a fração marcada permaneceu próxima da de `mean` (≈0,10 estático), de modo
+> que a base-rate esperada do p95 segue válida.
+
 ## Alternativas consideradas
 
 - **Máximo do erro de treino (Li/Valkov):** rejeitado — frágil a outlier único.

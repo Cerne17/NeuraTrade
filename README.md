@@ -85,7 +85,9 @@ anomaly-detection-b3/
 │   ├── 06_events_correlation.ipynb
 │   ├── 07_aggregation_recalibration.ipynb   # M8 · agregação max/percentil
 │   ├── 08_walkforward.ipynb                 # M8 · seleção de latent_dim (walk-forward)
-│   └── 09_multivariate_ohlcv.ipynb          # M8 · Close+Volume, anomalia de volume
+│   ├── 09_multivariate_ohlcv.ipynb          # M8 · Close+Volume, anomalia de volume
+│   ├── 10_max_default_decision.ipynb        # M9 · max no teste real, troca de default
+│   └── 11_ohlcv_full.ipynb                  # M9 · OHLCV vs Close+Volume; latent_dim multi
 ├── models/                   # pesos treinados (não versionado)
 ├── figures/                  # saídas para o relatório
 └── report/                   # relatório LaTeX
@@ -110,6 +112,8 @@ Os notebooks são numerados na ordem de execução e mapeiam as fases do projeto
 | `07_aggregation_recalibration` | M8 · agregação `max`/`percentil` do erro + recalibração do limiar (ADR-0009) |
 | `08_walkforward`               | M8 · seleção de `latent_dim` por validação walk-forward (ADR-0010) |
 | `09_multivariate_ohlcv`        | M8 · entrada Close+Volume; atribuição de anomalia de volume (ADR-0011) |
+| `10_max_default_decision`      | M9 · `max` no teste real 2020–2024; adoção como default (ADR-0009) |
+| `11_ohlcv_full`                | M9 · OHLCV `(30,5)` vs Close+Volume; `latent_dim` multivariado (ADR-0011) |
 
 ---
 

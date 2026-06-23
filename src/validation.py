@@ -20,8 +20,10 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import TimeSeriesSplit
 
+from sklearn.preprocessing import MinMaxScaler
+
 from .config import CONFIG
-from .preprocessing import apply_scaler, fit_scaler, make_windows
+from .preprocessing import apply_scaler, build_features, fit_scaler, make_windows
 
 
 def walk_forward_splits(
@@ -72,11 +74,50 @@ def walk_forward_splits(
         }
 
 
+def walk_forward_splits_multivariate(
+    feats: pd.DataFrame,
+    n_splits: int | None = None,
+    window_size: int | None = None,
+    step: int | None = None,
+) -> Iterator[dict]:
+    """Versão multivariada de :func:`walk_forward_splits` (ADR-0010 + ADR-0011).
+
+    Recebe um frame de features já construído (saída de
+    :func:`src.preprocessing.build_features`, p.ex. Close+Volume) e, em cada fold,
+    ajusta um ``MinMaxScaler`` **por coluna** apenas no recorte de treino — mesma
+    garantia anti-vazamento da versão univariada, agora canal a canal.
+
+    Yields:
+        Dict por fold com ``X_train``/``X_val`` de forma ``(n, window, n_features)``.
+    """
+    n_splits = n_splits if n_splits is not None else CONFIG["validation"]["n_splits"]
+
+    tscv = TimeSeriesSplit(n_splits=n_splits)
+    idx = feats.index
+
+    for fold, (train_idx, val_idx) in enumerate(tscv.split(feats.to_numpy())):
+        tr, va = feats.iloc[train_idx], feats.iloc[val_idx]
+
+        scaler = MinMaxScaler().fit(tr.to_numpy())  # por coluna, só no treino do fold
+        tr_scaled = scaler.transform(tr.to_numpy())
+        va_scaled = scaler.transform(va.to_numpy())
+
+        yield {
+            "fold": fold,
+            "X_train": make_windows(tr_scaled, window_size, step),
+            "X_val": make_windows(va_scaled, window_size, step),
+            "scaler": scaler,
+            "train_index": idx[train_idx],
+            "val_index": idx[val_idx],
+        }
+
+
 def cross_validate_latent_dim(
     series: pd.Series,
     candidates: list[int],
     n_splits: int | None = None,
     epochs: int | None = None,
+    folds: list[dict] | None = None,
 ) -> pd.DataFrame:
     """Seleciona ``latent_dim`` por validação *walk-forward* (ADR-0010, issue #50).
 
@@ -90,6 +131,10 @@ def cross_validate_latent_dim(
         candidates: valores de ``latent_dim`` a comparar (ex.: ``[8, 16, 32]``).
         epochs: teto de épocas por fold (reduzido no CV para conter custo). Usa
             ``CONFIG["train"]["epochs"]`` se ``None``.
+        folds: folds pré-computados (ex.: de
+            :func:`walk_forward_splits_multivariate` para o caso OHLCV). Se ``None``,
+            usa a malha univariada sobre ``series``. O ``n_features`` é inferido das
+            janelas, então o mesmo loop serve uni e multivariado.
 
     Returns:
         ``DataFrame`` indexado por ``latent_dim`` com colunas ``val_loss_mean``,
@@ -101,7 +146,8 @@ def cross_validate_latent_dim(
 
     tcfg = CONFIG["train"]
     epochs = epochs if epochs is not None else tcfg["epochs"]
-    folds = list(walk_forward_splits(series, n_splits=n_splits))
+    if folds is None:
+        folds = list(walk_forward_splits(series, n_splits=n_splits))
 
     rows = []
     for latent_dim in candidates:
@@ -110,7 +156,8 @@ def cross_validate_latent_dim(
             X_tr, X_val = f["X_train"], f["X_val"]
             if len(X_tr) == 0 or len(X_val) == 0:
                 continue  # fold curto demais para gerar janelas
-            model = build_lstm_autoencoder(latent_dim=latent_dim)
+            n_features = X_tr.shape[-1]
+            model = build_lstm_autoencoder(latent_dim=latent_dim, n_features=n_features)
             es = keras.callbacks.EarlyStopping(
                 monitor="val_loss",
                 patience=tcfg["early_stopping_patience"],
