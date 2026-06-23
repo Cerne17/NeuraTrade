@@ -283,7 +283,7 @@ seu ADR):
 | `detection.threshold_percentile` | 95 | 0005 |
 | `detection.dynamic_window` | 252 | 0005 |
 | `detection.aggregation` | **max** | 0009 |
-| `validation.n_splits` | 5 | 0010 |
+| `validation.n_splits` | 10 | 0010 |
 | `preprocessing.features` | `[Close, Volume]` | 0011 |
 
 ---
@@ -301,6 +301,7 @@ seu ADR):
 - Petrovic, D. *Anomaly Detection in Stock Price with LSTM Autoencoder.* (GitHub)
 - *Anomaly Detection on Bitcoin Values.* IEEE (2021).
 - Liu et al. (2025). *Robust Anomaly Detection in Financial Markets Using LSTM Autoencoders and GANs.*
+- Kohavi, R. (1995). *A Study of Cross-Validation and Bootstrap for Accuracy Estimation and Model Selection.* IJCAI. — base para `validation.n_splits = 10`.
 
 Repositórios públicos foram usados apenas como guia arquitetural. Toda a implementação, os dados e
 as análises são originais.

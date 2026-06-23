@@ -46,8 +46,11 @@ ITUB4.SA & 0,00237 & 0,00240 \\
 \subsection{\texttt{latent\_dim} do modelo multivariado (ADR-0010/0011)}
 \label{sec:m9-latent}
 A malha walk-forward, generalizada para entrada por coluna
-(\texttt{walk\_forward\_splits\_multivariate}), avaliou o gargalo do modelo Close+Volume:
-\texttt{val\_loss} médio $0{,}01415$ ($8$), $0{,}01427$ ($16$), $0{,}01433$ ($32$) --- de novo
-\textbf{insensível}, com leve vantagem para $8$. Mantém-se $16$ por consistência com o
-univariado; a diferença é desprezível. A insensibilidade do gargalo, agora observada em ambas as
-representações, é evidência consistente de robustez da reconstrução.
+(\texttt{walk\_forward\_splits\_multivariate}) e com $\texttt{n\_splits}=10$ (Kohavi, 1995),
+avaliou o gargalo do modelo Close+Volume: \texttt{val\_loss} médio $0{,}016485$ ($8$),
+$0{,}016416$ ($16$), $0{,}016311$ ($32$) --- de novo \textbf{insensível} (amplitude
+$\approx 0{,}0002$). Um detalhe revela o ponto: o ``melhor'' \texttt{latent\_dim} \emph{mudou} de
+$8$ (sob $5$ folds) para $32$ (sob $10$ folds) --- precisamente porque os três estão dentro do
+ruído, o argmin é instável e não carrega significado. Mantém-se $16$ por consistência com o
+univariado. A insensibilidade do gargalo, observada em ambas as representações e em dois desenhos
+de validação, é evidência robusta.

@@ -26,6 +26,12 @@ Valores `PROVISÓRIO` aparecem marcados também no `config.yaml`.
 - **Petrovic, D.** *Anomaly Detection in Stock Price with LSTM Autoencoder.* GitHub.
 - **Liu et al. (2025).** *Robust Anomaly Detection in Financial Markets Using LSTM Autoencoders and GANs.* OPAST.
 - **(2021).** *Anomaly Detection on Bitcoin Values.* IEEE.
+- **Kohavi, R. (1995).** *A Study of Cross-Validation and Bootstrap for Accuracy Estimation and Model
+  Selection.* IJCAI. — recomenda **10-fold** como melhor compromisso viés/variância (ver ADR-0010).
+- **Bergmeir, C. & Benítez, J. M. (2012).** *On the use of cross-validation for time series predictor
+  evaluation.* Information Sciences. — valida forward-CV em séries temporais (não elege um `k`).
+- **Bengio, Y. & Grandvalet, Y. (2004).** *No Unbiased Estimator of the Variance of K-Fold
+  Cross-Validation.* JMLR.
 
 ## Índice
 

@@ -67,10 +67,11 @@ sempre o bloco seguinte. Nunca o futuro entra no treino.
 A regra de ouro do projeto (normalizar só com o treino, ADR-0001) vale \textbf{dentro de cada
 fold}: o \texttt{MinMaxScaler} é reajustado a cada corte, usando apenas o treino daquele fold, e
 as janelas são geradas dentro de cada partição. Custa $K$ vezes mais treino, mas dá média
-$\pm$~desvio do erro por candidato. Rodado (notebook \texttt{08}) para \texttt{latent\_dim} $\in
-\{8,16,32\}$, os três praticamente empataram (\texttt{val\_loss} $\approx 0{,}0154$): o gargalo
-\textbf{16 foi confirmado} e, de quebra, o modelo mostrou-se \emph{insensível} ao tamanho do
-gargalo nessa faixa --- um sinal de robustez. Decisão em ADR-0010.
+$\pm$~desvio do erro por candidato. Rodado (notebook \texttt{08}, com $10$ folds --- a convenção
+de Kohavi, 1995) para \texttt{latent\_dim} $\in \{8,16,32\}$, os três praticamente empataram
+(\texttt{val\_loss} $\approx 0{,}0154$): o gargalo \textbf{16 foi confirmado} e, de quebra, o
+modelo mostrou-se \emph{insensível} ao tamanho do gargalo nessa faixa --- um sinal de robustez.
+Decisão em ADR-0010.
 \end{naprat}
 
 \subsection{Mais de uma variável: entrada multivariada (OHLCV)}

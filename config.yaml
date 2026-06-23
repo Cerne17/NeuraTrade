@@ -49,7 +49,7 @@ train:
 
 # M8/ADR-0010: validacao Walk-Forward (seleção de hiperparametros).
 validation:
-  n_splits: 5               # TimeSeriesSplit: folds expansiveis. Scaler refita POR fold (anti-vazamento).
+  n_splits: 10              # k=10 (Kohavi 1995). TimeSeriesSplit expansivel, scaler por fold. Ver ADR-0010.
 
 # Detecção de anomalias via erro de reconstrução. Ver ADR-0005.
 detection:

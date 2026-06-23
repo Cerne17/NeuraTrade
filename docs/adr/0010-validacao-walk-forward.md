@@ -32,6 +32,19 @@ produção; o modelo final é retreinado com o melhor hiperparâmetro sobre o tr
   ([ADR-0001](0001-split-temporal-antes-do-scaler.md), `shuffle=False`).
 - **Variância reduzida:** múltiplos folds dão média ± desvio do `val_loss` por candidato,
   base honesta para comparar `latent_dim` (ex.: 8/16/32).
+- **`n_splits = 10` (FUNDAMENTADO, com ressalva):** Kohavi (1995) recomenda **10-fold** como o
+  melhor compromisso viés/variância para estimação de acurácia e seleção de modelo, valor
+  adotado como convenção. **Ressalva metodológica:** o estudo de Kohavi trata *k-fold
+  estratificado sobre dados i.i.d.* (classificação); aqui usa-se *walk-forward sobre série
+  temporal* (sem embaralhar, folds expansíveis), então o "10 ótimo" não transfere literalmente.
+  Avaliou-se explicitamente se algum `k` diferente teria fundamentação **mais forte** para este
+  cenário e a conclusão foi que **não**: a literatura de CV em séries temporais
+  (Bergmeir & Benítez, 2012) valida o *esquema* forward-CV por preservar a causalidade, mas
+  **não elege um `k` ótimo**; argumentos por `k` menor (custo) ou atado ao tamanho do fold
+  (treino mínimo) são heurísticos, não teóricos; e Bengio & Grandvalet (2004) mostram que nem
+  existe estimador não-viesado da variância do `k`-fold. Sem um resultado que supere 10, mantém-se
+  **10 por convenção** (default consolidado), com esta ressalva registrada. O custo é gerenciável
+  (folds menores treinam rápido; ver Consequências).
 
 ## Consequências
 
@@ -69,6 +82,22 @@ produção; o modelo final é retreinado com o melhor hiperparâmetro sobre o tr
 > - O valor de `config.yaml` (`latent_dim=16`) permanece, agora **fundamentado por experimento**
 >   em vez de só por design. A malha walk-forward fica disponível para validar futuros
 >   hiperparâmetros e o modelo multivariado ([ADR-0011](0011-tensor-multivariado-ohlcv.md)).
+
+> **Atualização (2026-06-23) — `n_splits` 5 → 10 (Kohavi 1995).**
+> Adotou-se `n_splits=10` por convenção (Kohavi, 1995), com a ressalva i.i.d. registrada na
+> Justificativa. Reexecutado o `08_walkforward` com 10 folds (`val_loss` médio entre os 4 ativos):
+>
+> | `latent_dim` | val\_loss médio (4 ativos) | desvio entre ativos |
+> | --- | --- | --- |
+> | 8  | 0,015426 | 0,002902 |
+> | **16** | **0,015399** | 0,002888 |
+> | 32 | 0,015450 | 0,002976 |
+>
+> - **Mesma conclusão:** `latent_dim=16` segue o melhor (e o gargalo segue **insensível** em
+>   [8, 32]). A mudança de `k` **não** alterou o veredito --- robustez confirmada por um segundo
+>   desenho de validação.
+> - O desvio entre ativos caiu (≈0,0029 vs 0,0044 com 5 folds): mais folds → média um pouco mais
+>   estável, exatamente o efeito de redução de variância que motiva o 10-fold.
 
 ## Alternativas consideradas
 
