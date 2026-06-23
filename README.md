@@ -1,20 +1,37 @@
-# Detecção de Anomalias em Séries Temporais Financeiras Brasileiras com LSTM-Autoencoder
+# NeuraTrade — Detecção de Anomalias em Séries Financeiras da B3 com LSTM-Autoencoder
 
 > Trabalho Final — **Redes Neurais** (2026.1)
 > Autores: **Ana Beatriz** e **Miguel Cerne**
 
-Detecção não supervisionada de anomalias em ações da **B3** usando uma arquitetura **LSTM-Autoencoder**. O modelo é treinado apenas em períodos de comportamento "normal" e aprende a reconstruir padrões típicos; quando confrontado com movimentos atípicos, o **erro de reconstrução** dispara e sinaliza a anomalia. As anomalias detectadas são então cruzadas com uma linha do tempo de eventos econômicos e políticos brasileiros documentados.
+Detecção **não supervisionada** de anomalias em ações da **B3** com uma arquitetura
+**LSTM-Autoencoder**. O modelo é treinado apenas em períodos de comportamento "normal"
+(2010–2019) e aprende a reconstruir padrões típicos; diante de movimentos atípicos, o **erro de
+reconstrução** dispara e sinaliza a anomalia. As anomalias detectadas são cruzadas com uma linha
+do tempo de eventos econômicos e políticos brasileiros documentados.
 
 ---
 
 ## Sobre o projeto
 
-A maior parte da literatura de detecção de anomalias com deep learning se concentra no mercado americano e em criptomoedas. Este trabalho aplica a abordagem a **ativos brasileiros** e adiciona quatro contribuições combinadas:
+A maior parte da literatura de detecção de anomalias com deep learning foca o mercado americano e
+criptomoedas. Este trabalho aplica a abordagem a **ativos brasileiros** e reúne:
 
 - Aplicação em ativos nacionais (B3), contexto sub-representado na literatura.
-- Correlação sistemática e documentada entre anomalias detectadas e eventos históricos brasileiros.
-- Comparação entre **threshold estático** (percentil fixo) e **threshold dinâmico** (percentil em janela móvel).
+- Correlação documentada entre anomalias detectadas e eventos históricos brasileiros.
+- Comparação entre **limiar estático** (percentil fixo) e **limiar dinâmico** (percentil em janela
+  móvel causal).
 - Avaliação de generalização entre setores econômicos distintos.
+
+A modelagem evoluiu em duas fases, com cada decisão registrada como ADR e validada por
+experimento (ver [Resultados](#resultados) e [Documentação](#documentação)):
+
+- **Fase 1 (M0–M7)** — pipeline base: coleta, pré-processamento sem vazamento, treino,
+  detecção (estático vs. dinâmico), avaliação sintética e correlação com eventos.
+- **Fase 2 (M8–M9)** — evolução da modelagem: **agregação `max`** do erro por janela (Recall),
+  **validação walk-forward** do `latent_dim` e **entrada multivariada Close+Volume** (anomalias
+  de volume).
+- **M10** — organização do repositório: pipeline executável (`python -m src`), `scripts/`
+  versionado e índices.
 
 ### Ativos analisados
 
@@ -25,169 +42,206 @@ A maior parte da literatura de detecção de anomalias com deep learning se conc
 | `AMER3.SA` | Americanas S.A. | Varejo              |
 | `ITUB4.SA` | Itaú Unibanco   | Financeiro          |
 
-Período de coleta: **2010–2024**. Treino em 2010–2019 ("normalidade"), teste em 2020–2024.
-
----
-
-## Quick start
-
-### Google Colab (recomendado)
-
-No topo de qualquer notebook:
-
-```python
-!git clone https://github.com/<usuario>/anomaly-detection-b3.git
-%cd anomaly-detection-b3
-!pip install -e .
-
-from src.config import set_seeds, CONFIG
-set_seeds()
-```
-
-### Local
-
-```bash
-git clone https://github.com/<usuario>/anomaly-detection-b3.git
-cd anomaly-detection-b3
-python -m venv .venv && source .venv/bin/activate
-pip install -e .            # ou: pip install -r requirements.txt
-```
-
-Os dados brutos já estão versionados em `data/raw/`, então o pipeline roda offline — não é necessário baixar nada do yfinance para reproduzir os resultados.
-
----
-
-## Estrutura do repositório
-
-```
-anomaly-detection-b3/
-├── config.yaml               # fonte única de hiperparâmetros
-├── data/
-│   ├── raw/                  # cache do yfinance (versionado)
-│   └── processed/            # gerado (não versionado)
-├── src/                      # PIPELINE (lógica do projeto)
-│   ├── __main__.py           # CLI: `python -m src` roda a pipeline end-to-end — M10
-│   ├── pipeline.py           # run_pipeline(): data→preproc→train/load→detect→avaliar — M10
-│   ├── config.py             # carrega config.yaml + seeds globais
-│   ├── data.py               # download, cache, load
-│   ├── preprocessing.py      # log-returns, split, scaler, janelas (uni e multivariado)
-│   ├── model.py              # arquitetura do LSTM-Autoencoder
-│   ├── train.py              # treino + callbacks
-│   ├── detect.py             # erro de reconstrução (mean/max/percentil), thresholds
-│   ├── validation.py         # validação Walk-Forward (TimeSeriesSplit) — M8
-│   ├── evaluate.py           # injeção sintética, precision/recall/f1
-│   ├── events.py             # linha do tempo de eventos BR
-│   └── viz.py                # plots padronizados
-├── scripts/                  # UTILITÁRIOS (atalhos operacionais) — M10
-│   ├── run_pipeline.py       # wrapper da CLI
-│   ├── cache_data.py         # refaz data/raw via yfinance (passo de rede)
-│   ├── build_figures.py      # regenera report/figures/
-│   └── README.md
-├── notebooks/                # ESTUDOS (orquestram src/, versionados com saídas)
-│   ├── README.md             # índice dos estudos por fase
-│   ├── 01_eda.ipynb
-│   ├── 02_preprocessing.ipynb
-│   ├── 03_train.ipynb
-│   ├── 04_detection_thresholds.ipynb
-│   ├── 05_evaluation_synthetic.ipynb
-│   ├── 06_events_correlation.ipynb
-│   ├── 07_aggregation_recalibration.ipynb   # M8 · agregação max/percentil
-│   ├── 08_walkforward.ipynb                 # M8 · seleção de latent_dim (walk-forward)
-│   ├── 09_multivariate_ohlcv.ipynb          # M8 · Close+Volume, anomalia de volume
-│   ├── 10_max_default_decision.ipynb        # M9 · max no teste real, troca de default
-│   └── 11_ohlcv_full.ipynb                  # M9 · OHLCV vs Close+Volume; latent_dim multi
-├── models/                   # pesos treinados (não versionado)
-├── figures/                  # saídas para o relatório
-└── report/                   # relatório LaTeX
-```
-
-Três papéis, três pastas:
-
-- **`src/`** — a **pipeline** (lógica do projeto). Ponto de entrada: `python -m src`.
-- **`scripts/`** — **utilitários** operacionais (atalhos finos sobre `src/`). Ver [`scripts/README.md`](scripts/README.md).
-- **`notebooks/`** — os **estudos** (exploração/medição, com saídas). Ver [`notebooks/README.md`](notebooks/README.md).
-
-A lógica vive em `src/`; notebooks e scripts apenas a orquestram. Isso reaproveita o mesmo pipeline nos quatro ativos e reduz conflitos de merge no `.ipynb`.
+Período de coleta: **2010–2024**. Treino em 2010–2019 ("normalidade"), teste em 2020–2024. Um
+modelo por ativo, para permitir a comparação setorial.
 
 ---
 
 ## Quickstart
 
 ```bash
+git clone https://github.com/Cerne17/NeuraTrade.git
+cd NeuraTrade
 python -m venv .venv && source .venv/bin/activate
-pip install -e .
+pip install -e .                 # ou: pip install -r requirements.txt
 
-# pipeline de detecção end-to-end (carrega modelos salvos; --train para treinar do zero)
-python -m src --train          # primeira vez (sem modelos versionados)
-python -m src                  # execuções seguintes
+# pipeline de detecção end-to-end
+python -m src --train            # 1ª vez: treina os 4 modelos (models/ não é versionado)
+python -m src                    # execuções seguintes: carrega os modelos salvos
 ```
 
+Os dados brutos já estão versionados em `data/raw/`, então tudo roda **offline** — o `yfinance`
+só é necessário para recriar o cache (`python scripts/cache_data.py`).
+
 A pipeline usa a configuração atual de `config.yaml` (agregação do erro **`max`** por default,
-adotada em M9) e imprime um resumo por ativo: fração de janelas marcadas (limiar estático e
-dinâmico) e, salvo `--no-evaluate`, Precision/Recall/F1 da injeção sintética.
+adotada em M9) e imprime um resumo por ativo:
+
+```
+$ python -m src --no-evaluate
+         agregacao n_test_windows limiar_estatico frac_estatico frac_dinamico
+PETR4.SA       max           1215         0.40772        0.0584        0.0568
+VALE3.SA       max           1215          0.2631         0.0280        0.0856
+AMER3.SA       max           1215          0.2844         0.2700        0.1251
+ITUB4.SA       max           1215         0.37819         0.0560        0.0543
+```
+
+**Colab:** clone o repo, `pip install -e .`, depois
+`from src.config import set_seeds, CONFIG; set_seeds()`.
 
 ---
 
-## Como rodar (estudos)
+## Estrutura do repositório
 
-Os notebooks são numerados na ordem de execução e mapeiam as fases do projeto
-(índice completo em [`notebooks/README.md`](notebooks/README.md)):
+```
+NeuraTrade/
+├── config.yaml               # fonte única de hiperparâmetros (cada chave referencia um ADR)
+├── data/
+│   ├── raw/                  # cache do yfinance (versionado → roda offline)
+│   └── processed/            # gerado (não versionado)
+├── src/                      # PIPELINE (lógica do projeto)
+│   ├── __main__.py           # CLI: `python -m src` roda a pipeline end-to-end
+│   ├── pipeline.py           # run_pipeline(): data→preproc→train/load→detect→avaliar
+│   ├── config.py             # carrega config.yaml + seeds globais
+│   ├── data.py               # download, cache, load (yfinance)
+│   ├── preprocessing.py      # log-returns, split, scaler, janelas (uni e multivariado)
+│   ├── model.py              # arquitetura do LSTM-Autoencoder (n_features ≥ 1)
+│   ├── train.py              # treino + EarlyStopping (univariado e multivariado)
+│   ├── detect.py             # erro de reconstrução (mean/max/percentil), limiares
+│   ├── validation.py         # validação Walk-Forward (TimeSeriesSplit), uni e multivariado
+│   ├── evaluate.py           # injeção sintética, precision/recall/f1
+│   ├── events.py             # linha do tempo de eventos BR
+│   └── viz.py                # plots padronizados
+├── scripts/                  # UTILITÁRIOS (atalhos operacionais)
+│   ├── run_pipeline.py       # wrapper da CLI
+│   ├── cache_data.py         # refaz data/raw via yfinance (passo de rede)
+│   ├── build_figures.py      # regenera report/figures/
+│   └── README.md
+├── notebooks/                # ESTUDOS (orquestram src/, versionados com saídas)
+│   ├── README.md             # índice dos estudos por fase
+│   └── 01_eda … 11_ohlcv_full.ipynb
+├── docs/adr/                 # Architecture Decision Records (0001–0011)
+├── report/                   # relatório LaTeX (preliminar)
+├── teoria/                   # guia teórico autocontido (LaTeX)
+├── debate/                   # confrontações teóricas / defesa das decisões (LaTeX)
+├── models/                   # pesos treinados (não versionado)
+└── figures/                  # saídas dos estudos
+```
 
-| Notebook                       | Etapa                                                              |
-| ------------------------------ | ----------------------------------------------------------------- |
-| `01_eda`                       | Inspeção das séries, gaps, integridade dos dados                  |
-| `02_preprocessing`             | Log-returns, split temporal, normalização, janelas deslizantes    |
-| `03_train`                     | Treino do LSTM-Autoencoder (um modelo por ativo)                  |
-| `04_detection_thresholds`      | Erro de reconstrução; threshold estático vs. dinâmico             |
-| `05_evaluation_synthetic`      | Injeção de anomalias artificiais; Precision, Recall, F1           |
-| `06_events_correlation`        | Sobreposição das anomalias com eventos econômicos/políticos       |
-| `07_aggregation_recalibration` | M8 · agregação `max`/`percentil` do erro + recalibração do limiar (ADR-0009) |
-| `08_walkforward`               | M8 · seleção de `latent_dim` por validação walk-forward (ADR-0010) |
-| `09_multivariate_ohlcv`        | M8 · entrada Close+Volume; atribuição de anomalia de volume (ADR-0011) |
-| `10_max_default_decision`      | M9 · `max` no teste real 2020–2024; adoção como default (ADR-0009) |
-| `11_ohlcv_full`                | M9 · OHLCV `(30,5)` vs Close+Volume; `latent_dim` multivariado (ADR-0011) |
+**Três papéis, três pastas:**
+
+- **`src/`** — a **pipeline** (lógica do projeto). Ponto de entrada: `python -m src`.
+- **`scripts/`** — **utilitários** operacionais (atalhos finos sobre `src/`). Ver [`scripts/README.md`](scripts/README.md).
+- **`notebooks/`** — os **estudos** (exploração/medição, com saídas). Ver [`notebooks/README.md`](notebooks/README.md).
+
+A lógica vive em `src/`; notebooks e scripts apenas a orquestram. Isso reaproveita o mesmo
+pipeline nos quatro ativos e reduz conflitos de merge no `.ipynb`.
+
+---
+
+## Estudos (notebooks)
+
+Numerados na ordem de execução (índice completo em [`notebooks/README.md`](notebooks/README.md)):
+
+| Notebook                       | Estudo |
+| ------------------------------ | ------ |
+| `01_eda`                       | Inspeção das séries, gaps, integridade dos dados (M1). |
+| `02_preprocessing`             | Log-retornos, split temporal, normalização, janelas (M2). |
+| `03_train`                     | Treino do LSTM-Autoencoder, um modelo por ativo (M3). |
+| `04_detection_thresholds`      | Erro de reconstrução; limiar estático vs. dinâmico (M4). |
+| `05_evaluation_synthetic`      | Injeção sintética; Precision/Recall/F1 (M5). |
+| `06_events_correlation`        | Anomalias × eventos econômicos/políticos (M6). |
+| `07_aggregation_recalibration` | Agregação `max`/`percentil` + recalibração do limiar (M8, ADR-0009). |
+| `08_walkforward`               | Seleção de `latent_dim` por walk-forward (M8, ADR-0010). |
+| `09_multivariate_ohlcv`        | Close+Volume; atribuição de anomalia de volume (M8, ADR-0011). |
+| `10_max_default_decision`      | `max` no teste real 2020–2024; adoção como default (M9, ADR-0009). |
+| `11_ohlcv_full`                | OHLCV `(30,5)` vs Close+Volume; `latent_dim` multivariado (M9, ADR-0011). |
 
 ---
 
 ## Metodologia
 
-1. **Pré-processamento** — retorno logarítmico diário como feature principal; *split temporal antes da normalização* (o `MinMaxScaler` é ajustado apenas no treino, para evitar vazamento de informação do futuro); janelas deslizantes.
-2. **Modelo** — Encoder LSTM → bottleneck → Decoder LSTM, otimizando o MSE de reconstrução, com `EarlyStopping`. Um modelo por ativo, para permitir a comparação setorial.
-3. **Detecção** — uma janela é marcada como anômala quando seu erro de reconstrução ultrapassa o limiar (percentil 95 do erro de treino, no caso estático).
-4. **Threshold dinâmico** — percentil calculado em janela temporal móvel, comparado ao estático.
+1. **Pré-processamento** — retorno logarítmico diário como feature; *split temporal antes da
+   normalização* (`MinMaxScaler` ajustado **apenas no treino**, evitando vazamento do futuro);
+   janelas deslizantes de 30 passos. A via multivariada (Close+Volume) escala **por coluna** e
+   aplica `log1p` ao volume.
+2. **Modelo** — Encoder LSTM → bottleneck (`latent_dim=16`, validado por walk-forward) → Decoder
+   LSTM, perda MSE, `EarlyStopping`. Um modelo por ativo.
+3. **Erro por janela** — reduzido em duas etapas (features → tempo). A agregação temporal é
+   **`max`** por default (desde M9): preserva choques de um único dia que a média diluía.
+4. **Detecção** — uma janela é anômala quando o erro supera o limiar: **estático** (percentil 95
+   do erro de treino) ou **dinâmico** (percentil em janela móvel **causal** de 252 pregões). O
+   limiar é recalibrado sobre o mesmo escore de agregação.
+5. **Validação de hiperparâmetro** — walk-forward (`TimeSeriesSplit`), com scaler reajustado
+   **por fold** (anti-vazamento por fold).
 
 ### Avaliação
 
-Como o problema é não supervisionado, a avaliação combina duas vias:
+Problema não supervisionado → avaliação em duas vias:
 
-- **Narrativa** — verificação de que as anomalias detectadas correspondem a eventos reais conhecidos (crash de março/2020, caso Americanas em janeiro/2023, etc.).
-- **Quantitativa** — injeção controlada de perturbações artificiais (*price shocks* e *volume spikes*) em posições conhecidas, permitindo calcular Precision, Recall e F1.
+- **Narrativa** — as anomalias detectadas correspondem a eventos reais conhecidos (crash de
+  março/2020, caso Americanas em janeiro/2023, etc.).
+- **Quantitativa** — injeção controlada de perturbações em posições conhecidas (*price shocks*; e
+  *volume spikes* na via multivariada), permitindo Precision/Recall/F1.
 
-> **Nota metodológica:** o período de treino (2010–2019) contém eventos de forte volatilidade (recessão de 2014–2016, Lava Jato, impeachment de 2016). A definição de "normalidade" é, portanto, relativa e está discutida no relatório.
+> **Nota metodológica:** o período de treino (2010–2019) contém eventos de forte volatilidade
+> (recessão de 2014–2016, Lava Jato, impeachment de 2016). "Normalidade" é, portanto, relativa —
+> discutido no relatório.
+
+---
+
+## Resultados
+
+Principais achados da Fase 2, todos medidos (notebooks 07–11) e registrados nos ADRs:
+
+- **Agregação `max` (ADR-0009).** Na injeção sintética, trocar a média pelo `max` **dobrou o
+  Recall** (0,16 → 0,35) e ainda **elevou a Precision** (0,55 → 0,84) — o choque de um dia, antes
+  diluído, separa-se no pior passo. No teste real 2020–2024 a fração de janelas marcadas ficou
+  ~igual à da média (≈0,10), sem inflar falsos positivos → **`max` adotado como default**.
+- **`latent_dim` (ADR-0010).** Walk-forward confirmou `latent_dim=16`; o modelo é **insensível** ao
+  tamanho do gargalo em [8, 32] (diferenças ≪ desvio entre folds) — evidência de robustez.
+- **Multivariado Close+Volume (ADR-0011).** Um pico injetado só no canal de volume eleva o erro
+  **daquele** canal (+0,05 a +0,36) e deixa o canal de preço em ≈0 — a anomalia de volume, antes
+  invisível ao modelo univariado, passa a ser detectada e **atribuída**. O **OHLCV completo
+  `(30,5)`** foi testado e **rejeitado** (piora o `val_loss` em 2/4 ativos sem ganho).
+
+---
+
+## Documentação
+
+- **[`docs/adr/`](docs/adr/)** — Architecture Decision Records (0001–0011): cada decisão de
+  metodologia/hiperparâmetro, com proveniência e evidência. `config.yaml` referencia o ADR de cada
+  chave.
+- **[`report/`](report/)** — relatório LaTeX (preliminar), uma seção por milestone.
+- **[`teoria/`](teoria/)** — guia teórico autocontido (finanças, estatística, redes neurais).
+- **[`debate/`](debate/)** — confrontações teóricas: defesa crítica das decisões e limitações
+  assumidas.
 
 ---
 
 ## Configuração
 
-Todos os hiperparâmetros ficam em `config.yaml` (tickers, datas de split, `window_size`, percentil do threshold, tamanho da janela móvel, seed). É a fonte única de verdade — alterar um experimento significa alterar esse arquivo, não os notebooks.
+Todos os hiperparâmetros vivem em `config.yaml` — **fonte única de verdade**; alterar um
+experimento significa editar esse arquivo, não os notebooks. Chaves principais (cada uma referencia
+seu ADR):
+
+| Chave | Valor | ADR |
+| ----- | ----- | --- |
+| `preprocessing.window_size` | 30 | 0002 |
+| `model.latent_dim` | 16 | 0003 / 0010 |
+| `detection.threshold_percentile` | 95 | 0005 |
+| `detection.dynamic_window` | 252 | 0005 |
+| `detection.aggregation` | **max** | 0009 |
+| `validation.n_splits` | 5 | 0010 |
+| `preprocessing.features` | `[Close, Volume]` | 0011 |
 
 ---
 
 ## Stack
 
-`Python` · `TensorFlow/Keras` · `yfinance` · `pandas` · `numpy` · `scikit-learn` · `matplotlib` · `seaborn`
+`Python` · `TensorFlow/Keras` · `yfinance` · `pandas` · `numpy` · `scikit-learn` · `matplotlib` · `seaborn` · `pytest`
 
 ---
 
 ## Referências
 
 - Li, S. (2020). *Time Series of Price Anomaly Detection with LSTM.*
+- Valkov, V. *Time Series Anomaly Detection with LSTM Autoencoders using Keras.* (curiousily.com)
 - Petrovic, D. *Anomaly Detection in Stock Price with LSTM Autoencoder.* (GitHub)
 - *Anomaly Detection on Bitcoin Values.* IEEE (2021).
 - Liu et al. (2025). *Robust Anomaly Detection in Financial Markets Using LSTM Autoencoders and GANs.*
-- *LSTM e DBSCAN para Bitcoin.* Springer Nature (2025).
 
-Repositórios públicos foram usados apenas como guia arquitetural. Toda a implementação, os dados e as análises são originais.
+Repositórios públicos foram usados apenas como guia arquitetural. Toda a implementação, os dados e
+as análises são originais.
 
 ---
 
