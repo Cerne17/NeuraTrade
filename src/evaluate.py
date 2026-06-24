@@ -147,3 +147,71 @@ def compute_metrics(
         "recall": float(recall_score(y_true, y_pred, zero_division=0)),
         "f1": float(f1_score(y_true, y_pred, zero_division=0)),
     }
+
+
+def score_curves(
+    window_scores: np.ndarray,
+    window_labels: np.ndarray,
+) -> dict:
+    """Métricas **independentes de limiar** para classe rara (ADR-0015).
+
+    Sob forte desbalanceamento (anomalias ≈ poucos %), a **ROC-AUC engana**: o
+    excesso de verdadeiros-negativos infla a pontuação. A **PR-AUC** (área sob a
+    curva Precision–Recall, = *average precision*) foca na classe positiva e é a
+    métrica honesta. Reporta ambas — e a *baseline* da PR-AUC (a prevalência), que
+    é o que um classificador aleatório atinge.
+
+    Args:
+        window_scores: escore contínuo por janela (erro de reconstrução agregado),
+            **não** as flags binárias — PR/ROC precisam de escore para varrer limiares.
+        window_labels: ground-truth 0/1 por janela.
+
+    Returns:
+        Dict com ``pr_auc``, ``roc_auc``, ``prevalence`` (baseline da PR) e
+        ``pr_lift`` (pr_auc / prevalence). ``roc_auc`` é ``nan`` se só houver uma classe.
+    """
+    from sklearn.metrics import average_precision_score, roc_auc_score
+
+    y = np.asarray(window_labels, dtype=int)
+    s = np.asarray(window_scores, dtype=float)
+    prevalence = float(y.mean())
+
+    pr_auc = float(average_precision_score(y, s)) if 0 < prevalence < 1 else float("nan")
+    roc_auc = float(roc_auc_score(y, s)) if 0 < prevalence < 1 else float("nan")
+    return {
+        "pr_auc": pr_auc,
+        "roc_auc": roc_auc,
+        "prevalence": prevalence,
+        "pr_lift": pr_auc / prevalence if prevalence > 0 else float("nan"),
+    }
+
+
+def expected_cost(
+    window_flags: np.ndarray,
+    window_labels: np.ndarray,
+    cost_fp: float = 1.0,
+    cost_fn: float = 1.0,
+) -> dict[str, float]:
+    """Custo assimétrico de Falsos Positivos vs Falsos Negativos (ADR-0015/0016).
+
+    Em detecção de anomalias o erro não é simétrico: deixar passar um choque (FN)
+    raramente custa o mesmo que um alarme falso (FP). Esta é a tradução mínima e
+    honesta para "custo" — sem inventar uma estratégia de portfólio (ver ADR-0016).
+
+    Args:
+        cost_fp/cost_fn: custos relativos. Ex.: ``cost_fn=5`` = perder uma anomalia
+            é 5× pior que um alarme falso.
+
+    Returns:
+        Dict com contagens ``fp``/``fn``/``tp``/``tn`` e ``cost`` total ponderado.
+    """
+    y = np.asarray(window_labels, dtype=int)
+    p = np.asarray(window_flags, dtype=int)
+    tp = int(((p == 1) & (y == 1)).sum())
+    fp = int(((p == 1) & (y == 0)).sum())
+    fn = int(((p == 0) & (y == 1)).sum())
+    tn = int(((p == 0) & (y == 0)).sum())
+    return {
+        "tp": tp, "fp": fp, "fn": fn, "tn": tn,
+        "cost": float(cost_fp * fp + cost_fn * fn),
+    }
