@@ -48,6 +48,7 @@ Valores `PROVISÓRIO` aparecem marcados também no `config.yaml`.
 | [0009](0009-agregacao-erro-janela.md) | Agregação do erro por janela: `mean`/`max`/`percentil` (Recall) | DECISÃO DE PROJETO · **aceito** (M8) |
 | [0010](0010-validacao-walk-forward.md) | Validação Walk-Forward (`TimeSeriesSplit`) para seleção de hiperparâmetros | FUNDAMENTADO · **aceito** (M8) |
 | [0011](0011-tensor-multivariado-ohlcv.md) | Tensor multivariado OHLCV `(30,1)→(30,5)`, scaler por coluna, `log1p` volume | DECISÃO DE PROJETO · **aceito** (M8, Etapa 1) |
+| [0012](0012-contexto-macro-conditional-ae.md) | Contexto macro via Conditional AE (encoder vê macro, loss só em preço/volume) + decisão idiossincrático/sistêmico | DECISÃO DE PROJETO · **proposto** |
 
 > **Fase 2 (M8) — concluída e validada por experimento:**
 > - **ADR-0009** (`07_aggregation_recalibration`): agregação `max` dobrou o Recall (0,16→0,35) e
