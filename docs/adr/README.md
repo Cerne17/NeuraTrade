@@ -49,6 +49,10 @@ Valores `PROVISÓRIO` aparecem marcados também no `config.yaml`.
 | [0010](0010-validacao-walk-forward.md) | Validação Walk-Forward (`TimeSeriesSplit`) para seleção de hiperparâmetros | FUNDAMENTADO · **aceito** (M8) |
 | [0011](0011-tensor-multivariado-ohlcv.md) | Tensor multivariado OHLCV `(30,1)→(30,5)`, scaler por coluna, `log1p` volume | DECISÃO DE PROJETO · **aceito** (M8, Etapa 1) |
 | [0012](0012-contexto-macro-conditional-ae.md) | Contexto macro via Conditional AE (encoder vê macro, loss só em preço/volume) + decisão idiossincrático/sistêmico | DECISÃO DE PROJETO · **aceito** (M11, prova de conceito) |
+| [0013](0013-atencao-transformers.md) | Atenção / Transformers no autoencoder | DECISÃO DE PROJETO · **rejeitado** (janela=30, dataset pequeno, gargalo insensível) |
+| [0014](0014-otimizacao-bayesiana-optuna.md) | Otimização Bayesiana (Optuna) de hiperparâmetros | DECISÃO DE PROJETO · **rejeitado** (landscape plano medido) |
+| [0015](0015-metricas-classe-rara-pr-auc.md) | Métricas para classe rara: PR-AUC + custo FP×FN | FUNDAMENTADO · **aceito** (implementado) |
+| [0016](0016-backtesting-financeiro.md) | Backtesting financeiro / impacto real | DECISÃO DE PROJETO · **parcial** (custo assimétrico sim, portfólio futuro) |
 
 > **Fase 2 (M8) — concluída e validada por experimento:**
 > - **ADR-0009** (`07_aggregation_recalibration`): agregação `max` dobrou o Recall (0,16→0,35) e

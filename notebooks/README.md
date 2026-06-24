@@ -49,4 +49,10 @@ modelos em `models/` (gerados por `03_train` ou `python -m src --train`).
 | 12 | `12_conditional_macro` | Conditional AE com macro (USDBRL/VIX/Selic/IPCA): distingue **idiossincrático** vs **sistêmico** — COVID=sistêmico, Americanas=idiossincrático (ADR-0012). |
 | 13 | `13_conditional_tuning` | Tuning: dropar macro mensais inertes (Selic/IPCA) e revalidar `latent_dim` condicional por walk-forward (ADR-0012). |
 
+## Métricas (M12)
+
+| # | Notebook | Estudo |
+| - | -------- | ------ |
+| 14 | `14_imbalanced_metrics` | PR-AUC vs ROC-AUC em classe rara (ROC engana) + custo assimétrico FP×FN (ADR-0015/0016). |
+
 As decisões de cada estudo estão registradas como ADRs em [`docs/adr/`](../docs/adr/).
