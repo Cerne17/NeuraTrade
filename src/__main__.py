@@ -43,6 +43,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--verbose", type=int, default=0, help="verbosidade do treino Keras (0/1/2)."
     )
+    parser.add_argument(
+        "--quiet", action="store_true", help="oculta a barra de progresso do treino."
+    )
     args = parser.parse_args(argv)
 
     print(
@@ -55,6 +58,7 @@ def main(argv: list[str] | None = None) -> int:
             train=args.train,
             evaluate=args.evaluate,
             verbose=args.verbose,
+            progress=not args.quiet,
         )
     except FileNotFoundError as exc:
         print(f"\nERRO: {exc}\nDica: rode com --train para treinar os modelos.")

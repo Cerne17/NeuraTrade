@@ -31,6 +31,7 @@ def run_pipeline(
     train: bool = False,
     evaluate: bool = True,
     verbose: int = 0,
+    progress: bool = True,
 ) -> dict[str, dict]:
     """Roda a pipeline completa para cada ativo.
 
@@ -41,6 +42,8 @@ def run_pipeline(
             mensagem clara se ausente.
         evaluate: se ``True``, injeta choques sintéticos (k·σ) e calcula P/R/F1.
         verbose: verbosidade do treino Keras.
+        progress: ao treinar, mostra ``[i/n]`` por ativo + barra de progresso por
+            época (default ``True``).
 
     Returns:
         Dict ``{ticker: resumo}`` com fração de janelas marcadas (estático e
@@ -53,11 +56,15 @@ def run_pipeline(
     data_map = data.load_all(tickers)
 
     results: dict[str, dict] = {}
-    for t in tickers:
+    for i, t in enumerate(tickers, 1):
         pre = pp.preprocess_ticker(data_map[t])
 
         if train:
-            model, _ = train_mod.train_model(pre["X_train"], ticker=t, verbose=verbose)
+            if progress:
+                print(f"[{i}/{len(tickers)}] treinando {t} ...")
+            model, _ = train_mod.train_model(
+                pre["X_train"], ticker=t, verbose=verbose, progress=progress
+            )
         else:
             model = train_mod.load_model(t)  # FileNotFoundError com dica se ausente
 
