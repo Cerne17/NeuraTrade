@@ -32,6 +32,9 @@ experimento (ver [Resultados](#resultados) e [Documentação](#documentação)):
   de volume).
 - **M10** — organização do repositório: pipeline executável (`python -m src`), `scripts/`
   versionado e índices.
+- **M11** — contexto macroeconômico (USD/BRL, VIX) via **Conditional Autoencoder**: distingue
+  anomalia **idiossincrática** (do ativo) de **sistêmica** (macro global) — COVID=sistêmico,
+  Americanas=idiossincrático (ADR-0012).
 
 ### Ativos analisados
 
@@ -192,7 +195,7 @@ NeuraTrade/
 ├── notebooks/                # ESTUDOS + guia de uso (orquestram src/, com saídas)
 │   ├── README.md             # índice dos estudos por fase
 │   ├── 00_quickstart.ipynb   # guia de uso: pipeline + fetch + inferência
-│   └── 01_eda … 12_conditional_macro.ipynb
+│   └── 01_eda … 13_conditional_tuning.ipynb
 ├── docs/adr/                 # Architecture Decision Records (0001–0011)
 ├── report/                   # relatório LaTeX (preliminar)
 ├── teoria/                   # guia teórico autocontido (LaTeX)

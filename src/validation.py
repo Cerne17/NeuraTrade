@@ -186,3 +186,67 @@ def cross_validate_latent_dim(
         )
 
     return pd.DataFrame(rows).set_index("latent_dim")
+
+
+def cross_validate_latent_dim_conditional(
+    folds: list[dict],
+    n_price_volume: int,
+    candidates: list[int],
+    epochs: int | None = None,
+) -> pd.DataFrame:
+    """Seleciona ``latent_dim`` do **Conditional AE** por walk-forward (ADR-0010/0012).
+
+    Como :func:`cross_validate_latent_dim`, mas treina o modelo condicional
+    (`build_conditional_autoencoder`): a entrada é o tensor completo pv+macro e o
+    **alvo é só o bloco preço/volume** (`X[..., :n_price_volume]`). Os ``folds`` vêm
+    de :func:`walk_forward_splits_multivariate` sobre o frame `[pv | macro]`.
+
+    Returns:
+        ``DataFrame`` por ``latent_dim`` com ``val_loss_mean``/``val_loss_std``/``n_folds``.
+    """
+    from tensorflow import keras
+
+    from .model import build_conditional_autoencoder
+
+    tcfg = CONFIG["train"]
+    epochs = epochs if epochs is not None else tcfg["epochs"]
+
+    rows = []
+    for latent_dim in candidates:
+        fold_losses = []
+        for f in folds:
+            X_tr, X_val = f["X_train"], f["X_val"]
+            if len(X_tr) == 0 or len(X_val) == 0:
+                continue
+            n_macro = X_tr.shape[-1] - n_price_volume
+            model = build_conditional_autoencoder(
+                n_price_volume=n_price_volume, n_macro=n_macro, latent_dim=latent_dim
+            )
+            es = keras.callbacks.EarlyStopping(
+                monitor="val_loss",
+                patience=tcfg["early_stopping_patience"],
+                restore_best_weights=True,
+            )
+            hist = model.fit(
+                X_tr,
+                X_tr[..., :n_price_volume],   # alvo: só preço/volume
+                validation_data=(X_val, X_val[..., :n_price_volume]),
+                epochs=epochs,
+                batch_size=tcfg["batch_size"],
+                shuffle=tcfg["shuffle"],
+                callbacks=[es],
+                verbose=0,
+            )
+            fold_losses.append(min(hist.history["val_loss"]))
+            keras.backend.clear_session()
+
+        rows.append(
+            {
+                "latent_dim": latent_dim,
+                "val_loss_mean": float(np.mean(fold_losses)) if fold_losses else np.nan,
+                "val_loss_std": float(np.std(fold_losses)) if fold_losses else np.nan,
+                "n_folds": len(fold_losses),
+            }
+        )
+
+    return pd.DataFrame(rows).set_index("latent_dim")

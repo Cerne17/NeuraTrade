@@ -120,6 +120,19 @@ anomalia **do ativo**.
 > walk-forward; lag do IPCA é aproximado (não a data exata de divulgação); Selic/IPCA mensais são
 > quase inertes — o sinal sistêmico vem de USDBRL/VIX (diários).
 
+> **Atualização (M11, 2026-06-24) — tuning: features macro e `latent_dim` (notebook `13`).**
+> - **Macro mensal descartada.** Comparando o conjunto completo (USDBRL, VIX, Selic, IPCA) com
+>   **só as diárias** (USDBRL, VIX): a separação é **idêntica** (PETR4 COVID 30 sistêmico; AMER3
+>   2023 39 idiossincrático) e o `val_loss` praticamente igual ($0{,}00214$ vs $0{,}00215$). Selic e
+>   IPCA, quase constantes na janela após o `ffill`, **não contribuem** — o sinal sistêmico está em
+>   **USDBRL/VIX** (diários). `config.macro.features` passa a `["USDBRL", "VIX"]`; o cache mantém as
+>   4 séries (decisão de fetch ≠ decisão de modelo). Ecoa "mais dimensão ≠ mais sinal" (OHLCV
+>   rejeitado, [ADR-0011](0011-tensor-multivariado-ohlcv.md)).
+> - **`latent_dim` condicional insensível.** Walk-forward (`cross_validate_latent_dim_conditional`,
+>   espaço Close+Volume+USDBRL+VIX): `val_loss` médio $0{,}016668$ (8), $0{,}016487$ (16),
+>   $0{,}016455$ (32) — diferenças na 4ª casa $\ll$ desvio $\approx 0{,}003$. Mantém-se **16** por
+>   consistência. A insensibilidade do gargalo repete-se em todas as representações testadas.
+
 ## Alternativas consideradas
 
 - **Macro empilhada no tensor reconstruído `(30, 2+N)` + `max` global:** rejeitada — MSE ignora a
