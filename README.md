@@ -178,6 +178,8 @@ NeuraTrade/
 │   ├── validation.py         # validação Walk-Forward (TimeSeriesSplit), uni e multivariado
 │   ├── evaluate.py           # injeção sintética, precision/recall/f1
 │   ├── inference.py          # aplica modelos a janelas novas (fora do treino)
+│   ├── macro.py              # conector macro (BCB/yfinance) + alinhamento causal (ADR-0012)
+│   ├── conditional.py        # Conditional AE: contexto macro, regime idiossincrático/sistêmico
 │   ├── events.py             # linha do tempo de eventos BR
 │   └── viz.py                # plots padronizados
 ├── scripts/                  # UTILITÁRIOS (atalhos operacionais)
@@ -190,7 +192,7 @@ NeuraTrade/
 ├── notebooks/                # ESTUDOS + guia de uso (orquestram src/, com saídas)
 │   ├── README.md             # índice dos estudos por fase
 │   ├── 00_quickstart.ipynb   # guia de uso: pipeline + fetch + inferência
-│   └── 01_eda … 11_ohlcv_full.ipynb
+│   └── 01_eda … 12_conditional_macro.ipynb
 ├── docs/adr/                 # Architecture Decision Records (0001–0011)
 ├── report/                   # relatório LaTeX (preliminar)
 ├── teoria/                   # guia teórico autocontido (LaTeX)

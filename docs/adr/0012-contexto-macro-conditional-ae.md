@@ -1,13 +1,13 @@
 # ADR-0012: Injeção de Contexto Macroeconômico via Conditional Autoencoder
 
-- **Status:** proposto
+- **Status:** aceito — prova de conceito validada (notebook `12_conditional_macro`)
 - **Data:** 2026-06-24
 - **Proveniência:** DECISÃO DE PROJETO
-- **Milestone:** M11 (proposto)
+- **Milestone:** M11
 - **Chaves em `config.yaml`:** `macro.features`, `macro.stationarize`
-- **Código (protótipo):** [src/macro.py](../../src/macro.py),
+- **Código:** [src/macro.py](../../src/macro.py) (conector BCB/yfinance + alinhamento),
   [src/conditional.py](../../src/conditional.py),
-  `src/model.py::build_conditional_autoencoder`
+  `src/model.py::build_conditional_autoencoder`, `scripts/cache_data.py --macro`
 
 ## Contexto
 
@@ -96,6 +96,29 @@ anomalia **do ativo**.
   contra eventos reais (crash COVID = sistêmico; fraude Americanas 2023 = idiossincrático) — é a
   prova do conceito ([ADR-0008](0008-linha-do-tempo-eventos.md)).
 - **Conector de dados** (BCB/SGS, FRED) fica fora do protótipo; é pré-requisito para validar.
+
+> **Atualização (M11, 2026-06-24) — conector + validação (notebook `12_conditional_macro`).**
+> Conector implementado em [src/macro.py](../../src/macro.py): USDBRL/Selic/IPCA via BCB-SGS
+> (Selic = série 1178; chunks de 4 anos pelo limite de pontos do SGS) e VIX via yfinance; IPCA
+> recebe **lag de publicação** (mês de referência + ~9 dias) — Dez/2024 cai em 10/jan/2025, como
+> esperado. Cacheado em `data/raw/macro.csv` (versionado); `scripts/cache_data.py` baixa por
+> default.
+>
+> **Prova de conceito (teste 2020–2024, agregação `max`, limiar p95 por bloco):**
+>
+> | Ticker | COVID 2020 (mar–mai) | Jan–mar 2023 (Americanas) |
+> | --- | --- | --- |
+> | PETR4.SA | **30 sistêmico**, 0 idiossincrático | 0 (normal) |
+> | AMER3.SA | 0 (normal) | **49 idiossincrático**, 0 sistêmico |
+>
+> A separação é nítida: o crash COVID (VIX/câmbio em movimento) é classificado **sistêmico**; a
+> fraude Americanas (AMER3 em estresse, macro estável) é **idiossincrático**. No agregado do teste,
+> as anomalias da PETR4 são quase todas sistêmicas (concentradas na COVID) e as da AMER3 quase todas
+> idiossincráticas (sua própria crise). VALE3/ITUB4 (estáveis) não marcam no período.
+>
+> **Pendências para reportar resultado final:** revalidar `latent_dim` do espaço pv+macro por
+> walk-forward; lag do IPCA é aproximado (não a data exata de divulgação); Selic/IPCA mensais são
+> quase inertes — o sinal sistêmico vem de USDBRL/VIX (diários).
 
 ## Alternativas consideradas
 
