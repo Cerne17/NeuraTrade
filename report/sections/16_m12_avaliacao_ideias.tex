@@ -1,0 +1,79 @@
+\section{Avaliação de Ideias e Métricas para Classe Rara (M12)}
+\label{sec:m12}
+
+A M12 confrontou \textbf{quatro propostas de extensão} contra a evidência já acumulada pelo projeto,
+decidindo o que incorporar e o que rejeitar \emph{com justificativa}. Duas foram implementadas
+(ao menos parcialmente) e duas, rejeitadas. O critério foi sempre o mesmo: a complexidade adicional
+precisa atacar um gargalo \emph{real} e medido, não apenas conferir verniz arquitetural.
+
+\subsection{Métricas de classe rara: PR-AUC e \emph{lift} (ADR-0015)}
+\label{sec:m12-prauc}
+Sob forte desbalanceamento (anomalias raras), a \textbf{ROC-AUC engana}: o excesso de
+verdadeiros-negativos infla a pontuação. Implementou-se \texttt{src/evaluate.py::score\_curves}
+(PR-AUC, ROC-AUC e \emph{baseline}/\emph{lift} sobre o acaso) e adotou-se \textbf{PR-AUC $+$ F1}
+como leitura padrão; a ROC-AUC fica apenas como contraste didático. Varrendo a raridade no ground-truth
+sintético da PETR4 (Tabela~\ref{tab:m12-prauc}):
+
+\begin{table}[h]
+\centering
+\caption{PR-AUC \emph{vs.} ROC-AUC ao variar a raridade (ADR-0015, notebook \texttt{14}, PETR4).}
+\label{tab:m12-prauc}
+\begin{tabular}{rccc}
+\toprule
+\texttt{n\_injections} & prevalência & \textbf{PR-AUC} & ROC-AUC \\
+\midrule
+2  & 0,049 & \textbf{0,151} & 0,840 \\
+5  & 0,105 & 0,314 & 0,847 \\
+10 & 0,188 & 0,537 & 0,921 \\
+25 & 0,447 & 0,707 & 0,878 \\
+50 & 0,715 & 0,865 & 0,885 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent No regime \textbf{raro} (\texttt{n=2}, prevalência 4,9\%) a ROC-AUC $= 0{,}84$ \emph{mascara}
+um desempenho fraco que a PR-AUC $= 0{,}15$ expõe (apenas ${\sim}3\times$ o acaso). À medida que a classe
+se equilibra, as duas convergem. A crítica é \textbf{confirmada} --- e, de quebra, expôs um defeito do
+nosso protocolo sintético.
+
+\subsection{Custo assimétrico FP$\times$FN (ADR-0016, parcial)}
+\label{sec:m12-custo}
+A escolha de limiar (ADR-0005) é uma \textbf{decisão de risco}, não só estatística: um falso positivo
+(alarme falso) e um falso negativo (anomalia perdida) custam diferente. Implementou-se
+\texttt{src/evaluate.py::expected\_cost(flags, labels, cost\_fp, cost\_fn)}, que reporta o custo total
+sob diferentes razões FN:FP sobre a matriz de confusão. Isso conecta a métrica ao domínio financeiro
+sem inventar uma estratégia de \emph{trading}.
+
+\subsection{Ideias rejeitadas com defesa}
+\label{sec:m12-rejeitadas}
+\begin{itemize}[noitemsep]
+  \item \textbf{Atenção / Transformers (ADR-0013):} a premissa (LSTM ``esquece'' em janelas longas)
+        \emph{não se aplica} a \texttt{window\_size=30} (ADR-0002); o contexto de longo alcance já entra
+        pelo bloco macro (ADR-0012); o dataset ($\sim$2450 janelas/ativo) é pequeno demais para
+        Transformers \emph{data-hungry}; e o \texttt{latent\_dim} já se mostrou \textbf{insensível} em
+        [8, 32] --- não falta capacidade. Rejeitada.
+  \item \textbf{Otimização bayesiana / Optuna (ADR-0014):} a seleção \emph{não} foi manual casual ---
+        usou-se walk-forward com \texttt{TimeSeriesSplit} (ADR-0010). A paisagem de \texttt{latent\_dim}
+        é \textbf{plana} (diferenças na 4ª casa decimal, abaixo do desvio entre folds $\approx 0{,}003$);
+        buscar o ótimo sobre ruído só produz falsa precisão. Rejeitada.
+\end{itemize}
+
+\subsection{Trabalho futuro declarado}
+\label{sec:m12-futuro}
+Dois itens ficam explicitamente como direção futura, e não como entrega:
+\begin{itemize}[noitemsep]
+  \item \textbf{Backtest de portfólio (ADR-0016):} anomalia $\ne$ sinal de \emph{trade}; um P\&L
+        exigiria uma \emph{estratégia} (qual ação tomar?) que o escopo não tem, e um backtest ingênuo
+        no período de teste fabricaria facilmente uma história de lucro frágil a \emph{look-ahead} e
+        \emph{overfit}. Pré-requisitos claros: definir a ação associada à anomalia, custos de transação,
+        protocolo anti-\emph{look-ahead}.
+  \item \textbf{Correção do protocolo sintético (consequência da ADR-0015):} com a injeção \emph{default}
+        (50 choques) e janelas sobrepostas, cada choque rotula ${\sim}$\texttt{window\_size} janelas e
+        a prevalência sobe a ${\sim}$70\% --- a classe \textbf{deixa de ser rara}. Para avaliar no
+        regime realista 99/1, reduzir \texttt{n\_injections} e/ou \textbf{agrupar detecções contíguas
+        como um único evento} antes de rotular.
+\end{itemize}
+
+\noindent\textbf{Limite honesto:} no teste \emph{real} (não supervisionado) não há rótulos, então a
+PR-AUC só é computável sobre o sintético; no real, segue-se com a fração marcada $+$ correlação a
+eventos (ADR-0008).

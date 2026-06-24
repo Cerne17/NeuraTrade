@@ -1,0 +1,105 @@
+\section{Quatro ideias confrontadas: o que se incorpora, o que se rejeita}
+\label{sec:debate-m12}
+
+A M12 levou ao banco quatro extensões plausíveis. O princípio da resposta é o mesmo do projeto:
+a complexidade só entra se atacar um gargalo \emph{medido}. Duas passaram (uma com ressalva), duas
+não --- e a recusa é \emph{argumentada}, não omissão.
+
+\subsection{``A ROC-AUC não engana em classe rara?''}
+\label{sec:debate-prauc}
+
+\begin{confronto}
+``Vocês reportam desempenho de detecção sob forte desbalanceamento. A ROC-AUC superestima o
+resultado quando a classe positiva é rara --- o mar de verdadeiros-negativos infla a área. Cadê a
+\emph{Precision--Recall} (PR-AUC)?''
+\end{confronto}
+
+A crítica é \textbf{correta e clássica}, e foi acatada: implementou-se \texttt{score\_curves}
+(PR-AUC, ROC-AUC, \emph{baseline}/\emph{lift}) e adotou-se \textbf{PR-AUC $+$ F1} como leitura padrão.
+Mas a confrontação rendeu uma \emph{surpresa empírica} que vale mais que a métrica em si: ao varrer a
+raridade no nosso sintético (PETR4), a ROC-AUC fica $\approx 0{,}84$ enquanto a PR-AUC cai a
+$\mathbf{0{,}15}$ no regime raro (prevalência 4,9\%) --- expondo um desempenho que a ROC mascarava.
+Conforme a classe se equilibra, as duas convergem.
+
+\begin{honesto}
+A mesma varredura revelou um \textbf{defeito do nosso protocolo}: com a injeção \emph{default} (50
+choques) e janelas sobrepostas, cada choque contamina ${\sim}$\texttt{window\_size} janelas e a
+prevalência sobe a ${\sim}$70\% --- ao nível de janela a anomalia \textbf{não é rara}. A PR-AUC só
+``morde'' depois de corrigir isso (menos injeções e/ou agrupar detecções contíguas como um evento).
+Preferimos registrar o defeito a esconder a métrica fácil do regime abundante.
+\end{honesto}
+
+\begin{honesto}
+No teste \textbf{real} (não supervisionado) não há rótulos: a PR-AUC só é computável sobre o
+sintético. No real, a avaliação segue por fração marcada $+$ correlação a eventos (ADR-0008). A
+PR-AUC valida o \emph{detector}, não substitui a inexistência de \emph{ground-truth} real.
+\end{honesto}
+
+\subsection{``Por que não traduzir o alarme em dinheiro?''}
+\label{sec:debate-backtest}
+
+\begin{confronto}
+``Validar por MSE/PR-AUC é abstrato. Um praticante pergunta: \emph{quanto custa um erro}? Cadê o
+backtest financeiro --- o impacto num portfólio?''
+\end{confronto}
+
+O \textbf{núcleo correto} da crítica foi incorporado: o custo de um falso positivo $\ne$ o de um
+falso negativo. \texttt{expected\_cost(flags, labels, cost\_fp, cost\_fn)} reporta o custo total sob
+diferentes razões FN:FP, ligando a \emph{escolha de limiar} (ADR-0005) a uma decisão de risco.
+
+\begin{tradeoff}
+Aceitamos a versão \textbf{mínima} (custo assimétrico) e \textbf{rejeitamos} o backtest de portfólio.
+Motivo: \emph{anomalia $\ne$ sinal de trade}. O sistema detecta; não diz o que fazer (vender? proteger?
+comprar?). Um P\&L exige uma \textbf{estratégia} que o projeto não tem e não se propôs a ter; inventá-la
+muda o escopo (de detecção para \emph{trading}) e arrisca \emph{overclaim} --- um backtest ingênuo no
+período de teste fabrica ``lucro'' frágil a \emph{look-ahead} na estratégia e \emph{overfit} do período.
+Fica como trabalho futuro com pré-requisitos explícitos.
+\end{tradeoff}
+
+\subsection{``LSTM esquece --- por que não Atenção/Transformers?''}
+\label{sec:debate-atencao}
+
+\begin{confronto}
+``LSTMs degradam em sequências longas. Uma camada de \textbf{Atenção} (ou blocos Transformer)
+focaria eventos passados específicos e daria interpretabilidade pelos pesos. É o estado da arte.''
+\end{confronto}
+
+A premissa \textbf{não se aplica à nossa janela}. \texttt{window\_size = 30} pregões (ADR-0002)
+$\approx$ 6 semanas: não há esquecimento de longo prazo a resolver, e um evento de ``6 meses atrás''
+\emph{nem está na janela}. O contexto sistêmico de longo alcance já entra pelo bloco macro (ADR-0012),
+sem atender a passos distantes. E há \textbf{evidência de que não falta capacidade}: o
+\texttt{latent\_dim} é insensível em [8, 32] em todas as representações (uni, multivariado, condicional);
+um gargalo que não satura não está limitado por capacidade --- atenção não atacaria o gargalo real.
+
+\begin{tradeoff}
+Num dataset de ${\sim}$2450 janelas/ativo, Transformers \emph{data-hungry} tenderiam a
+\textbf{overfitar}, não a ganhar. Rejeitamos. Fica como trabalho futuro \emph{condicionado}: só faz
+sentido com janelas longas (126/252) \emph{e} muito mais dados --- cenário em que o esquecimento de
+longo prazo passaria a existir.
+\end{tradeoff}
+
+\subsection{``Cadê a otimização bayesiana dos hiperparâmetros?''}
+\label{sec:debate-optuna}
+
+\begin{confronto}
+``Escolher \texttt{latent\_dim}/\texttt{learning\_rate} ``no olho'' é frágil. \textbf{Optuna} faria
+uma busca bayesiana sistemática e reportável --- mais rigor científico na topologia.''
+\end{confronto}
+
+A seleção \textbf{não} foi casual: usou-se \textbf{walk-forward} com \texttt{TimeSeriesSplit}
+(ADR-0010), a abordagem correta para série temporal --- Optuna sem CV temporal seria \emph{menos}
+rigoroso. Os hiperparâmetros sensíveis (\texttt{window\_size}, \texttt{lstm\_units}, \texttt{dropout},
+\texttt{lr}) têm \textbf{proveniência} na literatura (ADR-0003/0004), não chute.
+
+\begin{tradeoff}
+A paisagem de \texttt{latent\_dim} é \textbf{plana} --- diferenças de \texttt{val\_loss} na 4ª casa
+decimal, abaixo do desvio entre folds ($\approx 0{,}003$). Rodar busca bayesiana sobre ruído não acha
+nada melhor: só produz falsa precisão (``o ótimo é 17,3!''). Rejeitamos. Justificável \emph{se} a
+arquitetura crescer e a paisagem deixar de ser plana.
+\end{tradeoff}
+
+\begin{intuicao}
+As quatro respostas convergem para o tema central do NeuraTrade: \textbf{mais
+dimensão/capacidade $\ne$ mais sinal}. O que importa é \emph{o que} se dá ao modelo (volume, macro
+diária, agregação \emph{max}), não \emph{quanto}.
+\end{intuicao}

@@ -1,0 +1,100 @@
+\section{Avaliar quando a anomalia é rara: PR-AUC e custo do erro}
+\label{sec:metricas-rara}
+
+Anomalia é, por definição, \textbf{rara}: a esmagadora maioria das janelas é normal. Isso muda o que
+significa ``o modelo é bom''. Esta seção explica por que a métrica mais famosa (ROC-AUC) \emph{engana}
+nesse caso, qual usar no lugar, e por que escolher o limiar é uma decisão de \emph{dinheiro}, não só
+de estatística.
+
+\subsection{Por que a acurácia (e a ROC-AUC) enganam}
+\label{sec:rara-roc}
+
+\begin{intuicao}
+Se 99\% das janelas são normais, um modelo preguiçoso que diz ``tudo normal, sempre'' acerta 99\% ---
+acurácia altíssima, utilidade zero (não acha \emph{nenhuma} anomalia). A acurácia premia o pano de
+fundo.
+\end{intuicao}
+
+A \textbf{ROC-AUC} sofre de um problema parecido, mais sutil. Ela cruza a taxa de verdadeiros-positivos
+com a de falsos-positivos. Quando os \emph{negativos} são a esmagadora maioria, a taxa de falsos-positivos
+quase não se mexe (o denominador é gigante), e a curva parece ótima mesmo que, entre os poucos alarmes
+disparados, a maioria seja falsa.
+
+\subsection{A métrica certa: Curva Precision--Recall e PR-AUC}
+\label{sec:rara-pr}
+
+\begin{definicao}[Precisão e Revocação (\emph{recall})]
+\textbf{Precisão} $=$ dos alarmes que disparei, quantos eram anomalia de verdade
+($\frac{\text{VP}}{\text{VP}+\text{FP}}$). \textbf{Revocação} $=$ das anomalias que existiam, quantas
+eu peguei ($\frac{\text{VP}}{\text{VP}+\text{FN}}$).
+\end{definicao}
+
+\begin{definicao}[PR-AUC]
+A área sob a curva Precisão$\times$Revocação, varrendo todos os limiares. Diferente da ROC, ela
+\textbf{ignora os verdadeiros-negativos} --- olha só para o que importa na classe rara: a qualidade
+dos alarmes e a cobertura das anomalias.
+\end{definicao}
+
+\begin{intuicao}
+A linha de base da PR-AUC é a própria \textbf{prevalência} (a fração de anomalias). Se 5\% das janelas
+são anômalas, um chute aleatório dá PR-AUC $\approx 0{,}05$. Então o número só é bom \emph{relativo} a
+essa base --- daí também reportar o \emph{lift} (quantas vezes acima do acaso).
+\end{intuicao}
+
+\begin{exemplo}
+No notebook \texttt{14} (PETR4), variando a raridade da injeção:
+no regime \textbf{raro} (prevalência 4,9\%) a ROC-AUC dá $0{,}84$ --- parece ótimo --- mas a
+\textbf{PR-AUC dá só $0{,}15$} (apenas ${\sim}3\times$ o acaso): o modelo, na verdade, vai mal. Quando
+a classe se equilibra (prevalência $\to$ 70\%), as duas sobem e convergem. A ROC mentiu; a PR-AUC
+contou a verdade.
+\end{exemplo}
+
+\subsection{O custo do erro não é simétrico}
+\label{sec:rara-custo}
+
+\begin{intuicao}
+Errar tem dois sabores. Um \textbf{falso positivo} (FP) é um alarme à toa: você investiga e não era
+nada --- custa tempo/atenção. Um \textbf{falso negativo} (FN) é uma anomalia que passou batido --- pode
+custar muito mais (o rombo que ninguém viu chegar). Eles \emph{não} valem o mesmo.
+\end{intuicao}
+
+\begin{definicao}[Custo esperado assimétrico]
+Atribui-se um peso a cada tipo de erro e soma-se sobre a matriz de confusão:
+$\text{custo} = c_{\text{FP}}\cdot \#\text{FP} + c_{\text{FN}}\cdot \#\text{FN}$. Variar a razão
+$c_{\text{FN}}{:}c_{\text{FP}}$ desloca o \textbf{limiar ótimo}: se perder uma anomalia é 10$\times$
+pior que um alarme falso, o limiar deve disparar mais (mais recall, menos precisão).
+\end{definicao}
+
+\begin{naprat}
+Implementado em \texttt{src/evaluate.py}: \texttt{score\_curves} (PR-AUC, ROC-AUC, \emph{lift}) e
+\texttt{expected\_cost} (custo FP$\times$FN). Adotamos \textbf{PR-AUC $+$ F1} como leitura padrão; a
+ROC-AUC fica só como contraste. O custo assimétrico mostra que a escolha de limiar (Seção~\ref{sec:deteccao})
+é uma \emph{decisão de risco}. \textbf{Ressalva honesta:} no teste real não há rótulos, então a PR-AUC
+só vale sobre o sintético; no real, usa-se fração marcada $+$ correlação a eventos. Decisões em
+ADR-0015 e ADR-0016.
+\end{naprat}
+
+\subsection{Duas ideias que \emph{não} entraram --- e por quê}
+\label{sec:rara-rejeitadas}
+
+Nem toda extensão moderna ajuda. Duas foram avaliadas e \textbf{rejeitadas com razão}:
+
+\begin{intuicao}
+\textbf{Atenção / Transformers.} Servem para sequências \emph{longas}, onde a rede ``esqueceria'' o
+começo. Nossa janela tem só 30 dias --- não há o que esquecer. E o gargalo (\texttt{latent\_dim}) já se
+mostrou \emph{insensível}: não falta capacidade. Mais maquinaria, num dataset pequeno, levaria a
+\textbf{overfitting}, não a ganho (ADR-0013).
+\end{intuicao}
+
+\begin{intuicao}
+\textbf{Otimização bayesiana (Optuna).} Busca o melhor hiperparâmetro --- útil quando a ``paisagem''
+tem picos e vales. Medimos que a nossa é \textbf{plana} (mudar \texttt{latent\_dim} quase não altera o
+erro). Buscar o ótimo sobre uma superfície plana só dá uma falsa sensação de precisão sobre ruído
+(ADR-0014).
+\end{intuicao}
+
+\begin{intuicao}
+A lição que liga as quatro ideias: \textbf{mais capacidade $\ne$ mais sinal}. O que melhora o modelo é
+\emph{o que} se mede (volume, macro diária) e \emph{como} se avalia (PR-AUC, custo do erro) --- não
+empilhar parâmetros.
+\end{intuicao}
