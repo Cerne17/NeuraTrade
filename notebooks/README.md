@@ -14,7 +14,7 @@ modelos em `models/` (gerados por `03_train` ou `python -m src --train`).
 
 | # | Notebook | Conteúdo |
 | - | -------- | -------- |
-| 00 | `00_quickstart` | **Guia de uso** (não é um estudo): roda a pipeline completa, puxa uma janela de dados nova, faz inferência com os modelos e visualiza as anomalias — com o script/CLI equivalente em cada passo. |
+| 00 | `00_quickstart` | **Guia de uso** (não é um estudo): exercita **todas as configurações** do sistema — pipeline de detecção, troca de agregação (`mean`/`max`/`percentile`), multivariado Close+Volume + atribuição por canal, contexto macro (regime idiossincrático/sistêmico), inferência em janela nova — com o script/CLI equivalente em cada passo. |
 
 ## Fase 1 — pipeline base (M1–M6)
 
