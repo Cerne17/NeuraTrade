@@ -42,4 +42,10 @@ modelos em `models/` (gerados por `03_train` ou `python -m src --train`).
 | 10 | `10_max_default_decision` | `max` no teste real 2020–2024; adoção como default (ADR-0009). |
 | 11 | `11_ohlcv_full` | OHLCV `(30,5)` vs Close+Volume; `latent_dim` multivariado (ADR-0011). |
 
+## Contexto macro (M11)
+
+| # | Notebook | Estudo |
+| - | -------- | ------ |
+| 12 | `12_conditional_macro` | Conditional AE com macro (USDBRL/VIX/Selic/IPCA): distingue **idiossincrático** vs **sistêmico** — COVID=sistêmico, Americanas=idiossincrático (ADR-0012). |
+
 As decisões de cada estudo estão registradas como ADRs em [`docs/adr/`](../docs/adr/).
