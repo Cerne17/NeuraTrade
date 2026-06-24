@@ -1,0 +1,71 @@
+\section{Contexto macro e o Conditional Autoencoder}
+\label{sec:cond-macro}
+
+Até aqui o modelo olha só para o \emph{ativo} (preço e volume). Mas uma queda pode ter duas causas
+muito diferentes: um problema \textbf{do próprio ativo} (uma fraude, um \emph{rombo} de liquidez)
+ou um \textbf{choque do mercado inteiro} (uma crise global). Para distinguir, damos à rede um
+\emph{contexto macroeconômico}: dólar (USD/BRL), VIX (o ``índice do medo''), Selic e IPCA.
+
+\subsection{Por que não basta jogar a macro junto}
+\label{sec:cond-juntar}
+
+\begin{intuicao}
+Se você empilha a macro no mesmo bloco que a rede tenta \emph{reconstruir}, acontece uma injustiça:
+o IPCA quase não muda dentro de uma janela de 30 dias (é mensal), então reconstruí-lo é trivial ---
+a rede ``acerta'' sem esforço. O erro de reconstrução passa a vir só de preço/volume, e a macro
+vira decoração: está lá, mas não influencia nada.
+\end{intuicao}
+
+A causa é a perda \textbf{MSE}: ela é dominada pelas variáveis que mais variam. Uma série quase
+constante contribui com erro $\approx 0$ e é \emph{ignorada} pelo treino.
+
+\subsection{A ideia: macro como contexto, não como alvo}
+\label{sec:cond-ideia}
+
+\begin{definicao}[Conditional Autoencoder]
+Um autoencoder em que parte da entrada serve apenas para \emph{condicionar} (dar contexto) a
+codificação, mas \textbf{não} faz parte do que se tenta reconstruir. Aqui: o \emph{encoder} vê
+preço/volume \emph{e} macro; o \emph{decoder} reconstrói \textbf{só} preço/volume; a perda mede só
+o erro de preço/volume.
+\end{definicao}
+
+\begin{intuicao}
+A macro fica como ``pano de fundo'': ela molda a representação interna (o gargalo), mas a rede nunca
+é cobrada por reconstruí-la. Assim a macro \emph{informa} sem ser ignorada nem poluir a conta do
+erro.
+\end{intuicao}
+
+\subsection{Separando idiossincrático de sistêmico}
+\label{sec:cond-regime}
+
+Com dois números por janela conseguimos a distinção:
+\begin{itemize}[noitemsep]
+  \item \textbf{erro de Preço/Volume} --- o quanto o \emph{ativo} está estranho (vem da
+        reconstrução);
+  \item \textbf{estresse Macro} --- o quanto o \emph{mercado} se mexeu (medido direto da macro, pela
+        amplitude dela na janela --- não por reconstrução).
+\end{itemize}
+
+\begin{exemplo}
+Ativo muito estranho $+$ macro parada $\Rightarrow$ \textbf{idiossincrático} (o problema é dele:
+a fraude da Americanas). \\
+Ativo muito estranho $+$ macro também agitada $\Rightarrow$ \textbf{sistêmico} (a crise é de todos:
+o \emph{crash} da COVID, com o VIX nas alturas).
+\end{exemplo}
+
+\subsection{Cuidado com o tempo: data de publicação, não de referência}
+\label{sec:cond-leak}
+
+\begin{intuicao}
+O IPCA de \emph{março} só é \emph{divulgado} em meados de \emph{abril}. Se você ``souber'' o IPCA de
+março já em 1º de março, está espiando o futuro (Seção~\ref{sec:vazamento}). Por isso cada indicador
+é datado pela sua \textbf{data de publicação}, e o preenchimento é só ``para frente'' (\emph{ffill}):
+o dado existe para a rede a partir do dia em que virou público --- nunca antes.
+\end{intuicao}
+
+\begin{naprat}
+Validado no notebook \texttt{12}: o \emph{crash} da COVID/2020 foi classificado \textbf{sistêmico}
+e a fraude da Americanas/2023, \textbf{idiossincrático} --- a separação que o método buscava. O
+contexto macro vem sobretudo das séries \emph{diárias} (USD/BRL, VIX); as mensais (Selic, IPCA) são
+quase constantes na janela e contribuem pouco. Decisão registrada no ADR-0012.
+\end{naprat}

@@ -1,0 +1,52 @@
+\section{Contexto macro: por que condicionar, e não empilhar}
+\label{sec:debate-macro}
+
+\begin{confronto}
+``Adicionar Selic, IPCA, dólar e VIX ao tensor de entrada é o caminho óbvio para dar contexto
+sistêmico. Por que inventar um \emph{Conditional} Autoencoder em vez de simplesmente passar de
+$(30,2)$ para $(30,2{+}N)$ e reconstruir tudo?''
+\end{confronto}
+
+Porque ``empilhar e reconstruir tudo'' \textbf{não atinge o objetivo} --- e isso é demonstrável,
+não opinião. Três falhas:
+
+\begin{enumerate}[noitemsep]
+  \item \textbf{O MSE ignora a macro.} Indicadores de baixa frequência (IPCA mensal, Selic em
+        escada), após o preenchimento causal, são quase constantes na janela. Sua variância escalada
+        é ínfima; reconstruí-los é trivial; o gradiente vem só de preço/volume. A macro entraria como
+        \emph{decoração inerte}.
+  \item \textbf{Eventos agendados viram falsos positivos.} Uma alta de Selic ou um \emph{print} de
+        IPCA são \emph{programados}. Se a macro está no alvo e o erro é agregado por \emph{max}
+        (Seção~\ref{sec:debate-fase2-pooling}), um evento de calendário dispararia uma ``anomalia''.
+  \item \textbf{Um escalar único apaga a distinção.} Colapsar preço/volume e macro num só erro
+        impede dizer \emph{qual} bloco se mexeu --- justamente a informação que separa idiossincrático
+        de sistêmico.
+\end{enumerate}
+
+A solução é o \textbf{Conditional Autoencoder}: o encoder \emph{vê} a macro (ela condiciona a
+codificação), mas o decoder reconstrói \textbf{só} preço/volume e a perda recai só sobre esse bloco.
+O estresse macro é medido \emph{direto da entrada} (amplitude na janela), em um eixo separado do
+erro do ativo.
+
+\begin{tradeoff}
+Ganha-se a distinção idiossincrático \emph{vs.} sistêmico ao custo de uma arquitetura assimétrica
+(entrada $\ne$ alvo) e de um conector de dados macro com tratamento de frequências mistas. A prova
+de conceito (notebook \texttt{12}) pagou: COVID/2020 saiu \textbf{sistêmico}; Americanas/2023,
+\textbf{idiossincrático}.
+\end{tradeoff}
+
+\begin{honesto}
+A defesa anti-vazamento depende de um \textbf{contrato}: a macro é indexada pela \emph{data de
+publicação}, não de referência (o IPCA de março só existe para a rede em meados de abril), com
+\emph{ffill} causal e sem \emph{backfill}. Assumimos um \emph{lag} de publicação \textbf{aproximado}
+para o IPCA --- não a data exata de divulgação ---, o que é uma simplificação a refinar. E as séries
+mensais (Selic, IPCA) acabam quase inertes na janela: o contexto sistêmico vem, na prática, dos
+indicadores diários (USD/BRL, VIX). O método funciona, mas o crédito honesto vai para os dois canais
+diários, não para os quatro.
+\end{honesto}
+
+\begin{honesto}
+Esta extensão (ADR-0012) é uma \textbf{prova de conceito} --- ainda não incorporada como entrega
+oficial. O \texttt{latent\_dim} do espaço ampliado carece de revalidação por \emph{walk-forward}
+antes de qualquer número final.
+\end{honesto}
