@@ -28,6 +28,7 @@ def train_model(
     verbose: int = 0,
     n_features: int | None = None,
     suffix: str = "",
+    progress: bool = False,
 ):
     """Treina o autoencoder sobre janelas de treino (reconstrução: X→X).
 
@@ -39,6 +40,8 @@ def train_model(
             >1 ativa o caminho multivariado (OHLCV, ADR-0011).
         suffix: sufixo do arquivo de modelo (ex.: ``"_multi"``) para não
             sobrescrever o modelo univariado do mesmo ativo.
+        progress: se ``True``, mostra uma barra de progresso por época (callback
+            próprio, sem dependência); silencia o ``verbose`` do Keras.
 
     Returns:
         ``(model, history)``.
@@ -57,6 +60,11 @@ def train_model(
             restore_best_weights=True,
         )
     ]
+    if progress:
+        from .progress import keras_progress
+
+        callbacks.append(keras_progress(label=f"{ticker} " if ticker else ""))
+        verbose = 0  # a barra própria substitui o log do Keras
 
     history = model.fit(
         X_train,

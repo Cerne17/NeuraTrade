@@ -63,6 +63,10 @@ python -m src --train            # 1ª vez: treina os 4 modelos (models/ não é
 python -m src                    # execuções seguintes: carrega os modelos salvos
 ```
 
+Durante o treino, uma **barra de progresso** por época mostra que está andando
+(`PETR4.SA [████░░░] 38/100  val=0.0034`); use `--quiet` para ocultá-la. Em código,
+`train_model(..., progress=True)` / `run_pipeline(progress=True)`.
+
 Os dados brutos já estão versionados em `data/raw/`, então tudo roda **offline** — o `yfinance`
 só é necessário para recriar o cache (`python scripts/cache_data.py`).
 

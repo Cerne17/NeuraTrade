@@ -86,8 +86,11 @@ def train_conditional(
     n_price_volume: int,
     latent_dim: int | None = None,
     verbose: int = 0,
+    progress: bool = False,
 ):
     """Treina o Conditional AE: entrada = pv+macro, **alvo = só o bloco pv**.
+
+    ``progress=True`` mostra a barra de progresso por época (sem dependência).
 
     Returns:
         ``(model, history)``.
@@ -101,11 +104,19 @@ def train_conditional(
     model = build_conditional_autoencoder(
         n_price_volume=n_price_volume, n_macro=n_macro, latent_dim=latent_dim
     )
-    es = keras.callbacks.EarlyStopping(
-        monitor="val_loss",
-        patience=tcfg["early_stopping_patience"],
-        restore_best_weights=True,
-    )
+    callbacks = [
+        keras.callbacks.EarlyStopping(
+            monitor="val_loss",
+            patience=tcfg["early_stopping_patience"],
+            restore_best_weights=True,
+        )
+    ]
+    if progress:
+        from .progress import keras_progress
+
+        callbacks.append(keras_progress(label="conditional "))
+        verbose = 0
+
     y_train = X_train[..., :n_price_volume]  # alvo: só preço/volume
     history = model.fit(
         X_train,
@@ -114,7 +125,7 @@ def train_conditional(
         batch_size=tcfg["batch_size"],
         validation_split=tcfg["validation_split"],
         shuffle=tcfg["shuffle"],
-        callbacks=[es],
+        callbacks=callbacks,
         verbose=verbose,
     )
     return model, history
