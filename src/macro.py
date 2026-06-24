@@ -97,9 +97,10 @@ def fetch_macro(
     """
     start = start or CONFIG["data"]["start"]
     end = end or CONFIG["data"]["end"]
-    features = features or CONFIG.get("macro", {}).get(
-        "features", ["USDBRL", "VIX", "Selic", "IPCA"]
-    )
+    # Cache baixa TODAS as séries disponíveis (não só as do modelo): assim o
+    # data/raw/macro.csv preserva Selic/IPCA para reproduzir experimentos (nb12),
+    # enquanto o modelo usa o subconjunto de `config.macro.features` (só diárias).
+    features = features or list(BCB_SERIES) + ["VIX"]
 
     cols = {}
     for feat in features:

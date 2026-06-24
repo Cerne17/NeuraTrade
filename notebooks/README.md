@@ -47,5 +47,6 @@ modelos em `models/` (gerados por `03_train` ou `python -m src --train`).
 | # | Notebook | Estudo |
 | - | -------- | ------ |
 | 12 | `12_conditional_macro` | Conditional AE com macro (USDBRL/VIX/Selic/IPCA): distingue **idiossincrático** vs **sistêmico** — COVID=sistêmico, Americanas=idiossincrático (ADR-0012). |
+| 13 | `13_conditional_tuning` | Tuning: dropar macro mensais inertes (Selic/IPCA) e revalidar `latent_dim` condicional por walk-forward (ADR-0012). |
 
 As decisões de cada estudo estão registradas como ADRs em [`docs/adr/`](../docs/adr/).
