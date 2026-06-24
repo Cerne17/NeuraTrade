@@ -1,0 +1,86 @@
+\section{Contexto Macroeconômico via Conditional Autoencoder (M11)}
+\label{sec:m11}
+
+As fases anteriores detectam anomalias \emph{locais ao ativo} (preço/volume), mas não distinguem
+um \textbf{estresse idiossincrático} (problema do próprio ativo) de um \textbf{choque sistêmico}
+(macro global). M11 (ADR-0012) injeta contexto macroeconômico --- USD/BRL, VIX, Selic e IPCA ---
+para separar os dois regimes.
+
+\subsection{Macro como contexto, não como alvo}
+\label{sec:m11-conditional}
+A tentação natural --- empilhar a macro no mesmo tensor reconstruído $(30, 2+N)$ --- falha: a
+macro de baixa frequência, após preenchimento, é quase constante na janela, sua variância escalada
+é ínfima e a perda MSE a \textbf{ignora} (o gradiente vem só de preço/volume). Adotou-se, então, um
+\textbf{Conditional Autoencoder}: o encoder \emph{vê} preço/volume $+$ macro, mas o decoder
+reconstrói \textbf{apenas} o bloco de preço/volume e a perda recai só sobre ele. A macro
+\emph{condiciona} a codificação sem competir na loss.
+
+\subsection{Decisão de regime por bloco}
+\label{sec:m11-regime}
+Dois escores ortogonais por janela:
+\begin{itemize}[noitemsep]
+  \item \textbf{erro Preço/Volume} --- reconstrução do bloco do ativo (anomalia local), agregada
+        por \emph{max} (ADR-0009);
+  \item \textbf{estresse Macro} --- amplitude intra-janela do bloco macro, medida \emph{direto da
+        entrada} (não por reconstrução), de modo que um evento macro \emph{agendado} não infla o
+        erro do ativo.
+\end{itemize}
+Com limiares no percentil 95 do treino (Tabela~\ref{tab:m11-regime}):
+
+\begin{table}[h]
+\centering
+\caption{Decisão de regime (ADR-0012).}
+\label{tab:m11-regime}
+\begin{tabular}{lll}
+\toprule
+\textbf{erro Preço/Volume} & \textbf{estresse Macro} & \textbf{regime} \\
+\midrule
+$>$ limiar & $\le$ limiar & \textbf{idiossincrático} \\
+$>$ limiar & $>$ limiar & \textbf{sistêmico} \\
+$\le$ limiar & qualquer & normal \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Prevenção de vazamento na macro}
+\label{sec:m11-leakage}
+Indicadores macro têm frequências mistas e \emph{datas de publicação} distintas das de referência.
+O conector (\texttt{src/macro.py}) indexa cada série pela \textbf{data de publicação} --- o IPCA de
+março, divulgado em meados de abril, recebe um \emph{lag de publicação} --- e faz apenas
+preenchimento \textbf{causal} (\emph{forward-fill}), sem \emph{backfill} (que puxaria o futuro para
+o passado). As séries de nível com tendência (USD/BRL) são estacionarizadas antes da escala, para
+não misturar retorno estacionário com nível não-estacionário.
+
+\subsection{Prova de conceito}
+\label{sec:m11-resultado}
+O notebook \texttt{12\_conditional\_macro} treinou o Conditional AE nos quatro ativos e classificou
+o regime de cada janela de teste (2020--2024). A Tabela~\ref{tab:m11-prova} confronta dois episódios
+conhecidos:
+
+\begin{table}[h]
+\centering
+\caption{Regimes em dois episódios conhecidos (ADR-0012, notebook \texttt{12}).}
+\label{tab:m11-prova}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Ativo} & \textbf{COVID 2020 (mar--mai)} & \textbf{jan--mar 2023 (Americanas)} \\
+\midrule
+PETR4.SA & \textbf{30 sistêmico}, 0 idioss. & 0 (normal) \\
+AMER3.SA & 0 (normal) & \textbf{49 idiossincrático}, 0 sist. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent A separação é nítida: o \emph{crash} da COVID --- com VIX e câmbio em movimento --- sai
+\textbf{sistêmico}; a fraude da Americanas --- com a AMER3 sob estresse e a macro estável --- sai
+\textbf{idiossincrático}. No agregado, as anomalias da PETR4 são quase todas sistêmicas
+(concentradas na COVID) e as da AMER3, quase todas idiossincráticas (sua própria crise). É
+exatamente a distinção que o método buscava.
+
+\subsection{Limitações}
+\label{sec:m11-limitacoes}
+O \texttt{latent\_dim} do espaço preço/volume$+$macro ainda não foi revalidado por
+\emph{walk-forward}; o \emph{lag} de publicação do IPCA é uma aproximação (não a data exata de
+divulgação); e os indicadores mensais (Selic, IPCA) são quase inertes após o preenchimento --- o
+sinal sistêmico vem sobretudo dos diários (USD/BRL, VIX). A prova de conceito é encorajadora, mas o
+resultado final exige fechar esses pontos.
