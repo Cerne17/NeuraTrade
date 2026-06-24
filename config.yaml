@@ -29,6 +29,17 @@ preprocessing:
   features: ["Close", "Volume"]  # Etapa 1 (Close+Volume); Etapa 2 -> OHLCV completo
   volume_log1p: true             # log1p no Volume antes do scaler (nao-estacionariedade)
 
+# PROPOSTO (ADR-0012): contexto macro via Conditional AE. Inativo ate validacao + conector de dados.
+# A macro condiciona o encoder; a loss recai SO no bloco preco/volume (nao na macro).
+macro:
+  features: ["USDBRL", "VIX", "Selic", "IPCA"]   # priorizar diarias (USDBRL/VIX); mensais sao quase inertes
+  stationarize:                                  # politica por feature (estacionarizar antes de escalar)
+    USDBRL: "logret"
+    Selic: "delta"
+    IPCA: "level"
+    VIX: "level"
+  # CONTRATO ANTI-LEAKAGE: df_macro indexado por DATA DE PUBLICACAO, nao de referencia (ver src/macro.py).
+
 # Arquitetura LSTM-Autoencoder. Ver ADR-0003.
 model:
   latent_dim: 16            # bottleneck. Escolha de projeto (compressao ~4:1); calibrar em M3.
