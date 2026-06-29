@@ -48,6 +48,7 @@ model:
   lstm_units: 64            # Valkov (curiousily): units=64.
   dropout: 0.2              # Valkov: rate=0.2.
   loss: "mse"              # README/Li (2020). Alternativa MAE (Valkov) discutida no ADR-0003.
+  weight_decay: 0.0         # ADR-0018: 0 = Adam puro (default). >0 ativa AdamW (L2 desacoplado).
 
 # Treino. Ver ADR-0004.
 train:
