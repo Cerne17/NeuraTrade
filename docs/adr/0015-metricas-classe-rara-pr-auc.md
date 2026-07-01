@@ -50,7 +50,8 @@ No regime **raro** (`n=2`, prevalência 4,9%) a **ROC-AUC = 0,84 mascara** um de
 - **Reportar PR-AUC, não ROC-AUC**, ao avaliar o detector; incluir a prevalência como baseline.
 - **Corrigir o protocolo sintético** para avaliar no regime realmente raro: reduzir `n_injections`
   e/ou contar eventos contíguos como um só (agrupar detecções), para que a métrica reflita o
-  cenário 99/1. Fica como ajuste a calibrar.
+  cenário 99/1. **Endereçado em [ADR-0017](0017-avaliacao-por-evento.md)** (`group_events` +
+  `event_metrics`); reduzir `n_injections` segue como alavanca complementar.
 - **Limite honesto:** no teste **real** (não supervisionado) não há rótulos → PR-AUC só é computável
   sobre o sintético; no real, segue-se com fração marcada + correlação a eventos
   ([ADR-0008](0008-linha-do-tempo-eventos.md)).

@@ -7,7 +7,9 @@ então avaliado contra esse ground-truth via Precision / Recall / F1 (issue #23)
 Ordem de uso:
 1. ``inject_price_shocks``    — perturba a série e devolve labels.
 2. ``labels_to_window_labels`` — converte labels por passo em labels por janela.
-3. ``compute_metrics``         — Precision / Recall / F1 (issue #23).
+3. ``compute_metrics``         — Precision / Recall / F1 por janela (issue #23).
+4. ``event_metrics``           — Precision / Recall / F1 por **evento** (ADR-0017):
+   agrupa janelas contíguas para desinflar a prevalência do sintético sobreposto.
 """
 
 from __future__ import annotations
@@ -119,6 +121,89 @@ def labels_to_window_labels(
         [int(labels[i : i + window_size].any()) for i in starts],
         dtype=int,
     )
+
+
+def group_events(labels: np.ndarray) -> list[tuple[int, int]]:
+    """Agrupa índices positivos contíguos em eventos (ADR-0005/0015).
+
+    Com janelas sobrepostas, uma única injeção contamina ``~window_size`` janelas
+    consecutivas — ao nível de janela a anomalia deixa de ser rara (prevalência
+    artificial ~70%). Agrupar a corrida contígua de janelas positivas num único
+    **evento** desfaz essa inflação e permite avaliar no regime raro real.
+
+    Args:
+        labels: vetor 1D 0/1 (labels por janela ou flags por janela).
+
+    Returns:
+        Lista de intervalos ``(start, end)`` com ``end`` exclusivo, um por corrida
+        contígua de 1s. Vetor sem positivos devolve lista vazia.
+    """
+    values = np.asarray(labels, dtype=int)
+    events: list[tuple[int, int]] = []
+    start: int | None = None
+    for i, v in enumerate(values):
+        if v == 1 and start is None:
+            start = i
+        elif v == 0 and start is not None:
+            events.append((start, i))
+            start = None
+    if start is not None:
+        events.append((start, len(values)))
+    return events
+
+
+def event_metrics(
+    window_flags: np.ndarray,
+    window_labels: np.ndarray,
+) -> dict[str, float]:
+    """Precision / Recall / F1 ao nível de **evento** (ADR-0005/0015).
+
+    Corrige a inflação de prevalência do protocolo sintético com janelas
+    sobrepostas (ver ``group_events``). Em vez de premiar/punir cada uma das
+    ``~window_size`` janelas que um único choque contamina, avalia por evento:
+
+    - **Recall (evento):** fração dos eventos verdadeiros com **ao menos uma**
+      janela sinalizada dentro — pegar qualquer parte do evento conta como pegá-lo
+      (um alarme tardio na anomalia ainda é uma detecção).
+    - **Precision (evento):** fração dos eventos *previstos* (corridas contíguas de
+      flags) que sobrepõem algum evento verdadeiro — alarmes isolados fora de
+      qualquer anomalia são falsos positivos.
+
+    Args:
+        window_flags: flags binárias por janela (saída de ``flag_anomalies``).
+        window_labels: ground-truth 0/1 por janela (``labels_to_window_labels``).
+            Os dois vetores devem estar alinhados (mesma janela no mesmo índice).
+
+    Returns:
+        Dict com ``precision``, ``recall``, ``f1`` em [0, 1] e as contagens
+        ``n_true_events``, ``n_pred_events``, ``tp_events``.
+    """
+    flags = np.asarray(window_flags, dtype=int)
+    labels = np.asarray(window_labels, dtype=int)
+
+    true_events = group_events(labels)
+    pred_events = group_events(flags)
+
+    tp_events = sum(1 for s, e in true_events if flags[s:e].any())
+    matched_pred = sum(1 for s, e in pred_events if labels[s:e].any())
+
+    n_true = len(true_events)
+    n_pred = len(pred_events)
+    recall = tp_events / n_true if n_true else 0.0
+    precision = matched_pred / n_pred if n_pred else 0.0
+    f1 = (
+        2 * precision * recall / (precision + recall)
+        if (precision + recall) > 0
+        else 0.0
+    )
+    return {
+        "precision": float(precision),
+        "recall": float(recall),
+        "f1": float(f1),
+        "n_true_events": n_true,
+        "n_pred_events": n_pred,
+        "tp_events": tp_events,
+    }
 
 
 def compute_metrics(

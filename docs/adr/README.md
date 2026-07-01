@@ -53,6 +53,7 @@ Valores `PROVISÓRIO` aparecem marcados também no `config.yaml`.
 | [0014](0014-otimizacao-bayesiana-optuna.md) | Otimização Bayesiana (Optuna) de hiperparâmetros | DECISÃO DE PROJETO · **rejeitado** (landscape plano medido) |
 | [0015](0015-metricas-classe-rara-pr-auc.md) | Métricas para classe rara: PR-AUC + custo FP×FN | FUNDAMENTADO · **aceito** (implementado) |
 | [0016](0016-backtesting-financeiro.md) | Backtesting financeiro / impacto real | DECISÃO DE PROJETO · **parcial** (custo assimétrico sim, portfólio futuro) |
+| [0017](0017-avaliacao-por-evento.md) | Avaliação por evento (agrupa janelas contíguas) — corrige inflação de prevalência do sintético | FUNDAMENTADO · **aceito** (implementado) |
 | [0018](0018-weight-decay-adamw.md) | Weight decay (AdamW) — knob `model.weight_decay` | FUNDAMENTADO · **rejeitado como default** (ganho dentro do ruído inter-fold) |
 
 > **Fase 2 (M8) — concluída e validada por experimento:**
