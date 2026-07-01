@@ -188,6 +188,78 @@ def cross_validate_latent_dim(
     return pd.DataFrame(rows).set_index("latent_dim")
 
 
+def cross_validate_weight_decay(
+    series: pd.Series,
+    candidates: list[float],
+    n_splits: int | None = None,
+    epochs: int | None = None,
+    folds: list[dict] | None = None,
+) -> pd.DataFrame:
+    """Compara valores de ``weight_decay`` por walk-forward (ADR-0018).
+
+    Mesmo protocolo de :func:`cross_validate_latent_dim`, variando a penalidade
+    L2 desacoplada (AdamW) em vez do ``latent_dim``. ``weight_decay=0.0`` é o
+    baseline atual (Adam puro). Útil para responder, com a variância inter-fold à
+    vista, se a regularização por decay ajuda, atrapalha ou é indiferente num
+    dataset pequeno cujo gargalo já é insensível.
+
+    Args:
+        candidates: valores de ``weight_decay`` a comparar (ex.: ``[0.0, 1e-5, 1e-4, 1e-3]``).
+        epochs: teto de épocas por fold. Usa ``CONFIG["train"]["epochs"]`` se ``None``.
+        folds: folds pré-computados; se ``None``, usa a malha univariada sobre ``series``.
+
+    Returns:
+        ``DataFrame`` indexado por ``weight_decay`` com ``val_loss_mean``,
+        ``val_loss_std`` e ``n_folds``.
+    """
+    from tensorflow import keras
+
+    from .model import build_lstm_autoencoder
+
+    tcfg = CONFIG["train"]
+    epochs = epochs if epochs is not None else tcfg["epochs"]
+    if folds is None:
+        folds = list(walk_forward_splits(series, n_splits=n_splits))
+
+    rows = []
+    for wd in candidates:
+        fold_losses = []
+        for f in folds:
+            X_tr, X_val = f["X_train"], f["X_val"]
+            if len(X_tr) == 0 or len(X_val) == 0:
+                continue
+            n_features = X_tr.shape[-1]
+            model = build_lstm_autoencoder(n_features=n_features, weight_decay=wd)
+            es = keras.callbacks.EarlyStopping(
+                monitor="val_loss",
+                patience=tcfg["early_stopping_patience"],
+                restore_best_weights=True,
+            )
+            hist = model.fit(
+                X_tr,
+                X_tr,
+                validation_data=(X_val, X_val),
+                epochs=epochs,
+                batch_size=tcfg["batch_size"],
+                shuffle=tcfg["shuffle"],
+                callbacks=[es],
+                verbose=0,
+            )
+            fold_losses.append(min(hist.history["val_loss"]))
+            keras.backend.clear_session()
+
+        rows.append(
+            {
+                "weight_decay": wd,
+                "val_loss_mean": float(np.mean(fold_losses)) if fold_losses else np.nan,
+                "val_loss_std": float(np.std(fold_losses)) if fold_losses else np.nan,
+                "n_folds": len(fold_losses),
+            }
+        )
+
+    return pd.DataFrame(rows).set_index("weight_decay")
+
+
 def cross_validate_latent_dim_conditional(
     folds: list[dict],
     n_price_volume: int,

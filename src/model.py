@@ -19,11 +19,18 @@ def build_lstm_autoencoder(
     dropout: float | None = None,
     learning_rate: float | None = None,
     loss: str | None = None,
+    weight_decay: float | None = None,
 ):
     """Constrói e compila o LSTM-Autoencoder.
 
     Hiperparâmetros omitidos usam ``CONFIG`` (fonte única). Retorna um
     ``keras.Model`` já compilado.
+
+    Args:
+        weight_decay: penalidade L2 desacoplada (regularização). Quando ``> 0``,
+            o otimizador é ``AdamW`` com esse decaimento; quando ``0``/``None``,
+            usa ``Adam`` puro (comportamento histórico, sem decay). Default vem de
+            ``CONFIG["model"]["weight_decay"]`` (0.0). Ver ADR-0018.
     """
     from tensorflow import keras
     from tensorflow.keras import layers
@@ -36,6 +43,8 @@ def build_lstm_autoencoder(
     dropout = mcfg["dropout"] if dropout is None else dropout
     learning_rate = learning_rate or tcfg["learning_rate"]
     loss = loss or mcfg["loss"]
+    if weight_decay is None:
+        weight_decay = mcfg.get("weight_decay", 0.0)
 
     inputs = keras.Input(shape=(window_size, n_features), name="janela")
 
@@ -53,7 +62,12 @@ def build_lstm_autoencoder(
     )(x)
 
     model = keras.Model(inputs, outputs, name="lstm_autoencoder")
-    model.compile(optimizer=keras.optimizers.Adam(learning_rate), loss=loss)
+    optimizer = (
+        keras.optimizers.AdamW(learning_rate=learning_rate, weight_decay=weight_decay)
+        if weight_decay and weight_decay > 0
+        else keras.optimizers.Adam(learning_rate)
+    )
+    model.compile(optimizer=optimizer, loss=loss)
     return model
 
 
