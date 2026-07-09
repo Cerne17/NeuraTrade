@@ -2,7 +2,7 @@
 
 Detecção não supervisionada de anomalias em ações da B3 com LSTM-Autoencoder.
 **13 slides**, ritmo direto. Cada slide: título curto, 3–5 bullets, 1 visual.
-Tempo-alvo por bloco em `ROTEIRO.md`. Figuras já prontas em `report/figures/`.
+Tempo-alvo por bloco em `ROTEIRO.md`. Imagens prontas em `presentation/figures/` (manifesto em `CONTEXTO.md`).
 
 > Regra de ouro: **1 ideia por slide**. Não ler o slide — o slide é apoio, a fala
 > é o conteúdo (ver roteiro).
@@ -34,7 +34,7 @@ Tempo-alvo por bloco em `ROTEIRO.md`. Figuras já prontas em `report/figures/`.
 - **Encoder LSTM** → gargalo denso (`latent_dim=16`) → **Decoder LSTM** → reconstrução.
 - Perda MAE; um choque vira **erro alto** porque o modelo nunca viu aquilo.
 - Rede pequena **de propósito** (~2450 janelas/ativo — dataset pequeno).
-- Visual: esquema das camadas com shapes `(30,2)→16→(30,2)`.
+- Visual: esquema das camadas `(30,2)→16→(30,2)` (figures/04_arquitetura.png).
 
 ## Slide 5 — Metodologia sem vazamento (2:15–3:15)
 - **Split temporal ANTES de normalizar** — o scaler vê só o treino (nunca o futuro).
@@ -42,7 +42,7 @@ Tempo-alvo por bloco em `ROTEIRO.md`. Figuras já prontas em `report/figures/`.
 - Limiar = **percentil do erro de treino** (p95), não do período avaliado.
 - **Walk-forward** (`TimeSeriesSplit`, k=10) para escolher hiperparâmetros — sem holdout ingênuo.
 - Régua honesta: uma melhora só conta se **supera o desvio entre folds**.
-- Visual: barra temporal treino|teste + folds expansíveis empilhados.
+- Visual: barra treino|teste + folds walk-forward (figures/05_walkforward.png).
 
 ## Slide 6 — Desafios (abertura) (3:15–3:30)
 - "A parte interessante não foi montar o autoencoder — foi o que **quebrou** no caminho."
@@ -53,14 +53,14 @@ Tempo-alvo por bloco em `ROTEIRO.md`. Figuras já prontas em `report/figures/`.
 - **Vazamento:** normalizar antes de separar treino/teste puxa o futuro → corrigido com split-antes-do-scaler (por fold no walk-forward).
 - **Choque de 1 dia diluído:** média sobre 30 passos apagava o pico → trocamos por **agregação `max`**.
 - Resultado medido: `max` **dobrou o Recall** (0,16 → 0,35) e **subiu a Precision** (0,55 → 0,84).
-- Visual: antes/depois — série do erro com `mean` (pico sumido) vs `max` (pico nítido).
+- Visual: erro de reconstrução vs limiares (figures/07_erro_limiares.png).
 
 ## Slide 8 — Desafio 3: idiossincrático vs sistêmico (4:30–5:30)
 - Uma queda pode ser **do ativo** (fraude) ou **do mercado** (crise global). O erro sozinho não separa.
 - Solução: **Conditional Autoencoder** — encoder vê a macro (USD/BRL, VIX), mas a perda recai só em preço/volume.
 - Prova de conceito: **COVID/2020 → sistêmico**; **Americanas/2023 → idiossincrático**.
 - Números: PETR4 na COVID = 30 janelas sistêmicas; AMER3 = 49 idiossincráticas.
-- Visual: tabela COVID×Americanas por ativo (report/figures/m6_covid_contagio.png).
+- Visual: tabela COVID×Americanas por ativo (figures/08_covid_contagio.png).
 
 ## Slide 9 — Desafio 4: a métrica que engana (5:30–6:30)
 - Classe rara: a **ROC-AUC infla** (mar de verdadeiros-negativos). Trocamos por **PR-AUC**.
@@ -74,13 +74,13 @@ Tempo-alvo por bloco em `ROTEIRO.md`. Figuras já prontas em `report/figures/`.
   - `latent_dim` insensível em [8, 32]; Atenção/Transformers; Optuna; **weight decay** (ADR-0018).
 - Todos ficaram **dentro do ruído inter-fold**. O modelo é robusto e parcimonioso.
 - O que importa é *o que* se dá (volume, macro diária, agregação `max`), não *quanto*.
-- Visual: gráfico "delta vs desvio inter-fold" — barras minúsculas contra a régua.
+- Visual: Δ val_loss dentro do ruído inter-fold (figures/10_weight_decay.png).
 
 ## Slide 11 — Resultados (7:00–7:45)
 - Detector marca ~10% das janelas no teste real, **sem explosão de falsos positivos**.
 - Separação idiossincrático/sistêmico **bate com os eventos conhecidos**.
 - Pipeline reprodutível, offline, walk-forward, 32 testes verdes, decisões em 18 ADRs.
-- Visual: série de PETR4 2020 com a janela da COVID acesa (report/figures/m5_distribuicao_erro.png).
+- Visual: série de PETR4 2020 com a janela da COVID acesa (figures/11_distribuicao_erro.png).
 
 ## Slide 12 — Demonstração ao vivo (7:45–9:15)
 - **Sandbox interativo** (Streamlit): mexer em agregação, limiar e injeção **em tempo real**.

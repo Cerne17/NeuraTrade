@@ -10,6 +10,22 @@
 
 ---
 
+## 0. Manifesto de envio (o que acompanha este arquivo)
+
+Envie estes **10 arquivos soltos** para a IA que vai montar os slides:
+
+**3 markdowns** (`presentation/`):
+- `SLIDES.md` · `ROTEIRO.md` · `CONTEXTO.md` (este)
+
+**7 imagens PNG** (`presentation/figures/`):
+- `04_arquitetura.png` · `05_walkforward.png` · `07_erro_limiares.png`
+- `08_covid_contagio.png` · `08_amer3_detalhe.png` · `10_weight_decay.png`
+- `11_distribuicao_erro.png`
+
+O detalhamento de cada imagem (o que mostra, em qual slide) está na §4.
+
+---
+
 ## 1. O que é o projeto (resumo de 30 segundos)
 
 NeuraTrade é um projeto acadêmico (Redes Neurais 2026.1) de **detecção não
@@ -60,21 +76,26 @@ do projeto é o **rigor metodológico**, não sofisticação de arquitetura.
 Cada desafio segue o padrão **Problema → Solução → Evidência (número)**. Mantenha
 esse tríptico visível em cada slide de desafio.
 
-## 4. Recursos visuais disponíveis (caminhos reais no repositório)
+## 4. Recursos visuais disponíveis (7 imagens prontas)
 
-Use estas figuras onde `SLIDES.md` pedir; **não** invente gráficos que não existem.
+Todas as imagens já existem como PNG e vão junto no envio (mesma pasta que os `.md`
+ou `presentation/figures/` no repo). Use cada uma no slide indicado; **não** invente
+gráficos que não estejam nesta lista.
 
-| Arquivo | O que mostra | Slide sugerido |
+| Arquivo (nome de envio) | O que mostra | Slide |
 | --- | --- | --- |
-| `report/figures/m4_erro_limiares.png` | erro de reconstrução vs limiares | 7 (agregação/limiar) |
-| `report/figures/m5_distribuicao_erro.png` | distribuição do erro / detecção | 11 (resultados) |
-| `report/figures/m6_covid_contagio.png` | contágio sistêmico na COVID | 8 (sistêmico) |
-| `report/figures/m6_amer3_detalhe.png` | detalhe da anomalia da AMER3 | 8 (idiossincrático) |
-| `figures/experiment_weight_decay.csv` | tabela do experimento de weight decay | 10 / apêndice A4 |
+| `04_arquitetura.png` | esquema Encoder → gargalo (16) → Decoder + seta "erro = alarme" | 4 |
+| `05_walkforward.png` | split treino\|teste + folds walk-forward expansíveis | 5 |
+| `07_erro_limiares.png` | erro de reconstrução vs limiares | 7 |
+| `08_covid_contagio.png` | contágio sistêmico na COVID | 8 (sistêmico) |
+| `08_amer3_detalhe.png` | detalhe da anomalia da AMER3 | 8 (idiossincrático) |
+| `10_weight_decay.png` | Δ val_loss dentro do ruído inter-fold (weight decay indiferente) | 10 |
+| `11_distribuicao_erro.png` | distribuição do erro / detecção | 11 (resultados) |
 
-Diagramas a **gerar** (não existem como imagem; descreva/desenhe): arquitetura
-Encoder→gargalo→Decoder (slide 4); barra temporal treino|teste + folds walk-forward
-(slide 5); barras "delta vs desvio inter-fold" (slide 10). Podem ser esquemáticos.
+Referencie-as no Marp como `![](figures/04_arquitetura.png)` **ou**, se você recebeu
+os PNGs soltos no chat, pelo nome do anexo — os nomes acima já batem com o slide.
+Não há mais diagramas a inventar: os esquemáticos (arquitetura, walk-forward, weight
+decay) já estão prontos nesta lista.
 
 ## 5. Diretrizes de design
 
