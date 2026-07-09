@@ -1,0 +1,3 @@
+# Dependência exclusiva do demo interativo (não exigida pelo pipeline src/).
+# Instalar com: pip install -r demo/requirements.txt
+streamlit>=1.30
