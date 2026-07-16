@@ -1,0 +1,916 @@
+<title>Guia Teórico Interativo — NeuraTrade</title>
+<style>
+  :root{
+    --ground:#eef3f3; --surface:#ffffff; --surface-2:#f5f9f9;
+    --ink:#0f2429; --muted:#54696c; --line:#d5e2e2;
+    --teal:#0e6b6b; --teal-strong:#0a5252; --teal-wash:#e3efee;
+    --signal:#d64a2a; --signal-wash:#f9e7e1;
+    --blue:#2f6fd0; --blue-wash:#e4edfa; --amber:#c98700;
+    --shadow:0 1px 2px rgba(15,36,41,.05),0 8px 30px rgba(15,36,41,.06);
+    --radius:14px;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --ground:#0a1a1f; --surface:#0f2830; --surface-2:#123139;
+      --ink:#e7f1f1; --muted:#93abad; --line:#1f3d46; --teal:#43b2ab; --teal-strong:#5ac6bf;
+      --teal-wash:#123b3a; --signal:#f0714f; --signal-wash:#3a1f18;
+      --blue:#5f97e8; --blue-wash:#152a41; --amber:#e7b23e;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 34px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"]{
+    --ground:#eef3f3; --surface:#ffffff; --surface-2:#f5f9f9;
+    --ink:#0f2429; --muted:#54696c; --line:#d5e2e2;
+    --teal:#0e6b6b; --teal-strong:#0a5252; --teal-wash:#e3efee;
+    --signal:#d64a2a; --signal-wash:#f9e7e1; --blue:#2f6fd0; --blue-wash:#e4edfa; --amber:#c98700;
+    --shadow:0 1px 2px rgba(15,36,41,.05),0 8px 30px rgba(15,36,41,.06);
+  }
+  :root[data-theme="dark"]{
+    --ground:#0a1a1f; --surface:#0f2830; --surface-2:#123139;
+    --ink:#e7f1f1; --muted:#93abad; --line:#1f3d46; --teal:#43b2ab; --teal-strong:#5ac6bf;
+    --teal-wash:#123b3a; --signal:#f0714f; --signal-wash:#3a1f18;
+    --blue:#5f97e8; --blue-wash:#152a41; --amber:#e7b23e;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 34px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+    line-height:1.6;-webkit-font-smoothing:antialiased;font-size:17px}
+  .wrap{max-width:920px;margin:0 auto;padding:0 20px}
+  h1,h2,h3{text-wrap:balance;line-height:1.12;margin:0}
+  p{margin:0}
+  a{color:var(--teal);text-decoration-thickness:1px;text-underline-offset:2px}
+  code,.mono{font-family:var(--mono);font-size:.9em}
+  .tnum{font-variant-numeric:tabular-nums}
+
+  /* progress nav */
+  .topbar{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--ground) 86%,transparent);
+    backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .topbar .wrap{display:flex;align-items:center;gap:14px;height:52px}
+  .brand{font-weight:700;letter-spacing:-.01em;white-space:nowrap}
+  .brand .dot{color:var(--signal)}
+  .navlinks{display:flex;gap:2px;overflow-x:auto;margin-left:auto;scrollbar-width:none}
+  .navlinks::-webkit-scrollbar{display:none}
+  .navlinks a{font:600 12px/1 var(--mono);color:var(--muted);text-decoration:none;
+    padding:7px 9px;border-radius:8px;white-space:nowrap}
+  .navlinks a:hover{color:var(--ink);background:var(--surface-2)}
+  .themebtn{border:1px solid var(--line);background:var(--surface);color:var(--ink);
+    border-radius:8px;padding:6px 10px;font:600 12px var(--mono);cursor:pointer}
+
+  /* hero */
+  header.hero{padding:64px 0 40px}
+  .eyebrow{font:700 12px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--teal)}
+  .hero h1{font-size:clamp(34px,6vw,58px);font-weight:800;letter-spacing:-.025em;margin:16px 0 0}
+  .hero .sub{font-size:clamp(18px,2.5vw,22px);color:var(--muted);margin-top:16px;max-width:60ch}
+  .hero-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px}
+  .tag{font:600 12px var(--mono);color:var(--ink);background:var(--surface);border:1px solid var(--line);
+    padding:6px 11px;border-radius:999px}
+  .herofig{margin-top:34px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);
+    box-shadow:var(--shadow);overflow:hidden}
+  .herofig canvas{display:block;width:100%;height:150px}
+  .herofig .cap{padding:9px 14px;border-top:1px solid var(--line);color:var(--muted);
+    font:600 12px var(--mono)}
+
+  /* how to */
+  .howto{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:8px 0 8px}
+  .howto div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .howto b{color:var(--teal)}
+  .howto p{font-size:14px;color:var(--muted);margin-top:3px}
+  @media(max-width:640px){.howto{grid-template-columns:1fr}}
+
+  section.module{padding:34px 0;border-top:1px solid var(--line)}
+  .m-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .m-num{font:800 13px var(--mono);color:var(--surface);background:var(--teal);
+    width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:none}
+  .slidetag{font:700 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;
+    color:var(--teal);background:var(--teal-wash);padding:4px 9px;border-radius:999px}
+  .module h2{font-size:clamp(23px,3.4vw,30px);font-weight:800;letter-spacing:-.02em;margin-top:14px}
+  .lede{font-size:18px;color:var(--ink);margin-top:12px;max-width:66ch}
+  .module p+p{margin-top:12px}
+  .body-txt{color:var(--muted);max-width:66ch;margin-top:12px}
+  .body-txt strong{color:var(--ink);font-weight:650}
+
+  .callout{border-left:3px solid var(--teal);background:var(--surface);border:1px solid var(--line);
+    border-left:3px solid var(--teal);border-radius:0 12px 12px 0;padding:14px 16px;margin-top:20px}
+  .callout .lbl{font:700 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--teal)}
+  .callout.say .lbl{color:var(--teal)}
+  .callout p{margin-top:6px}
+  .callout.warn{border-left-color:var(--signal)}
+  .callout.warn .lbl{color:var(--signal)}
+
+  details.qa{margin-top:16px;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+  details.qa summary{cursor:pointer;padding:13px 16px;font:650 14px var(--sans);color:var(--ink);
+    list-style:none;display:flex;align-items:center;gap:10px}
+  details.qa summary::-webkit-details-marker{display:none}
+  details.qa summary::before{content:"?";font:800 12px var(--mono);color:var(--signal);
+    background:var(--signal-wash);width:22px;height:22px;border-radius:6px;display:grid;place-items:center;flex:none}
+  details.qa[open] summary{border-bottom:1px solid var(--line)}
+  .qa-body{padding:14px 16px 16px}
+  .qa-body p{color:var(--muted);font-size:15px}
+  .qa-body p+p{margin-top:9px}
+
+  /* demo */
+  .demo{margin-top:22px;border:1px solid var(--line);border-radius:var(--radius);
+    background:var(--surface);box-shadow:var(--shadow);overflow:hidden}
+  .demo-head{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);
+    background:var(--surface-2)}
+  .demo-head .k{font:700 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .demo-head .k b{color:var(--teal)}
+  .demo-body{padding:16px}
+  .demo canvas{display:block;width:100%;border-radius:10px}
+  .controls{display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-top:14px}
+  .ctl{display:flex;flex-direction:column;gap:5px;min-width:150px;flex:1}
+  .ctl label{font:600 12px var(--mono);color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+  .ctl label b{color:var(--ink)}
+  input[type=range]{-webkit-appearance:none;appearance:none;height:5px;border-radius:5px;
+    background:var(--line);outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;
+    background:var(--teal);cursor:pointer;border:3px solid var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+  input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--teal);
+    cursor:pointer;border:3px solid var(--surface)}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--surface)}
+  .seg button{border:0;background:transparent;color:var(--muted);font:600 13px var(--sans);
+    padding:8px 14px;cursor:pointer}
+  .seg button[aria-pressed=true]{background:var(--teal);color:#fff}
+  :root[data-theme="dark"] .seg button[aria-pressed=true]{color:#08201f}
+
+  .statrow{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+  .stat{flex:1;min-width:96px;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;
+    padding:11px 13px}
+  .stat .n{font:800 22px/1 var(--mono);letter-spacing:-.02em}
+  .stat .l{font:600 11px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:5px}
+  .stat.pos .n{color:var(--teal)} .stat.neg .n{color:var(--signal)}
+
+  /* confusion matrix */
+  .cm{display:grid;grid-template-columns:auto 1fr 1fr;gap:6px;margin-top:16px;max-width:420px}
+  .cm .h{font:600 11px var(--mono);color:var(--muted);display:grid;place-items:center;text-align:center;padding:4px}
+  .cm .cell{border-radius:9px;padding:12px 8px;text-align:center;border:1px solid var(--line)}
+  .cm .cell .cn{font:800 20px var(--mono);line-height:1}
+  .cm .cell .cl{font:600 10px var(--mono);color:var(--muted);margin-top:3px;text-transform:uppercase}
+  .cm .tp{background:var(--teal-wash)} .cm .tp .cn{color:var(--teal-strong)}
+  .cm .tn{background:var(--surface-2)}
+  .cm .fp{background:var(--signal-wash)} .cm .fp .cn{color:var(--signal)}
+  .cm .fn{background:var(--signal-wash)} .cm .fn .cn{color:var(--signal)}
+
+  /* roteiro */
+  .roteiro{padding:44px 0 20px;border-top:2px solid var(--teal)}
+  .duo{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:22px}
+  @media(max-width:720px){.duo{grid-template-columns:1fr}}
+  .person{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);overflow:hidden}
+  .person .ph{padding:15px 18px;border-bottom:1px solid var(--line)}
+  .person .ph .who{font:800 15px var(--sans);letter-spacing:-.01em}
+  .person .ph .rg{font:700 12px var(--mono);color:var(--teal);margin-top:2px}
+  .person.b .ph .rg{color:var(--signal)}
+  .beats{list-style:none;margin:0;padding:8px 8px 12px}
+  .beats li{display:grid;grid-template-columns:44px 1fr;gap:10px;padding:9px 10px;border-radius:10px}
+  .beats li:hover{background:var(--surface-2)}
+  .beats .sn{font:800 12px var(--mono);color:var(--teal);background:var(--teal-wash);
+    border-radius:7px;display:grid;place-items:center;height:26px;align-self:start;margin-top:1px}
+  .person.b .beats .sn{color:var(--signal);background:var(--signal-wash)}
+  .beats .bt{font-size:14.5px}
+  .beats .bt b{font-weight:680}
+  .beats .bt span{color:var(--muted);font-size:13px;display:block;margin-top:1px}
+  .handoff{margin-top:16px;border:1px dashed var(--teal);border-radius:12px;background:var(--teal-wash);
+    padding:13px 16px;font-size:14.5px}
+  .handoff b{color:var(--teal-strong)}
+  :root[data-theme="dark"] .handoff b{color:var(--teal)}
+
+  .backup{margin-top:22px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);overflow:hidden}
+  .backup .bh{padding:14px 18px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+  .backup .bh h3{font-size:18px;font-weight:750}
+  .backup .bh p{color:var(--muted);font-size:13.5px;margin-top:3px}
+  .backup table{width:100%;border-collapse:collapse;font-size:14px}
+  .backup td{padding:11px 18px;border-top:1px solid var(--line);vertical-align:top}
+  .backup td:first-child{white-space:nowrap;font:700 12px var(--mono);color:var(--signal);width:1%}
+  .backup td b{color:var(--ink)}
+  .backup td span{color:var(--muted);display:block;font-size:13px;margin-top:2px}
+
+  .glossary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+  @media(max-width:640px){.glossary{grid-template-columns:1fr}}
+  .term{background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:12px 14px}
+  .term dt{font:700 14px var(--mono);color:var(--teal)}
+  .term dd{margin:4px 0 0;color:var(--muted);font-size:14px}
+
+  footer{padding:40px 0 70px;color:var(--muted);font-size:13.5px;text-align:center;border-top:1px solid var(--line);margin-top:30px}
+  .kbd{font:600 12px var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;
+    padding:2px 6px;background:var(--surface-2);color:var(--ink)}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+  html{scroll-behavior:smooth}
+  :focus-visible{outline:2px solid var(--teal);outline-offset:2px;border-radius:4px}
+</style>
+
+<div class="topbar">
+  <div class="wrap">
+    <span class="brand">Neura<span class="dot">·</span>Trade</span>
+    <nav class="navlinks" aria-label="Módulos">
+      <a href="#m0">domínio</a><a href="#m1">one-class</a><a href="#m2">autoencoder</a>
+      <a href="#m3">lstm</a><a href="#m4">perda</a><a href="#m5">validação</a>
+      <a href="#m6">limiar</a><a href="#m7">roc·pr</a><a href="#m8">conditional</a>
+      <a href="#m9">capacidade</a><a href="#roteiro">roteiro</a>
+    </nav>
+    <button class="themebtn" id="themebtn" aria-label="Alternar tema">tema</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <header class="hero">
+    <span class="eyebrow">Guia teórico interativo</span>
+    <h1>A teoria por trás do NeuraTrade</h1>
+    <p class="sub">Tudo o que você precisa entender para apresentar os 25 slides a uma turma de
+      redes neurais — sem depender de nenhum conhecimento de finanças. Cada módulo mapeia um slide,
+      explica o conceito e traz uma peça interativa para você <em>sentir</em> a ideia antes de ensiná-la.</p>
+    <div class="hero-meta">
+      <span class="tag">público: turma de redes neurais</span>
+      <span class="tag">pré-requisito de finanças: nenhum</span>
+      <span class="tag">9 módulos + roteiro a 2 vozes</span>
+    </div>
+    <figure class="herofig">
+      <canvas id="heroCanvas" width="880" height="150" aria-label="Série com uma anomalia detectada acima do limiar"></canvas>
+      <figcaption class="cap">a ideia em uma imagem — erro de reconstrução baixo no normal, um pico acima do limiar = anomalia</figcaption>
+    </figure>
+  </header>
+
+  <div class="howto" aria-label="Como usar">
+    <div><b>Leia o conceito</b><p>cada módulo é curto e ligado ao slide que ele sustenta.</p></div>
+    <div><b>Mexa na demo</b><p>arraste os controles — a intuição gruda quando você vê a resposta.</p></div>
+    <div><b>Roube as falas</b><p>caixas "na turma diga" e "pode cair" já vêm prontas.</p></div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- MÓDULO 0 -->
+  <section class="module" id="m0">
+    <div class="m-head"><span class="m-num">0</span><span class="slidetag">Slides 1–3 · contexto</span></div>
+    <h2>O mínimo de domínio (para não travar)</h2>
+    <p class="lede">Você não precisa saber investir. Precisa de quatro palavras.</p>
+    <p class="body-txt"><strong>B3</strong> é a bolsa de valores brasileira; o projeto olha 4 ações
+      (Petrobras, Vale, Americanas, Itaú). <strong>Log-retorno</strong> é só a variação diária do preço
+      em escala logarítmica — <code>ln(preço_hoje / preço_ontem)</code>; transforma "preço" em "quanto mudou",
+      que é estacionário e comparável entre ativos. <strong>Janela deslizante</strong>: em vez de olhar 1 dia,
+      olhamos blocos de <strong>30 pregões</strong> consecutivos, deslizando 1 dia por vez — é a "amostra" que
+      entra na rede. <strong>Anomalia</strong> = uma dessas janelas que foge do padrão (um crash, uma fraude).</p>
+    <div class="callout say">
+      <div class="lbl">Na turma diga</div>
+      <p>"Esqueçam finanças por um instante: o dado é uma <em>série temporal</em>, cortada em janelas de 30 passos.
+      A tarefa é achar as janelas estranhas — um problema clássico de <em>detecção de anomalias</em> em sequências."</p>
+    </div>
+  </section>
+
+  <!-- MÓDULO 1 -->
+  <section class="module" id="m1">
+    <div class="m-head"><span class="m-num">1</span><span class="slidetag">Slide 4 · paradigma</span></div>
+    <h2>Aprender só o normal (one-class)</h2>
+    <p class="lede">Não há rótulos de "anomalia" para treinar. Então não dá para usar classificação supervisionada.</p>
+    <p class="body-txt">Supervisão precisaria de exemplos <strong>rotulados</strong> das duas classes — e ninguém
+      marcou, dia a dia, o que foi anômalo. A saída é o paradigma <strong>one-class</strong>: mostrar à rede
+      <strong>apenas o normal</strong>, deixá-la modelar esse comportamento, e tratar como candidato a anomalia
+      tudo que ela reproduzir mal. É aprendizado <strong>não supervisionado</strong> — a "classe positiva" nunca
+      é vista no treino.</p>
+    <div class="callout say">
+      <div class="lbl">Na turma diga</div>
+      <p>"A rede aprende a <em>densidade do normal</em>, não uma fronteira entre classes. Anomalia é definida por
+      <em>ausência</em> — o que não se parece com o que ela viu."</p>
+    </div>
+    <details class="qa"><summary>Por que não tratar como classificação e rotular à mão?</summary>
+      <div class="qa-body"><p>Anomalias são raras, diversas e não se repetem — rotular é caro, incompleto e
+      enviesa para os tipos já conhecidos. One-class generaliza para anomalias <em>inéditas</em>, que é o ponto.</p></div>
+    </details>
+  </section>
+
+  <!-- MÓDULO 2 -->
+  <section class="module" id="m2">
+    <div class="m-head"><span class="m-num">2</span><span class="slidetag">Slides 5 &amp; 8 · autoencoder</span></div>
+    <h2>Autoencoder: comprimir para entender</h2>
+    <p class="lede">Um autoencoder aprende a copiar a entrada passando por um gargalo estreito. O gargalo é o truque.</p>
+    <p class="body-txt">O <strong>encoder</strong> comprime a janela num vetor pequeno (o <em>gargalo</em>,
+      <code>latent_dim=16</code>); o <strong>decoder</strong> reconstrói a janela a partir só desse vetor.
+      Como o gargalo é <strong>menor que a entrada</strong> (undercomplete), a rede não consegue decorar — é
+      forçada a guardar só a <strong>estrutura essencial</strong> do que é típico. Treinada apenas no normal, ela
+      reconstrói bem o típico e <strong>mal o inédito</strong>. Esse erro de reconstrução <em>é</em> o sinal.</p>
+    <div class="demo" aria-label="Demonstração de reconstrução">
+      <div class="demo-head"><span class="k">demo · <b>entrada</b> (linha) vs <b>reconstrução</b> (tracejado)</span></div>
+      <div class="demo-body">
+        <canvas id="reconCanvas" width="880" height="240"></canvas>
+        <div class="controls">
+          <div class="seg" role="group" aria-label="Tipo de janela">
+            <button id="btnNormal" aria-pressed="true">janela normal</button>
+            <button id="btnAnom" aria-pressed="false">janela anômala</button>
+          </div>
+          <div class="ctl">
+            <label>tamanho do gargalo <b><span id="latVal">16</span></b></label>
+            <input type="range" id="latSlider" min="1" max="30" value="16">
+          </div>
+          <div class="stat pos" style="max-width:150px"><div class="n tnum" id="reconErr">0.00</div><div class="l">erro de reconstrução</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="callout say">
+      <div class="lbl">Na turma diga</div>
+      <p>"Gargalo largo demais → a rede vira uma fotocopiadora e reconstrói <em>até</em> a anomalia (erro some).
+      Gargalo estreito demais → perde detalhe do próprio normal. Existe um ponto certo — e no nosso caso ele
+      é surpreendentemente <em>insensível</em> (voltamos nisso no módulo 9)."</p>
+    </div>
+    <details class="qa"><summary>Qual a diferença para o PCA?</summary>
+      <div class="qa-body"><p>PCA é uma compressão <em>linear</em>. O autoencoder com LSTM captura estrutura
+      <em>temporal e não linear</em> — dependências entre passos que o PCA achata.</p></div>
+    </details>
+  </section>
+
+  <!-- MÓDULO 3 -->
+  <section class="module" id="m3">
+    <div class="m-head"><span class="m-num">3</span><span class="slidetag">Slide 6 · sequências</span></div>
+    <h2>Por que LSTM e não uma MLP</h2>
+    <p class="lede">A janela é uma <em>sequência ordenada</em>. A ordem carrega informação — e uma MLP a joga fora.</p>
+    <p class="body-txt">Uma <strong>MLP/Dense</strong> trata os 30 passos como um saco de números sem ordem.
+      Uma <strong>RNN</strong> tem memória, mas o gradiente <strong>desaparece</strong> em sequências longas
+      (multiplicações sucessivas encolhem o sinal de aprendizado). A <strong>LSTM</strong> resolve com um
+      <strong>estado de célula</strong> (memória de longo prazo) e três <strong>portões</strong> —
+      esquecer, entrada e saída — que controlam o que apagar, guardar e revelar. Assim ela preserva dependências
+      temporais <strong>sem explodir nem apagar</strong> o gradiente.</p>
+    <div class="callout say">
+      <div class="lbl">Na turma diga</div>
+      <p>"O portão de esquecimento é a peça-chave: ele deixa o gradiente fluir por muitos passos quase intacto —
+      é o que cura o <em>vanishing gradient</em> das RNNs simples."</p>
+    </div>
+    <details class="qa"><summary>30 passos é 'longo'? Precisava de LSTM mesmo?</summary>
+      <div class="qa-body"><p>Honestamente, 30 é curto — uma RNN daria conta. A LSTM é a escolha segura e padrão da
+      literatura de referência; e a <em>ausência</em> de necessidade de janelas longas é justamente o argumento que
+      o projeto usa para <em>rejeitar</em> atenção/Transformers (slide 17).</p></div>
+    </details>
+  </section>
+
+  <!-- MÓDULO 4 -->
+  <section class="module" id="m4">
+    <div class="m-head"><span class="m-num">4</span><span class="slidetag">Slide 7 · perda</span></div>
+    <h2>A perda: por que MAE e não MSE</h2>
+    <p class="lede">A perda define o que a rede considera "erro grande" — e isso decide a estabilidade do limiar.</p>
+    <p class="body-txt"><strong>MAE (L1)</strong> penaliza o erro <strong>linearmente</strong>; <strong>MSE (L2)</strong>
+      penaliza o <strong>quadrado</strong>. Com L2, poucos picos extremos dominam a conta e <strong>distorcem o limiar</strong>
+      — a rede passa a caçar caudas em vez de medir o desvio típico. Como o objetivo é medir o desvio <em>usual</em>,
+      o projeto usa <strong>MAE</strong>, mais robusto a outliers do próprio erro.</p>
+    <div class="demo" aria-label="MAE vs MSE">
+      <div class="demo-head"><span class="k">demo · penalidade em função do erro por passo</span></div>
+      <div class="demo-body">
+        <canvas id="lossCanvas" width="880" height="260"></canvas>
+        <div class="controls">
+          <div class="seg" role="group" aria-label="Qual perda destacar">
+            <button id="btnMAE" aria-pressed="true">MAE (L1)</button>
+            <button id="btnMSE" aria-pressed="false">MSE (L2)</button>
+          </div>
+          <p class="body-txt" style="margin:0;flex:2;min-width:220px" id="lossNote"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MÓDULO 5 -->
+  <section class="module" id="m5">
+    <div class="m-head"><span class="m-num">5</span><span class="slidetag">Slides 9 &amp; 10 · validação</span></div>
+    <h2>Vazamento temporal e walk-forward</h2>
+    <p class="lede">O erro metodológico mais fácil de cometer em série temporal: deixar o futuro treinar o passado.</p>
+    <p class="body-txt">Se você <strong>embaralha</strong> os dados num k-fold comum, uma janela de validação no meio
+      é cercada por treino do <strong>futuro</strong> — <strong>vazamento</strong>. Pior: normalizar (ajustar o
+      <em>scaler</em>) <strong>antes</strong> de separar treino/teste já contamina as estatísticas com o futuro.
+      A validação correta é <strong>causal</strong>: <strong>walk-forward</strong> — treinar no passado, validar no
+      bloco de futuro adjacente, e expandir o treino fold a fold. Scaler e limiar são recalculados <strong>dentro de
+      cada fold</strong>, sem nunca ver o teste.</p>
+    <div class="demo" aria-label="Walk-forward vs embaralhado">
+      <div class="demo-head"><span class="k">demo · <b>azul</b> treino · <b>âmbar</b> validação · o tempo corre →</span></div>
+      <div class="demo-body">
+        <canvas id="wfCanvas" width="880" height="230"></canvas>
+        <div class="controls">
+          <div class="seg" role="group" aria-label="Esquema de validação">
+            <button id="btnWF" aria-pressed="true">walk-forward (causal)</button>
+            <button id="btnShuf" aria-pressed="false">k-fold embaralhado</button>
+          </div>
+          <p class="body-txt" style="margin:0;flex:2;min-width:220px" id="wfNote"></p>
+        </div>
+      </div>
+    </div>
+    <div class="callout warn">
+      <div class="lbl">O erro a evitar</div>
+      <p>Reportar métrica com scaler ajustado no conjunto todo <em>infla</em> o resultado. É a crítica número 1 que
+      uma banca faz — e o projeto se blinda contra ela por construção.</p>
+    </div>
+  </section>
+
+  <!-- MÓDULO 6 -->
+  <section class="module" id="m6">
+    <div class="m-head"><span class="m-num">6</span><span class="slidetag">Slides 12 &amp; 13 · limiar</span></div>
+    <h2>Limiar, precisão e recall</h2>
+    <p class="lede">O erro é contínuo; o alarme é binário. O <em>limiar</em> é a régua que converte um no outro.</p>
+    <p class="body-txt">Acima do limiar = <strong>alarme</strong>. Comparando com a verdade, caímos na
+      <strong>matriz de confusão</strong>: <span class="mono">TP</span> (acertou anomalia),
+      <span class="mono">FP</span> (alarme falso), <span class="mono">FN</span> (anomalia perdida),
+      <span class="mono">TN</span> (normal em silêncio). <strong>Precisão</strong> = dos alarmes, quantos certos.
+      <strong>Recall</strong> = das anomalias, quantas pegou. Subir o limiar troca recall por precisão — e vice-versa.
+      Arraste e veja.</p>
+    <div class="demo" aria-label="Limiar interativo">
+      <div class="demo-head"><span class="k">demo · distribuição do erro — <b>normal</b> (azul) vs <b>anomalia</b> (vermelho)</span></div>
+      <div class="demo-body">
+        <canvas id="thrCanvas" width="880" height="240"></canvas>
+        <div class="controls">
+          <div class="ctl" style="flex:2">
+            <label>limiar <b class="tnum"><span id="thrVal">0.50</span></b></label>
+            <input type="range" id="thrSlider" min="0" max="100" value="50">
+          </div>
+        </div>
+        <div class="statrow">
+          <div class="stat pos"><div class="n tnum" id="statPrec">—</div><div class="l">precisão</div></div>
+          <div class="stat pos"><div class="n tnum" id="statRec">—</div><div class="l">recall</div></div>
+          <div class="stat"><div class="n tnum" id="statF1">—</div><div class="l">F1</div></div>
+        </div>
+        <div class="cm" aria-label="Matriz de confusão">
+          <div class="h"></div><div class="h">real: anomalia</div><div class="h">real: normal</div>
+          <div class="h">alarme</div>
+          <div class="cell tp"><div class="cn tnum" id="cTP">0</div><div class="cl">TP</div></div>
+          <div class="cell fp"><div class="cn tnum" id="cFP">0</div><div class="cl">FP</div></div>
+          <div class="h">silêncio</div>
+          <div class="cell fn"><div class="cn tnum" id="cFN">0</div><div class="cl">FN</div></div>
+          <div class="cell tn"><div class="cn tnum" id="cTN">0</div><div class="cl">TN</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="callout say">
+      <div class="lbl">Na turma diga</div>
+      <p>"Não existe limiar 'certo' universal — existe o limiar que equilibra o <em>custo</em> de um alarme falso
+      contra o de uma anomalia perdida. Por isso o projeto trata a escolha de limiar como <em>decisão de risco</em>."</p>
+    </div>
+  </section>
+
+  <!-- MÓDULO 7 -->
+  <section class="module" id="m7">
+    <div class="m-head"><span class="m-num">7</span><span class="slidetag">Slides 15 &amp; 16 · métricas</span></div>
+    <h2>ROC engana quando a classe é rara</h2>
+    <p class="lede">A métrica mais citada — ROC-AUC — mente sob desbalanceamento forte. Aqui está o mecanismo.</p>
+    <p class="body-txt"><strong>ROC</strong> cruza TPR × FPR. Quando os negativos são a esmagadora maioria, o FPR
+      quase não se mexe (denominador gigante) e a área parece <strong>ótima</strong>. <strong>PR</strong> cruza
+      precisão × recall e <strong>não usa TN</strong> — então expõe o custo dos falsos positivos. A linha de base da
+      PR é a própria <strong>prevalência</strong>. Arraste a raridade: a ROC-AUC fica <strong>parada</strong>
+      (é invariante à prevalência!), a PR-AUC <strong>despenca</strong>.</p>
+    <div class="demo" aria-label="ROC vs PR sob raridade">
+      <div class="demo-head"><span class="k">demo · mesmo classificador, mudando só a raridade da anomalia</span></div>
+      <div class="demo-body">
+        <canvas id="rocprCanvas" width="880" height="260"></canvas>
+        <div class="controls">
+          <div class="ctl" style="flex:2">
+            <label>prevalência da anomalia <b class="tnum"><span id="prevVal">5</span>%</b></label>
+            <input type="range" id="prevSlider" min="1" max="50" value="5">
+          </div>
+          <div class="stat pos"><div class="n tnum" id="rocVal">—</div><div class="l">ROC-AUC</div></div>
+          <div class="stat neg"><div class="n tnum" id="prVal">—</div><div class="l">PR-AUC</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="callout warn">
+      <div class="lbl">O número do deck</div>
+      <p>No projeto, em prevalência ~4,9%: <strong>ROC-AUC 0,84</strong> (parece ótimo) mascara uma
+      <strong>PR-AUC 0,15</strong> (a realidade). Esta demo é esquemática, mas reproduz exatamente esse efeito.</p>
+    </div>
+    <details class="qa"><summary>Por que a ROC-AUC não muda com a prevalência?</summary>
+      <div class="qa-body"><p>TPR e FPR são taxas <em>dentro de cada classe</em> — não dependem de quantos há de cada.
+      A precisão, sim, mistura as classes (usa FP contra TP), então a raridade a afeta diretamente. Daí a PR ser
+      honesta em classe rara.</p></div>
+    </details>
+  </section>
+
+  <!-- MÓDULO 8 -->
+  <section class="module" id="m8">
+    <div class="m-head"><span class="m-num">8</span><span class="slidetag">Slide 14 · conditional AE</span></div>
+    <h2>Idiossincrático vs sistêmico</h2>
+    <p class="lede">Uma queda do ativo (fraude) e uma queda do mercado inteiro (crise) parecem iguais para o erro sozinho.</p>
+    <p class="body-txt">Para separar, o <strong>Conditional Autoencoder</strong> dá <strong>contexto</strong> à rede:
+      o encoder <strong>vê</strong> variáveis macro (dólar, índice de medo VIX), mas a perda continua recaindo
+      <strong>só</strong> sobre preço/volume do ativo. A macro <em>condiciona</em> a codificação sem virar alvo.
+      Resultado do deck: <strong>COVID/2020 → sistêmico</strong> (todos os ativos), <strong>Americanas/2023 →
+      idiossincrático</strong> (só a AMER3). O truque conceitual: <em>entrada ≠ alvo</em> — a rede recebe mais do
+      que precisa reconstruir.</p>
+    <div class="callout say">
+      <div class="lbl">Na turma diga</div>
+      <p>"'Conditional' aqui significa: parte da entrada serve de <em>contexto</em>, não de coisa-a-reconstruir.
+      É a mesma ideia de condicionar um gerador — só que num autoencoder."</p>
+    </div>
+  </section>
+
+  <!-- MÓDULO 9 -->
+  <section class="module" id="m9">
+    <div class="m-head"><span class="m-num">9</span><span class="slidetag">Slide 17 · o argumento central</span></div>
+    <h2>Mais capacidade ≠ mais sinal</h2>
+    <p class="lede">O fio condutor da defesa: quase toda "melhoria moderna" foi testada e ficou <em>dentro do ruído</em>.</p>
+    <p class="body-txt">Aumentar o gargalo (<code>latent_dim</code> em [8,32]), atenção/Transformers, otimização
+      bayesiana (Optuna), <strong>weight decay</strong> — todos foram medidos por walk-forward e o ganho
+      <strong>não superou o desvio entre folds</strong>. Traduzindo: a diferença é <strong>indistinguível de zero</strong>.
+      A régua honesta (módulo 5) é o que autoriza dizer "não adianta" — e transforma uma rejeição em
+      <strong>evidência</strong>, não preguiça.</p>
+    <div class="callout say">
+      <div class="lbl">Na turma diga</div>
+      <p>"Quando o gargalo já é <em>insensível</em>, empilhar capacidade não ataca gargalo nenhum — só adiciona risco de
+      overfitting num dataset pequeno. O que move o ponteiro é <em>o que</em> se dá à rede (volume, macro diária,
+      agregação max), não <em>quanto</em>."</p>
+    </div>
+    <details class="qa"><summary>"Mas atenção não é sempre melhor?"</summary>
+      <div class="qa-body"><p>Atenção resolve <em>esquecimento em sequências longas</em>. Aqui a janela tem 30 passos e o
+      gargalo já não satura — não há o problema que a atenção resolve. Em dados escassos, ela tenderia a
+      <em>overfitar</em>, não a ganhar. Rejeição condicionada: valeria com janelas longas e muito mais dados.</p></div>
+    </details>
+  </section>
+
+  <!-- GLOSSÁRIO -->
+  <section class="module" id="glossario">
+    <div class="m-head"><span class="slidetag">cola rápida</span></div>
+    <h2>Glossário de bolso</h2>
+    <dl class="glossary">
+      <div class="term"><dt>latent_dim</dt><dd>tamanho do gargalo; quantos números resumem a janela (=16).</dd></div>
+      <div class="term"><dt>reconstrução</dt><dd>saída do decoder tentando refazer a entrada.</dd></div>
+      <div class="term"><dt>prevalência</dt><dd>fração de exemplos que são anomalia; a base da PR-AUC.</dd></div>
+      <div class="term"><dt>walk-forward</dt><dd>validação causal: treina no passado, valida no futuro, expande.</dd></div>
+      <div class="term"><dt>desvio inter-fold</dt><dd>variação da métrica entre folds; a régua do "conta ou é ruído".</dd></div>
+      <div class="term"><dt>avaliação por evento</dt><dd>agrupar janelas contíguas num alarme só, para não inflar a prevalência.</dd></div>
+    </dl>
+  </section>
+
+  <!-- ROTEIRO -->
+  <section class="roteiro" id="roteiro">
+    <span class="eyebrow">Recomendação final</span>
+    <h2 style="font-size:clamp(24px,4vw,34px);font-weight:800;letter-spacing:-.02em;margin-top:12px">Roteiro a duas vozes</h2>
+    <p class="lede">Divisão limpa no ponto natural da narrativa: A entrega os <strong>fundamentos e a montagem</strong>;
+      B entrega <strong>os desafios, resultados e a demo</strong>. A troca acontece no slide 11 — a abertura do núcleo,
+      um respiro perfeito para trocar de voz.</p>
+
+    <div class="duo">
+      <div class="person a">
+        <div class="ph"><div class="who">Apresentador A — a fundação</div><div class="rg">Slides 1 → 10 · ~5 min</div></div>
+        <ul class="beats">
+          <li><span class="sn">1</span><span class="bt"><b>Capa + gancho.</b><span>"dá para uma rede achar sozinha o dia estranho da bolsa?"</span></span></li>
+          <li><span class="sn">2</span><span class="bt"><b>O problema.</b><span>anomalia sem rótulo → não supervisionado (módulo 0–1).</span></span></li>
+          <li><span class="sn">3</span><span class="bt"><b>A ideia em uma frase.</b><span>aprender o normal, medir o desvio.</span></span></li>
+          <li><span class="sn">4</span><span class="bt"><b>Paradigma one-class.</b><span>por que não classificar (módulo 1).</span></span></li>
+          <li><span class="sn">5</span><span class="bt"><b>Autoencoder.</b><span>gargalo, reconstrução — use a intuição do módulo 2.</span></span></li>
+          <li><span class="sn">6</span><span class="bt"><b>LSTM vs MLP.</b><span>ordem importa, portões, gradiente (módulo 3).</span></span></li>
+          <li><span class="sn">7</span><span class="bt"><b>Perda MAE vs MSE.</b><span>robustez a outliers do erro (módulo 4).</span></span></li>
+          <li><span class="sn">8</span><span class="bt"><b>Arquitetura.</b><span>(30,2)→16→(30,2); rede pequena de propósito.</span></span></li>
+          <li><span class="sn">9</span><span class="bt"><b>Não embaralhar o tempo.</b><span>vazamento (módulo 5).</span></span></li>
+          <li><span class="sn">10</span><span class="bt"><b>Split antes de normalizar.</b><span>walk-forward + a régua honesta.</span></span></li>
+        </ul>
+      </div>
+      <div class="person b">
+        <div class="ph"><div class="who">Apresentador B — a prova</div><div class="rg">Slides 11 → 20 · ~5 min</div></div>
+        <ul class="beats">
+          <li><span class="sn">11</span><span class="bt"><b>Abre o núcleo.</b><span>"o autoencoder foi o fácil; vejam o que quebrou" — assume a voz.</span></span></li>
+          <li><span class="sn">12</span><span class="bt"><b>Precisão/recall/limiar.</b><span>matriz de confusão (módulo 6).</span></span></li>
+          <li><span class="sn">13</span><span class="bt"><b>Desafio 1+2.</b><span>vazamento + choque diluído → <b>max</b> (0,16→0,35).</span></span></li>
+          <li><span class="sn">14</span><span class="bt"><b>Desafio 3.</b><span>conditional AE; COVID sistêmico, Americanas idiossincrático (módulo 8).</span></span></li>
+          <li><span class="sn">15</span><span class="bt"><b>ROC vs PR.</b><span>o mecanismo da classe rara (módulo 7).</span></span></li>
+          <li><span class="sn">16</span><span class="bt"><b>Desafio 4.</b><span>ROC 0,84 vs PR-AUC 0,15; avaliação por evento.</span></span></li>
+          <li><span class="sn">17</span><span class="bt"><b>Tema central.</b><span>capacidade ≠ sinal (módulo 9) — o clímax do argumento.</span></span></li>
+          <li><span class="sn">18</span><span class="bt"><b>Resultados.</b><span>~10% marcado, sem explosão de FP; bate com eventos.</span></span></li>
+          <li><span class="sn">19</span><span class="bt"><b>Demo ao vivo.</b><span>3 gestos: mean→max, subir p, injetar choque.</span></span></li>
+          <li><span class="sn">20</span><span class="bt"><b>Conclusões.</b><span>rigor &gt; aparência; agradece e abre perguntas.</span></span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="handoff">
+      <b>A troca (slide 10 → 11).</b> A fecha com "…e essa régua honesta é o que separa uma melhoria real de ruído —
+      e foi ela que expôs os quatro problemas que quase derrubaram o projeto." B assume: "Exato. Montar o autoencoder
+      foi o fácil. Vejam o que quebrou no caminho." Uma frase encaixa na outra — sem vácuo, sem "agora é a vez dele".
+    </div>
+
+    <div class="backup">
+      <div class="bh"><h3>Slides 21–25 · munição para perguntas</h3>
+        <p>Não apresentar em sequência. Puxar sob demanda quando a pergunta pedir. Quem estiver com a palavra chama o slide.</p></div>
+      <table>
+        <tr><td>A1 · 22</td><td><b>"Por que MAE e não MSE?"</b><span>L2 deixa poucos picos dominarem e distorce o limiar; MAE mede o desvio típico (módulo 4).</span></td></tr>
+        <tr><td>A2 · 23</td><td><b>"Como garantem que não há vazamento?"</b><span>scaler e limiar recomputados por fold, só no treino daquele fold (módulo 5).</span></td></tr>
+        <tr><td>A3 · 24</td><td><b>"Limiar fixo não fica velho?"</b><span>há o dinâmico causal — percentil numa janela de 252 pregões, só do passado.</span></td></tr>
+        <tr><td>A4 · 25</td><td><b>"Testaram regularização?"</b><span>weight decay varrido por walk-forward: Δ dentro do ruído inter-fold → indiferente (módulo 9).</span></td></tr>
+      </table>
+    </div>
+
+    <div class="callout say" style="margin-top:22px">
+      <div class="lbl">Dica de ensaio</div>
+      <p>Cada apresentador deve conseguir responder as <em>caixas "pode cair"</em> deste guia dos módulos do outro —
+      a banca não respeita a divisão de slides. Rodem a demo (<span class="kbd">streamlit run demo/sandbox.py</span>)
+      uma vez antes; é o único ponto com risco de palco.</p>
+    </div>
+  </section>
+</div>
+
+<footer>
+  Guia teórico interativo · NeuraTrade · Redes Neurais 2026.1 — companheiro dos slides <span class="mono">SLIDES.md</span>,
+  <span class="mono">ROTEIRO.md</span> e <span class="mono">CONTEXTO.md</span>.
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var root=document.documentElement;
+  // ---------- theme toggle ----------
+  var btn=document.getElementById("themebtn");
+  function current(){ return root.getAttribute("data-theme") ||
+    (window.matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light"); }
+  btn.addEventListener("click",function(){
+    var next=current()==="dark"?"light":"dark";
+    root.setAttribute("data-theme",next); drawAll();
+  });
+  window.matchMedia("(prefers-color-scheme:dark)").addEventListener("change",drawAll);
+
+  function cssv(n){ return getComputedStyle(root).getPropertyValue(n).trim(); }
+  function C(){ return {
+    teal:cssv("--teal"), tealStrong:cssv("--teal-strong")||cssv("--teal"),
+    signal:cssv("--signal"), blue:cssv("--blue"), amber:cssv("--amber"),
+    ink:cssv("--ink"), muted:cssv("--muted"), line:cssv("--line"),
+    surface:cssv("--surface"), surface2:cssv("--surface-2")
+  };}
+
+  // hi-dpi setup: returns ctx, logical w/h
+  function fit(cv){
+    var dpr=Math.min(window.devicePixelRatio||1,2);
+    var w=cv.clientWidth||cv.width, h=parseInt(cv.getAttribute("height"),10);
+    cv.width=w*dpr; cv.height=h*dpr; cv.style.height=h+"px";
+    var ctx=cv.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0);
+    return {ctx:ctx,w:w,h:h};
+  }
+  function seg(a,b,onA,onB){
+    a.addEventListener("click",function(){a.setAttribute("aria-pressed","true");b.setAttribute("aria-pressed","false");onA();});
+    b.addEventListener("click",function(){b.setAttribute("aria-pressed","true");a.setAttribute("aria-pressed","false");onB();});
+  }
+  // seeded rng
+  function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  function gauss(rng){var u=0,v=0;while(u===0)u=rng();while(v===0)v=rng();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+
+  // ================= HERO =================
+  function drawHero(){
+    var cv=document.getElementById("heroCanvas"); if(!cv)return;
+    var f=fit(cv),ctx=f.ctx,w=f.w,h=f.h,col=C();
+    ctx.clearRect(0,0,w,h);
+    var rng=mulberry32(7), n=120, pad=16, base=h*0.62, amp=10;
+    var pts=[];
+    for(var i=0;i<n;i++){var x=pad+(w-2*pad)*i/(n-1);var y=base+gauss(rng)*amp - (i>10&&i<40?6:0);pts.push([x,y]);}
+    var spike=Math.floor(n*0.72); pts[spike][1]=h*0.16;
+    // threshold
+    var thr=h*0.34;
+    ctx.strokeStyle=col.line; ctx.setLineDash([5,5]); ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(pad,thr);ctx.lineTo(w-pad,thr);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=col.muted;ctx.font="600 11px ui-monospace,monospace";ctx.fillText("limiar",w-pad-48,thr-6);
+    // line
+    ctx.strokeStyle=col.teal; ctx.lineWidth=2; ctx.beginPath();
+    pts.forEach(function(p,i){i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]);}); ctx.stroke();
+    // anomaly dot
+    ctx.fillStyle=col.signal; ctx.beginPath(); ctx.arc(pts[spike][0],pts[spike][1],6,0,7); ctx.fill();
+    ctx.strokeStyle=col.signal; ctx.globalAlpha=.25; ctx.lineWidth=8; ctx.beginPath();
+    ctx.arc(pts[spike][0],pts[spike][1],6,0,7); ctx.stroke(); ctx.globalAlpha=1;
+  }
+
+  // ================= RECON DEMO =================
+  var reconMode="normal", latent=16;
+  (function(){
+    var la=document.getElementById("latSlider"),lv=document.getElementById("latVal");
+    la.addEventListener("input",function(){latent=+la.value;lv.textContent=latent;drawRecon();});
+    seg(document.getElementById("btnNormal"),document.getElementById("btnAnom"),
+      function(){reconMode="normal";drawRecon();},function(){reconMode="anom";drawRecon();});
+  })();
+  function drawRecon(){
+    var cv=document.getElementById("reconCanvas"); if(!cv)return;
+    var f=fit(cv),ctx=f.ctx,w=f.w,h=f.h,col=C();
+    ctx.clearRect(0,0,w,h);
+    var pad=18, N=30, base=h*0.55, amp=h*0.26;
+    var rng=mulberry32(3);
+    var inp=[],rec=[];
+    // fidelity grows with latent (saturating); smoothing when latent small
+    var fid=Math.min(1, latent/14);
+    for(var i=0;i<N;i++){
+      var t=i/(N-1);
+      var sig=Math.sin(t*Math.PI*2.2)*0.7 + Math.sin(t*Math.PI*4.4)*0.25;
+      inp.push(sig);
+    }
+    if(reconMode==="anom"){ inp[Math.floor(N*0.6)] += 1.9; }
+    // reconstruction: low-pass of input by (1-fid), and CANNOT represent the anomaly spike
+    for(var j=0;j<N;j++){
+      var acc=0,wsum=0,span=Math.max(1,Math.round((1-fid)*6)+1);
+      for(var k=-span;k<=span;k++){var idx=Math.min(N-1,Math.max(0,j+k));var wgt=1-Math.abs(k)/(span+1);
+        // recon trained on normal: clip the anomaly influence
+        var val=Math.max(-1.3,Math.min(1.3,inp[idx])); acc+=val*wgt;wsum+=wgt;}
+      rec.push(acc/wsum);
+    }
+    function X(i){return pad+(w-2*pad)*i/(N-1);}
+    function Y(v){return base - v*amp;}
+    // error shading
+    ctx.fillStyle=col.signal; ctx.globalAlpha=.14;
+    ctx.beginPath();
+    for(var a=0;a<N;a++){var x=X(a);a?ctx.lineTo(x,Y(inp[a])):ctx.moveTo(x,Y(inp[a]));}
+    for(var b=N-1;b>=0;b--){ctx.lineTo(X(b),Y(rec[b]));}
+    ctx.closePath();ctx.fill();ctx.globalAlpha=1;
+    // reconstruction dashed
+    ctx.strokeStyle=col.muted;ctx.setLineDash([6,4]);ctx.lineWidth=2;ctx.beginPath();
+    rec.forEach(function(v,i){i?ctx.lineTo(X(i),Y(v)):ctx.moveTo(X(i),Y(v));});ctx.stroke();ctx.setLineDash([]);
+    // input solid
+    ctx.strokeStyle=col.teal;ctx.lineWidth=2.4;ctx.beginPath();
+    inp.forEach(function(v,i){i?ctx.lineTo(X(i),Y(v)):ctx.moveTo(X(i),Y(v));});ctx.stroke();
+    // legend
+    ctx.font="600 11px ui-monospace,monospace";
+    ctx.fillStyle=col.teal;ctx.fillText("entrada",pad,16);
+    ctx.fillStyle=col.muted;ctx.fillText("reconstrução",pad+64,16);
+    // error metric (MAE)
+    var err=0;for(var m=0;m<N;m++){err+=Math.abs(inp[m]-rec[m]);}err/=N;
+    document.getElementById("reconErr").textContent=err.toFixed(2);
+    var el=document.getElementById("reconErr").parentElement;
+    el.className="stat "+(err>0.35?"neg":"pos");
+  }
+
+  // ================= LOSS DEMO =================
+  var lossMode="mae";
+  (function(){
+    seg(document.getElementById("btnMAE"),document.getElementById("btnMSE"),
+      function(){lossMode="mae";drawLoss();},function(){lossMode="mse";drawLoss();});
+  })();
+  function drawLoss(){
+    var cv=document.getElementById("lossCanvas"); if(!cv)return;
+    var f=fit(cv),ctx=f.ctx,w=f.w,h=f.h,col=C();
+    ctx.clearRect(0,0,w,h);
+    var pad=34, x0=pad,x1=w-pad,y0=h-26,y1=18, R=3;
+    function X(e){return x0+(x1-x0)*(e+R)/(2*R);}
+    function Y(p){return y0-(y0-y1)*p/9;}
+    // grid + axes
+    ctx.strokeStyle=col.line;ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y0);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(X(0),y1-4);ctx.lineTo(X(0),y0);ctx.stroke();
+    ctx.fillStyle=col.muted;ctx.font="600 11px ui-monospace,monospace";
+    ctx.fillText("erro por passo  e",x1-118,y0+18);
+    ctx.save();ctx.translate(14,h/2);ctx.rotate(-Math.PI/2);ctx.fillText("penalidade",-30,0);ctx.restore();
+    function curve(fn,color,wd,alpha){ctx.strokeStyle=color;ctx.globalAlpha=alpha;ctx.lineWidth=wd;ctx.beginPath();
+      for(var e=-R;e<=R;e+=0.05){var p=Math.min(9,fn(e));var x=X(e),y=Y(p);e===-R?ctx.moveTo(x,y):ctx.lineTo(x,y);}ctx.stroke();ctx.globalAlpha=1;}
+    var maeOn=lossMode==="mae";
+    curve(function(e){return e*e;},col.signal,maeOn?2:3.4,maeOn?.4:1);
+    curve(function(e){return Math.abs(e);},col.teal,maeOn?3.4:2,maeOn?1:.4);
+    // labels
+    ctx.font="700 12px ui-monospace,monospace";
+    ctx.fillStyle=col.teal;ctx.fillText("L1 = |e|  (MAE)",X(1.1),Y(1.1)-8);
+    ctx.fillStyle=col.signal;ctx.fillText("L2 = e²  (MSE)",X(2.15),Y(8.4));
+    if(!maeOn){ctx.fillStyle=col.signal;ctx.font="600 11px ui-monospace,monospace";
+      ctx.fillText("outlier: L2 explode →",X(-2.9),Y(8.2));}
+    document.getElementById("lossNote").innerHTML= maeOn
+      ? "<strong>MAE</strong>: cresce reto. Um passo muito errado pesa proporcional — o limiar fica estável."
+      : "<strong>MSE</strong>: cresce ao quadrado. Um único outlier domina a perda e <em>distorce o limiar</em>.";
+  }
+
+  // ================= WALK-FORWARD DEMO =================
+  var wfMode="wf";
+  (function(){
+    seg(document.getElementById("btnWF"),document.getElementById("btnShuf"),
+      function(){wfMode="wf";drawWF();},function(){wfMode="shuf";drawWF();});
+  })();
+  function drawWF(){
+    var cv=document.getElementById("wfCanvas"); if(!cv)return;
+    var f=fit(cv),ctx=f.ctx,w=f.w,h=f.h,col=C();
+    ctx.clearRect(0,0,w,h);
+    var pad=16, rows=5, gap=10, rh=(h-2*pad-(rows-1)*gap)/rows, x0=pad+54, x1=w-pad;
+    ctx.font="600 11px ui-monospace,monospace";
+    for(var r=0;r<rows;r++){
+      var y=pad+r*(rh+gap);
+      ctx.fillStyle=col.muted;ctx.fillText("fold "+(r+1),pad,y+rh/2+4);
+      var full=x1-x0;
+      // track bg
+      ctx.fillStyle=col.surface2;roundRect(ctx,x0,y,full,rh,6);ctx.fill();
+      if(wfMode==="wf"){
+        var trFrac=0.30+r*0.12, vaFrac=0.14;
+        drawBlk(ctx,x0,y,full*trFrac,rh,col.blue);
+        drawBlk(ctx,x0+full*trFrac,y,full*vaFrac,rh,col.amber);
+      }else{
+        // shuffled: 5 slots, val slot floats in the middle → leakage
+        var slots=6, sw=full/slots, valSlot=(r+2)%slots;
+        for(var s=0;s<slots;s++){
+          drawBlk(ctx,x0+s*sw+1,y,sw-2,rh,s===valSlot?col.amber:col.blue);
+        }
+      }
+    }
+    // verdict badge
+    ctx.font="800 12px ui-monospace,monospace";
+    document.getElementById("wfNote").innerHTML = wfMode==="wf"
+      ? "<strong style='color:var(--teal)'>CAUSAL ✓</strong> — validação (âmbar) sempre <em>depois</em> do treino. Zero futuro no passado."
+      : "<strong style='color:var(--signal)'>VAZAMENTO ✗</strong> — a validação cai no meio, cercada por treino do <em>futuro</em>.";
+    function drawBlk(ctx,x,y,ww,hh,c){ctx.fillStyle=c;roundRect(ctx,x,y,Math.max(2,ww),hh,4);ctx.fill();}
+  }
+  function roundRect(ctx,x,y,w,h,r){r=Math.min(r,h/2,w/2);ctx.beginPath();
+    ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+
+  // ================= THRESHOLD DEMO =================
+  var thr=0.5;
+  // two gaussian pools (fixed)
+  var poolN=[],poolA=[];
+  (function(){
+    var rng=mulberry32(11);
+    for(var i=0;i<2000;i++){poolN.push(clamp(0.28+gauss(rng)*0.09));}
+    for(var j=0;j<400;j++){poolA.push(clamp(0.62+gauss(rng)*0.12));}
+    var ts=document.getElementById("thrSlider");
+    ts.addEventListener("input",function(){thr=+ts.value/100;document.getElementById("thrVal").textContent=thr.toFixed(2);drawThr();});
+  })();
+  function clamp(v){return Math.max(0.01,Math.min(0.99,v));}
+  function drawThr(){
+    var cv=document.getElementById("thrCanvas"); if(!cv)return;
+    var f=fit(cv),ctx=f.ctx,w=f.w,h=f.h,col=C();
+    ctx.clearRect(0,0,w,h);
+    var pad=16, x0=pad,x1=w-pad,y0=h-24;
+    var bins=48, hn=new Array(bins).fill(0), ha=new Array(bins).fill(0);
+    poolN.forEach(function(v){hn[Math.min(bins-1,Math.floor(v*bins))]++;});
+    poolA.forEach(function(v){ha[Math.min(bins-1,Math.floor(v*bins))]++;});
+    var mx=0;hn.concat(ha).forEach(function(v){if(v>mx)mx=v;});
+    var bw=(x1-x0)/bins;
+    function bar(arr,color,alpha){ctx.fillStyle=color;ctx.globalAlpha=alpha;
+      arr.forEach(function(v,i){var bh=(y0-20)*v/mx;ctx.fillRect(x0+i*bw+0.5,y0-bh,bw-1,bh);});ctx.globalAlpha=1;}
+    bar(hn,col.blue,.55); bar(ha,col.signal,.6);
+    // axis
+    ctx.strokeStyle=col.line;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y0);ctx.stroke();
+    ctx.fillStyle=col.muted;ctx.font="600 11px ui-monospace,monospace";
+    ctx.fillText("erro de reconstrução →",x1-140,y0+18);
+    // threshold line
+    var tx=x0+(x1-x0)*thr;
+    ctx.strokeStyle=col.ink;ctx.lineWidth=2;ctx.setLineDash([5,4]);
+    ctx.beginPath();ctx.moveTo(tx,8);ctx.lineTo(tx,y0);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=col.ink;ctx.fillText("limiar",tx+6,16);
+    // shade alarm region
+    ctx.fillStyle=col.signal;ctx.globalAlpha=.06;ctx.fillRect(tx,8,x1-tx,y0-8);ctx.globalAlpha=1;
+    // counts
+    var TP=poolA.filter(function(v){return v>=thr;}).length;
+    var FN=poolA.length-TP;
+    var FP=poolN.filter(function(v){return v>=thr;}).length;
+    var TN=poolN.length-FP;
+    document.getElementById("cTP").textContent=TP;
+    document.getElementById("cFP").textContent=FP;
+    document.getElementById("cFN").textContent=FN;
+    document.getElementById("cTN").textContent=TN;
+    var prec=TP+FP>0?TP/(TP+FP):0, rec=TP+FN>0?TP/(TP+FN):0;
+    var f1=prec+rec>0?2*prec*rec/(prec+rec):0;
+    document.getElementById("statPrec").textContent=(prec*100).toFixed(0)+"%";
+    document.getElementById("statRec").textContent=(rec*100).toFixed(0)+"%";
+    document.getElementById("statF1").textContent=f1.toFixed(2);
+  }
+
+  // ================= ROC/PR DEMO =================
+  var prev=0.05;
+  var scoreN=[],scoreA=[];
+  (function(){
+    var rng=mulberry32(23), mu=1.42;
+    for(var i=0;i<1500;i++){scoreN.push(gauss(rng));}
+    for(var j=0;j<1500;j++){scoreA.push(mu+gauss(rng));}
+    var ps=document.getElementById("prevSlider");
+    ps.addEventListener("input",function(){prev=+ps.value/100;document.getElementById("prevVal").textContent=ps.value;drawROCPR();});
+  })();
+  function rocPrAUC(prevalence){
+    // sweep thresholds over combined score range
+    var lo=-4,hi=6,steps=200;
+    var tpr=[],fpr=[],prec=[],rec=[];
+    for(var s=steps;s>=0;s--){
+      var t=lo+(hi-lo)*s/steps;
+      var TP=0,FP=0;
+      for(var i=0;i<scoreA.length;i++)if(scoreA[i]>=t)TP++;
+      for(var j=0;j<scoreN.length;j++)if(scoreN[j]>=t)FP++;
+      var TPR=TP/scoreA.length, FPR=FP/scoreN.length;
+      var p=prevalence*TPR, fpw=(1-prevalence)*FPR;
+      var pr=(p+fpw)>0?p/(p+fpw):1;
+      tpr.push(TPR);fpr.push(FPR);prec.push(pr);rec.push(TPR);
+    }
+    // integrate (x increasing)
+    function auc(x,y){var a=0;for(var i=1;i<x.length;i++)a+=(x[i]-x[i-1])*(y[i]+y[i-1])/2;return a;}
+    return {roc:auc(fpr,tpr),pr:auc(rec,prec),fpr:fpr,tpr:tpr,rec:rec,prec:prec};
+  }
+  function drawROCPR(){
+    var cv=document.getElementById("rocprCanvas"); if(!cv)return;
+    var f=fit(cv),ctx=f.ctx,w=f.w,h=f.h,col=C();
+    ctx.clearRect(0,0,w,h);
+    var res=rocPrAUC(prev);
+    var pad=34, gap=40, pw=(w-2*pad-gap)/2, ph=h-46, ox0=pad, ox1=pad+pw+gap, oy=8;
+    // ROC panel
+    ctx.strokeStyle=col.line;ctx.strokeRect(ox0,oy+16,pw,ph-16);
+    ctx.strokeStyle=col.blue;ctx.lineWidth=2.4;ctx.beginPath();
+    for(var i=0;i<res.fpr.length;i++){var x=ox0+pw*res.fpr[i],y=(oy+16)+(ph-16)-(ph-16)*res.tpr[i];i?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();
+    ctx.setLineDash([4,4]);ctx.strokeStyle=col.line;ctx.lineWidth=1;ctx.beginPath();
+    ctx.moveTo(ox0,oy+16+ph-16);ctx.lineTo(ox0+pw,oy+16);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=col.blue;ctx.font="700 12px ui-sans-serif,system-ui";ctx.fillText("ROC — parece ótima",ox0,oy+12);
+    ctx.fillStyle=col.muted;ctx.font="600 10px ui-monospace,monospace";ctx.fillText("FPR →",ox0+pw-40,oy+16+ph-4);
+    // PR panel
+    ctx.strokeStyle=col.line;ctx.strokeRect(ox1,oy+16,pw,ph-16);
+    ctx.strokeStyle=col.signal;ctx.lineWidth=2.4;ctx.beginPath();
+    for(var k=0;k<res.rec.length;k++){var x2=ox1+pw*res.rec[k],y2=(oy+16)+(ph-16)-(ph-16)*res.prec[k];k?ctx.lineTo(x2,y2):ctx.moveTo(x2,y2);}ctx.stroke();
+    var by=(oy+16)+(ph-16)-(ph-16)*prev;
+    ctx.setLineDash([4,4]);ctx.strokeStyle=col.line;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(ox1,by);ctx.lineTo(ox1+pw,by);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=col.signal;ctx.font="700 12px ui-sans-serif,system-ui";ctx.fillText("PR — expõe a fraqueza",ox1,oy+12);
+    ctx.fillStyle=col.muted;ctx.font="600 10px ui-monospace,monospace";ctx.fillText("recall →",ox1+pw-48,oy+16+ph-4);
+    ctx.fillText("base ≈ prevalência",ox1+6,by-4);
+    document.getElementById("rocVal").textContent=res.roc.toFixed(2);
+    document.getElementById("prVal").textContent=res.pr.toFixed(2);
+  }
+
+  // ================= redraw all =================
+  function drawAll(){ try{
+    drawHero();drawRecon();drawLoss();drawWF();drawThr();drawROCPR();
+  }catch(e){/* no-op */} }
+  window.addEventListener("resize",function(){clearTimeout(window.__rt);window.__rt=setTimeout(drawAll,120);});
+  drawAll();
+})();
+</script>
