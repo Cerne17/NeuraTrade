@@ -11,6 +11,49 @@ do tempo de eventos econômicos e políticos brasileiros documentados.
 
 ---
 
+## 🧭 Para o avaliador
+
+> O repositório é grande porque **cada decisão foi medida e registrada**. Esta seção é o mapa
+> para avaliar sem se perder no volume de arquivos.
+
+**Caminho de 5 minutos (só leitura):**
+
+1. **Este README** — visão geral, metodologia e [Resultados](#resultados).
+2. **[`docs/adr/README.md`](docs/adr/)** — índice das **18 decisões** (ADRs). Cada ADR tem
+   *contexto → decisão → evidência (números)*. É aqui que mora o rigor: inclusive as ideias
+   **testadas e rejeitadas com prova** (atenção/Transformers, Optuna, weight decay).
+3. **Os 3 PDFs** (compilados, na raiz de cada pasta):
+   - [`report/main.pdf`](report/) — **relatório** do projeto, uma seção por milestone.
+   - [`teoria/main.pdf`](teoria/) — **guia teórico** autocontido (finanças, estatística, redes neurais do zero).
+   - [`debate/main.pdf`](debate/) — **defesa crítica**: confrontações e limitações assumidas.
+
+**Rodar (2 comandos, ~minutos, offline):**
+
+```bash
+pip install -e .
+python -m src --train      # treina os 4 modelos e imprime o resumo por ativo
+pytest -q                  # 32 testes verdes (pipeline, métricas, anti-vazamento)
+```
+
+Dados versionados em `data/raw/` → **roda sem internet**. Detalhes e Colab abaixo.
+
+**Onde cada critério é evidenciado:**
+
+| O que avaliar | Onde ver |
+| ------------- | -------- |
+| Formulação e fundamentação | `README` + `report/main.pdf` + `teoria/main.pdf` |
+| Metodologia sem vazamento | [`src/preprocessing.py`](src/preprocessing.py), [`src/validation.py`](src/validation.py) · ADR-0001, 0010 |
+| Arquitetura do modelo | [`src/model.py`](src/model.py) · ADR-0003 |
+| Rigor experimental (decisões medidas) | [`docs/adr/`](docs/adr/) (18 ADRs) + `notebooks/` (com **saídas versionadas**) |
+| Resultados quantitativos | [Resultados](#resultados) + notebooks `05`, `07`, `10`, `12`, `14` |
+| Reprodutibilidade | `python -m src`, `pytest` (32), seed fixa, roda offline |
+| Análise crítica / honestidade | `debate/main.pdf` + ADRs **rejeitados** (0013, 0014, 0016, 0018) |
+
+**Opcional — demonstração interativa:** [`demo/sandbox.py`](demo/) (Streamlit) deixa variar agregação,
+limiar e injeção sintética em tempo real sobre os modelos treinados. `pip install streamlit && streamlit run demo/sandbox.py`.
+
+---
+
 ## Sobre o projeto
 
 A maior parte da literatura de detecção de anomalias com deep learning foca o mercado americano e
@@ -38,6 +81,9 @@ experimento (ver [Resultados](#resultados) e [Documentação](#documentação)):
 - **M12** — avaliação crítica de ideias (ADR-0013–0016): **PR-AUC** + custo FP×FN para classe rara
   (aceito); atenção/Transformers e Optuna **rejeitados com defesa** (janela curta, dataset pequeno,
   landscape plano); backtest financeiro como trabalho futuro.
+- **M13** — refino do protocolo e regularização: **avaliação por evento** (agrupa janelas contíguas
+  para não inflar a prevalência do sintético, ADR-0017); **weight decay** varrido por walk-forward e
+  **rejeitado como default** — ganho dentro do ruído inter-fold (ADR-0018).
 
 ### Ativos analisados
 
@@ -190,23 +236,28 @@ NeuraTrade/
 │   ├── inference.py          # aplica modelos a janelas novas (fora do treino)
 │   ├── macro.py              # conector macro (BCB/yfinance) + alinhamento causal (ADR-0012)
 │   ├── conditional.py        # Conditional AE: contexto macro, regime idiossincrático/sistêmico
+│   ├── baseline.py           # baselines clássicos (chão de comparação p/ o autoencoder)
 │   ├── events.py             # linha do tempo de eventos BR
+│   ├── progress.py           # barra de progresso por época (sem dependência)
 │   └── viz.py                # plots padronizados
+├── tests/                    # 32 testes (pytest): pipeline, métricas, anti-vazamento
 ├── scripts/                  # UTILITÁRIOS (atalhos operacionais)
 │   ├── run_pipeline.py       # wrapper da CLI
 │   ├── fetch_window.py       # baixa uma janela nova (ex.: Q1/2025) → data/inference/
 │   ├── run_inference.py      # inferência interativa em janelas à escolha
 │   ├── cache_data.py         # refaz data/raw via yfinance (passo de rede)
+│   ├── experiment_weight_decay.py  # varredura de weight decay por walk-forward (ADR-0018)
 │   ├── build_figures.py      # regenera report/figures/
 │   └── README.md
 ├── notebooks/                # ESTUDOS + guia de uso (orquestram src/, com saídas)
 │   ├── README.md             # índice dos estudos por fase
 │   ├── 00_quickstart.ipynb   # guia de uso: pipeline + fetch + inferência
 │   └── 01_eda … 14_imbalanced_metrics.ipynb
-├── docs/adr/                 # Architecture Decision Records (0001–0011)
-├── report/                   # relatório LaTeX (preliminar)
-├── teoria/                   # guia teórico autocontido (LaTeX)
-├── debate/                   # confrontações teóricas / defesa das decisões (LaTeX)
+├── demo/                     # sandbox interativo (Streamlit) — dependência opcional
+├── docs/adr/                 # Architecture Decision Records (0001–0018)
+├── report/                   # relatório LaTeX (main.pdf compilado)
+├── teoria/                   # guia teórico autocontido (main.pdf)
+├── debate/                   # confrontações teóricas / defesa (main.pdf)
 ├── models/                   # pesos treinados (não versionado)
 └── figures/                  # saídas dos estudos
 ```
@@ -239,6 +290,12 @@ Numerados na ordem de execução (índice completo em [`notebooks/README.md`](no
 | `09_multivariate_ohlcv`        | Close+Volume; atribuição de anomalia de volume (M8, ADR-0011). |
 | `10_max_default_decision`      | `max` no teste real 2020–2024; adoção como default (M9, ADR-0009). |
 | `11_ohlcv_full`                | OHLCV `(30,5)` vs Close+Volume; `latent_dim` multivariado (M9, ADR-0011). |
+| `12_conditional_macro`         | Conditional AE com macro; regime idiossincrático/sistêmico (M11, ADR-0012). |
+| `13_conditional_tuning`        | Ajuste do Conditional AE; escolha das features macro diárias (M11, ADR-0012). |
+| `14_imbalanced_metrics`        | PR-AUC vs ROC-AUC em classe rara; custo FP×FN (M12, ADR-0015). |
+
+O `00_quickstart` é a vitrine de todas as configurações. Estudos versionados **com as saídas**
+(gráficos e tabelas) → dá para avaliar sem reexecutar.
 
 ---
 
@@ -288,14 +345,26 @@ Principais achados da Fase 2, todos medidos (notebooks 07–11) e registrados no
   invisível ao modelo univariado, passa a ser detectada e **atribuída**. O **OHLCV completo
   `(30,5)`** foi testado e **rejeitado** (piora o `val_loss` em 2/4 ativos sem ganho).
 
+Achados das fases seguintes (M11–M13):
+
+- **Contexto macro / Conditional AE (ADR-0012).** Com dólar e VIX condicionando o encoder, o modelo
+  separa regime: a **COVID/2020 sai sistêmica** (PETR4 = 30 janelas) e a **crise da Americanas/2023
+  sai idiossincrática** (AMER3 = 49 janelas) — exatamente a distinção buscada.
+- **Métrica de classe rara (ADR-0015).** Sob prevalência ~4,9%, a **ROC-AUC = 0,84 mascara** um
+  desempenho que a **PR-AUC = 0,15 expõe** → PR-AUC adotada como leitura padrão; custo assimétrico
+  FP×FN liga a escolha de limiar a uma decisão de risco.
+- **Parcimônia comprovada (ADR-0013/0014/0018).** Atenção/Transformers, Optuna e **weight decay**
+  foram testados e ficaram **dentro do desvio inter-fold** — indistinguíveis de zero. O modelo já é
+  robusto: *mais capacidade ≠ mais sinal*.
+
 ---
 
 ## Documentação
 
-- **[`docs/adr/`](docs/adr/)** — Architecture Decision Records (0001–0011): cada decisão de
+- **[`docs/adr/`](docs/adr/)** — Architecture Decision Records (0001–0018): cada decisão de
   metodologia/hiperparâmetro, com proveniência e evidência. `config.yaml` referencia o ADR de cada
   chave.
-- **[`report/`](report/)** — relatório LaTeX (preliminar), uma seção por milestone.
+- **[`report/`](report/)** — relatório LaTeX (`main.pdf`), uma seção por milestone.
 - **[`teoria/`](teoria/)** — guia teórico autocontido (finanças, estatística, redes neurais).
 - **[`debate/`](debate/)** — confrontações teóricas: defesa crítica das decisões e limitações
   assumidas.
@@ -317,6 +386,8 @@ seu ADR):
 | `detection.aggregation` | **max** | 0009 |
 | `validation.n_splits` | 10 | 0010 |
 | `preprocessing.features` | `[Close, Volume]` | 0011 |
+| `macro.features` | `[USDBRL, VIX]` | 0012 |
+| `model.weight_decay` | 0.0 (Adam puro) | 0018 |
 
 ---
 
