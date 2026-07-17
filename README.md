@@ -30,9 +30,9 @@ do tempo de eventos econômicos e políticos brasileiros documentados.
 **Rodar (2 comandos, ~minutos, offline):**
 
 ```bash
-pip install -e .
+pip install -e ".[dev]"
 python -m src --train      # treina os 4 modelos e imprime o resumo por ativo
-pytest -q                  # 32 testes verdes (pipeline, métricas, anti-vazamento)
+pytest -v                  # 32 testes verdes (pipeline, métricas, anti-vazamento)
 ```
 
 Dados versionados em `data/raw/` → **roda sem internet**. Detalhes e Colab abaixo.
