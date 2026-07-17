@@ -37,6 +37,12 @@ pytest -q                  # 32 testes verdes (pipeline, métricas, anti-vazamen
 
 Dados versionados em `data/raw/` → **roda sem internet**. Detalhes e Colab abaixo.
 
+> **Artefatos gerados não vêm no pacote** — são reconstruídos pelos comandos acima: os pesos
+> (`models/`) por `python -m src --train`, os intermediários (`data/processed/`) pela própria
+> pipeline, e as figuras dos estudos já estão embutidas nas saídas dos notebooks. O ambiente
+> virtual e caches (`.venv/`, `__pycache__/`, `*.egg-info/`) também não são necessários —
+> `pip install -e .` recria tudo.
+
 **Onde cada critério é evidenciado:**
 
 | O que avaliar | Onde ver |
